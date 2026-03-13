@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NL Studio | Generator</title>
+<meta name="referrer" content="no-referrer">
+<title>Newsletter Studio (0313-12)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@400;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ════════════ TOKENS ════════════ */
@@ -1850,7 +1851,7 @@ function renderHeroCard() {
           </select>
           <button class="sis-btn ${mainVisual.imgSrc==='none'?'sis-none':''}" onclick="mainVisual.imgSrc='none';mainVisual.image='';livePreview();renderSecList()">✕ 없음</button>
         </div>
-        <button class="mv-regen-btn" id="heroImgBtn" onclick="regenHeroImg()" style="margin-top:6px">🔄 AI 배경 생성</button>
+        <button class="mv-regen-btn" id="heroImgBtn" onclick="regenHeroImg()" style="margin-top:6px">🔄 ${mainVisual.image ? 'AI 배경 재생성' : 'AI 배경 생성'}</button>
         <label class="img-lbl ${hasFile?'has':''}" id="heroImgLbl" style="margin-top:6px">
           <input type="file" accept="image/*" onchange="onHeroImg(this)">
           <span class="img-ico">${hasFile?'':'📎'}</span>
@@ -2046,7 +2047,7 @@ function renderCard(s) {
         onclick="event.preventDefault();${fnClr}">✕</span>
     </label>
     ${src !== 'none' ? `<button class="mv-regen-btn" id="ri-${idSfx}"
-      onclick="${fnReg}">🔄 이미지 재생성</button>` : ''}`;
+      onclick="${fnReg}">🔄 ${img ? '이미지 재생성' : '이미지 생성'}</button>` : ''}`;
   };
 
   return `
@@ -2559,7 +2560,7 @@ async function regenSecImg(id) {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
   
-  // 이미지 재생성 시 뉴스 출처/링크 업데이트가 필요할 수 있으므로 crawl 실행 (이미지 업데이트 허용)
+  // 이미지 생성 시 뉴스 출처/링크 업데이트가 필요할 수 있으므로 crawl 실행 (이미지 업데이트 허용)
   if (s.imgSrc === 'web') await crawlNewsForSection(s, false);
 
   const btn = document.getElementById('ri-'+id);
@@ -2567,9 +2568,10 @@ async function regenSecImg(id) {
   const imgSt = (document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const src = s.imgSrc || 'ai';
   const secStyle = src==='ai' ? (s.imgStyle || imgSt) : imgSt;
-  setStatus(`🖼️ [${s.name}] 이미지 재생성 중...`);
+  setStatus(`🖼️ [${s.name}] 이미지 생성 중...`);
   try {
-    const img = await fetchImage(apiKey, src, s.topic||s.name, secStyle, s.name);
+    const imgTopic = s.originalTopic || s.topic || s.name;
+    const img = await fetchImage(apiKey, src, imgTopic, secStyle, s.name, s.crawledLink);
     if(img) {
       imageData['ai_'+id] = img;
       // 카드 썸네일 즉시 업데이트
@@ -2584,9 +2586,9 @@ async function regenSecImg(id) {
       if(nm)  nm.textContent='이미지 생성됨';
       if(sb)  sb.textContent='클릭해서 변경';
       if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
-      setStatus(`✓ [${s.name}] 이미지 재생성 완료`);
+      setStatus(`✓ [${s.name}] 이미지 생성 완료`);
     }
-  } catch(e) { alert('이미지 재생성 실패: '+e.message); }
+  } catch(e) { alert('이미지 생성 실패: '+e.message); }
   if(btn) { btn.disabled=false; btn.textContent='🔄'; }
 }
 
@@ -2594,7 +2596,7 @@ async function regenSecImg2(id) {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
   
-  // 이미지 재생성 시 뉴스 출처/링크 업데이트가 필요할 수 있으므로 crawl 실행 (이미지 업데이트 허용)
+  // 이미지 생성 시 뉴스 출처/링크 업데이트가 필요할 수 있으므로 crawl 실행 (이미지 업데이트 허용)
   if (s.imgSrc2 === 'web') await crawlNewsForSection(s, false);
 
   const btn = document.getElementById('ri2-'+id);
@@ -2602,9 +2604,10 @@ async function regenSecImg2(id) {
   const imgSt = (document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const src = s.imgSrc2 || 'ai';
   const secStyle = src==='ai' ? (s.imgStyle2 || imgSt) : imgSt;
-  setStatus(`🖼️ [${s.name}] 카드2 이미지 재생성 중...`);
+  setStatus(`🖼️ [${s.name}] 카드2 이미지 생성 중...`);
   try {
-    const img = await fetchImage(apiKey, src, s.topic2||s.topic||s.name, secStyle, s.name);
+    const imgTopic2 = s.topic2 || s.topic || s.name;
+    const img = await fetchImage(apiKey, src, imgTopic2, secStyle, s.name, s.crawledLink);
     if(img) {
       imageData['ai_'+id+'_c2'] = img;
       // 카드2 썸네일 즉시 업데이트
@@ -2619,9 +2622,9 @@ async function regenSecImg2(id) {
       if(nm)  nm.textContent='이미지 생성됨';
       if(sb)  sb.textContent='클릭해서 변경';
       if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
-      setStatus(`✓ [${s.name}] 카드2 이미지 재생성 완료`);
+      setStatus(`✓ [${s.name}] 카드2 이미지 생성 완료`);
     }
-  } catch(e) { alert('이미지 재생성 실패: '+e.message); }
+  } catch(e) { alert('이미지 생성 실패: '+e.message); }
   if(btn) { btn.disabled=false; btn.textContent='🔄'; }
 }
 
