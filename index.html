@@ -1880,7 +1880,7 @@ async function genHero() {
     // 1. 최신 뉴스 (서버 /api/news)
     let newsContext = '';
     try {
-      const nr = await fetch(`/api/news?keyword=${encodeURIComponent(topic)}`);
+      const nr = await fetch(`/api/news?source=aitimes&keyword=${encodeURIComponent(topic)}`);
       if (nr.ok) {
         const nd = await nr.json();
         if (nd.items?.length) {
@@ -2448,7 +2448,7 @@ async function crawlNewsForSection(s, skipImage = false) {
       return newsContext;
     }
 
-    // ── 그 외 섹션: 일반 뉴스 크롤링 ──
+    // ── 그 외 섹션: AI Times 키워드 크롤링 ──
     let firstNews = s._cachedArticle || null;
 
     if (!firstNews) {
@@ -2456,11 +2456,16 @@ async function crawlNewsForSection(s, skipImage = false) {
       let topic = s.topic || s.name;
       if(!s.topic) {
         if(s.keys.includes('dsnews')) topic = 'kt ds';
-        else if(s.keys.includes('itnow')) topic = 'it now';
+        else if(s.keys.includes('itnow')) topic = 'AI 디지털전환';
       }
       s.originalTopic = topic;
-      setStatus(`🌐 뉴스 크롤링 중 (${topic})...`);
-      const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
+
+      // KT DS 관련은 Naver/Bing, 그 외는 AI Times 직접 크롤링
+      const isKtDs = s.keys.includes('dsnews') || topic.toLowerCase().includes('kt ds');
+      const url = isKtDs
+        ? `/api/news?keyword=${encodeURIComponent(topic)}`
+        : `/api/news?source=aitimes&keyword=${encodeURIComponent(topic)}`;
+      setStatus(`🌐 ${isKtDs ? '뉴스' : 'AI Times'} 크롤링 중 (${topic})...`);
       const r = await fetch(url);
       if (!r.ok) return null;
       const data = await r.json();
