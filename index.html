@@ -486,6 +486,15 @@ select.r-inp { cursor:pointer; }
 .hero-sub { font-size:13px; color:rgba(255,255,255,.65); font-family:'Noto Sans KR',sans-serif; font-weight:400; line-height:1.55; max-width:400px; }
 .hero-ph { position:absolute; inset:0; z-index:0; background:radial-gradient(ellipse at 20% 50%,rgba(74,124,248,.25) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,.2) 0%,transparent 55%),linear-gradient(135deg,#0a0e1a,#111827,#0d1520); }
 
+/* Editor Hero Slogan */
+.mv-slogan-txt { 
+  position: absolute; left: 24px; bottom: 20px; z-index: 10;
+  font-size: 13px; font-weight: 800; color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+  font-family: 'Noto Serif KR', serif;
+  background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 4px; border-left: 3px solid #4a7cf8;
+}
+
 /* ════════════ NL RENDER ════════════ */
 /* KT DS */
 .k-top { background:#e5332a; }
@@ -2449,7 +2458,6 @@ async function generateAll() {
 
     // 2. 메인 비주얼 슬로건 추출
     setLoading(true,'✦ 메인 비주얼 슬로건 추출 중','인트로 카피 분석');
-    // Newly generated intro content from variants[0] instead of UI getSel
     const introFirst = copyData['intro']?.variants?.[0] || '';
     if(introFirst) {
       try { mainVisual.slogan = await extractSlogan(apiKey, introFirst, brand, brandSub); } catch(e){}
@@ -2460,14 +2468,8 @@ async function generateAll() {
     }
     if(!mainVisual.slogan) mainVisual.slogan={title:brand, sub:brandSub, keywords:[], mood:'professional editorial'};
     
-    // Explicitly update Hero panel UI with extracted slogan
-    const heroWrap = document.querySelector('#sc-hero .mv-preview-wrap');
-    if(heroWrap) {
-      const sloganTxt = `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-      let ex = heroWrap.querySelector('.mv-slogan-txt');
-      if(!ex) { ex = document.createElement('div'); ex.className='mv-slogan-txt'; heroWrap.appendChild(ex); }
-      ex.textContent = sloganTxt;
-    }
+    // Refresh Hero Card in editor side-bar to show the new slogan
+    renderHeroCard();
 
     // 3. 메인 비주얼 이미지
     const heroSrc   = mainVisual.imgSrc || imgSrc;
@@ -2801,8 +2803,11 @@ async function extractSlogan(apiKey, sourceText, brand, brandSub) {
 ${isTopic ? '주제' : '인트로'}:
 """${sourceText}"""
 
-JSON만 출력, 마크다운 없이:
-{"title":"강렬한 메인 타이틀(최대20자)","sub":"서브카피 한줄(최대35자)","keywords":["키워드1","키워드2","키워드3"],"mood":"영어 이미지 무드"}`;
+규칙:
+1. 타이틀은 15자 내외로 매우 임팩트 있고 짧게.
+2. 메인 이미지 위에 올라갈 슬로건임을 명심할 것.
+3. JSON만 출력, 마크다운 없이:
+{"title":"임팩트 있는 슬로건","sub":"설명 한줄","keywords":["키워드1","키워드2"],"mood":"professional"}`;
   
   const r=await fetch('/api/gemini-copy', {
     method:'POST',
@@ -2968,9 +2973,11 @@ function renderHeroCard() {
   const previewWrap = (mainVisual.image || mainVisual.slogan)
     ? `<div class="mv-preview-wrap">${imgEl}${sloganEl}</div>`
     : ``;
-  const sloganEl = mainVisual.slogan
-    ? `<div class="mv-slogan-txt">"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}</div>`
+  const sloganTxt = mainVisual.slogan 
+    ? `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`
     : '';
+  const sloganHTML = `<div class="mv-slogan-txt">${sloganTxt}</div>`;
+  
   return `<div class="sc active mv-card" id="sc-hero">
     <div class="sc-hd">
       <div class="sc-num">✦</div>
@@ -2989,7 +2996,10 @@ function renderHeroCard() {
         <button class="t-gen ${mainVisual.genDone?'done':''}" id="tg-hero"
           onclick="genHero()">${mainVisual.genDone?'✓':'✦'}</button>
       </div>
-      ${previewWrap}
+      <div class="mv-preview-wrap" style="position:relative;">
+        ${previewWrap}
+        ${sloganHTML}
+      </div>
       <div class="sis-row3" id="sis-hero">
         <select class="sis-ai-sel ${src==='ai'?'sis-ai-on':''}" 
           id="sis-style-hero"
