@@ -1796,8 +1796,8 @@ function initSections(type) {
    HERO VISUAL
 ═══════════════════════════════════════ */
 function buildHeroHTML() {
-  const main = mainVisual.slogan || '';
-  const copy = mainVisual.sub || '';
+  const main = copyData['mvMain'] ? getSel('mvMain') : mainVisual.slogan;
+  const copy = copyData['mvSub']  ? getSel('mvSub')  : mainVisual.sub;
   return `<div class="hero-vis">
     ${mainVisual.image ? `<img class="hero-bg" src="${mainVisual.image}" alt="">` : ''}
     <div class="hero-grad"></div>
@@ -1819,6 +1819,7 @@ function renderHeroCard() {
     <option value="cinematic dramatic lighting high contrast">🤖 시네마틱</option>
     <option value="abstract digital art flowing lines neon glow dark">🤖 추상/네온</option>
     <option value="watercolor soft illustration pastel warm tones">🤖 수채화</option>`;
+  const hasFile = mainVisual.image && mainVisual.imgSrc === 'url';
   return `<div class="hero-card" id="heroCard">
     <div class="hero-card-head">
       <span class="hero-card-ico">✦</span>
@@ -1828,21 +1829,28 @@ function renderHeroCard() {
       <input class="hero-topic-inp" id="heroTopicInp" placeholder="AI AX 디지털전환"
         value="${mainVisual.topic}" oninput="mainVisual.topic=this.value">
       <button class="hero-gen-btn" id="heroGenBtn" onclick="genHero()">
-        <span>✦</span> 슬로건 생성
+        <span>✦</span> 슬로건 생성 (3가지)
       </button>
-      <div class="hero-preview" id="heroPreview" ${mainVisual.slogan ? 'style="display:block"' : ''}>
-        <div class="hero-preview-main">${mainVisual.slogan}</div>
-        <div class="hero-preview-copy">${mainVisual.sub}</div>
+      <div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:10px">
+        <div style="font-size:10px;color:var(--mu);margin-bottom:6px;font-weight:600">배경 이미지</div>
+        <div class="sis-row3">
+          <select class="sis-ai-sel ${mainVisual.imgSrc==='ai'?'sis-ai-on':''}" id="heroImgStyleSel"
+            onchange="mainVisual.imgStyle=this.value;this.className='sis-ai-sel sis-ai-on'">
+            ${aiSelOpts}
+          </select>
+          <button class="sis-btn ${mainVisual.imgSrc==='none'?'sis-none':''}" onclick="mainVisual.imgSrc='none';mainVisual.image='';livePreview();renderSecList()">✕ 없음</button>
+        </div>
+        <button class="mv-regen-btn" id="heroImgBtn" onclick="regenHeroImg()" style="margin-top:6px">🔄 AI 배경 생성</button>
+        <label class="img-lbl ${hasFile?'has':''}" id="heroImgLbl" style="margin-top:6px">
+          <input type="file" accept="image/*" onchange="onHeroImg(this)">
+          <span class="img-ico">${hasFile?'':'📎'}</span>
+          <div class="img-txt">
+            <div class="img-name" id="heroImgName">${hasFile?'이미지 첨부됨':'배경 직접 첨부'}</div>
+            <div class="img-sub">JPG · PNG · GIF</div>
+          </div>
+          <span class="img-clr ${hasFile?'show':''}" onclick="clrHeroImg(event)">✕</span>
+        </label>
       </div>
-      <div class="sis-row3" style="margin-top:10px">
-        <select class="sis-ai-sel ${mainVisual.imgSrc==='ai'?'sis-ai-on':''}" id="heroImgStyleSel"
-          onchange="mainVisual.imgStyle=this.value;this.className='sis-ai-sel sis-ai-on'">
-          ${aiSelOpts}
-        </select>
-        <button class="sis-btn ${mainVisual.imgSrc==='none'?'sis-none':''}" onclick="mainVisual.imgSrc='none';livePreview();renderSecList()">✕ 없음</button>
-      </div>
-      <button class="mv-regen-btn" id="heroImgBtn" onclick="regenHeroImg()" style="margin-top:6px">🔄 배경 이미지 생성</button>
-      ${mainVisual.image ? `<img id="heroImgThumb" src="${mainVisual.image}" style="width:100%;border-radius:6px;margin-top:8px;display:block" alt="">` : '<img id="heroImgThumb" style="display:none" alt="">'}
     </div>
   </div>`;
 }
@@ -1855,28 +1863,28 @@ async function genHero() {
   mainVisual.topic = topic;
 
   try {
-    // 1. 최신 뉴스 가져오기 (서버 /api/news)
+    // 1. 최신 뉴스 (서버 /api/news)
     let newsContext = '';
     try {
       const nr = await fetch(`/api/news?keyword=${encodeURIComponent(topic)}`);
       if (nr.ok) {
         const nd = await nr.json();
-        if (nd.items && nd.items.length > 0) {
-          newsContext = '최신 뉴스 헤드라인:\n' + nd.items.map((t, i) => `${i + 1}. ${t.title}`).join('\n') + '\n\n';
+        if (nd.items?.length) {
+          newsContext = '최신 뉴스 헤드라인:\n' + nd.items.map((t, i) => `${i+1}. ${t.title}`).join('\n') + '\n\n';
         }
       }
-    } catch (e) { /* 뉴스 실패해도 계속 */ }
+    } catch (e) {}
 
-    // 2. 슬로건 생성 (서버 /api/gemini-copy)
+    // 2. 슬로건 3가지 생성 (서버 /api/gemini-copy)
     const p = `당신은 B2B IT 기업 뉴스레터 카피라이터입니다.
-${newsContext}위 최신 트렌드를 참고해서 "${topic}" 주제로 뉴스레터 히어로 배너 카피를 작성하세요.
+${newsContext}위 최신 트렌드를 참고해서 "${topic}" 주제로 히어로 배너 카피를 3가지 버전으로 작성하세요.
 
 요구사항:
-- main: 임팩트 있고 짧은 한국어 슬로건 (15-25자), 최신 AI/AX 트렌드 반영
-- sub: 설득력 있는 2-3문장 서브카피 (80자 이상), 기업 독자 대상, 구체적 가치 제안 포함
+- mvMain: 임팩트 있는 한국어 슬로건 (15-25자), AI/AX 트렌드 반영, 버전마다 톤이 달라야 함
+- mvSub: 2문장 서브카피 (50-70자), 기업 독자 대상, 구체적 가치 제안
 
-JSON만 출력 (마크다운 없이):
-{"main": "메인 슬로건", "sub": "서브 카피 문장들"}`;
+3가지 버전을 JSON으로만 출력 (마크다운 없이):
+{"mvMain": ["버전1","버전2","버전3"], "mvSub": ["버전1","버전2","버전3"]}`;
 
     const r = await fetch('/api/gemini-copy', {
       method: 'POST',
@@ -1888,17 +1896,15 @@ JSON만 출력 (마크다운 없이):
     const rawText = (d.rawText || JSON.stringify(d.parsed || {})).replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(rawText);
 
-    mainVisual.slogan = (parsed.main || '').trim();
-    mainVisual.sub = (parsed.sub || '').trim();
+    const mains = (parsed.mvMain || []).map(v => String(v).trim()).filter(Boolean);
+    const subs  = (parsed.mvSub  || []).map(v => String(v).trim()).filter(Boolean);
+    if (!mains.length) throw new Error('슬로건 파싱 실패');
 
-    // 사이드바 미리보기 업데이트
-    const prev = document.getElementById('heroPreview');
-    if (prev) {
-      prev.style.display = 'block';
-      prev.innerHTML = `<div class="hero-preview-main">${mainVisual.slogan}</div><div class="hero-preview-copy">${mainVisual.sub}</div>`;
-    }
+    copyData['mvMain'] = { variants: mains, selected: 0, edited: [...mains] };
+    copyData['mvSub']  = { variants: subs,  selected: 0, edited: [...subs]  };
 
-    livePreview();
+    renderCopyPanel();
+    rebuildPreview();
 
   } catch (e) {
     alert('슬로건 생성 실패: ' + e.message);
@@ -1918,8 +1924,6 @@ async function regenHeroImg() {
     if (imgData) {
       mainVisual.image = imgData;
       mainVisual.imgSrc = 'ai';
-      const thumb = document.getElementById('heroImgThumb');
-      if (thumb) { thumb.src = imgData; thumb.style.display = 'block'; }
       livePreview();
     } else {
       alert('이미지 생성에 실패했습니다.');
@@ -1927,12 +1931,38 @@ async function regenHeroImg() {
   } catch (e) {
     alert('이미지 생성 오류: ' + e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 배경 이미지 재생성'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 AI 배경 재생성'; }
   }
+}
+
+function onHeroImg(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    mainVisual.image = e.target.result;
+    mainVisual.imgSrc = 'url';
+    const nm = document.getElementById('heroImgName');
+    const lbl = document.getElementById('heroImgLbl');
+    if (nm) nm.textContent = file.name;
+    if (lbl) { lbl.classList.add('has'); lbl.querySelector('.img-ico').textContent = ''; lbl.querySelector('.img-clr').classList.add('show'); }
+    livePreview();
+  };
+  reader.readAsDataURL(file);
+}
+function clrHeroImg(e) {
+  e.preventDefault(); e.stopPropagation();
+  mainVisual.image = ''; mainVisual.imgSrc = 'ai';
+  const nm = document.getElementById('heroImgName');
+  const lbl = document.getElementById('heroImgLbl');
+  if (nm) nm.textContent = '배경 직접 첨부';
+  if (lbl) { lbl.classList.remove('has'); lbl.querySelector('.img-ico').textContent = '📎'; lbl.querySelector('.img-clr').classList.remove('show'); }
+  livePreview();
 }
 
 function renderSecList() {
   document.getElementById('secList').innerHTML = renderHeroCard() + sections.map(renderCard).join('');
+  const heroSel = document.getElementById('heroImgStyleSel');
+  if (heroSel && mainVisual.imgStyle) { heroSel.value = mainVisual.imgStyle; heroSel.className = 'sis-ai-sel sis-ai-on'; }
   sections.forEach(s => {
     const sel = document.getElementById('sis-style-'+s.id);
     if(sel) {
@@ -2877,6 +2907,7 @@ function setAiStyleForSec(id, style) {
    COPY PANEL
 ═══════════════════════════════════════ */
 const COPY_LABELS={
+  mvMain:'히어로 메인',mvSub:'히어로 서브',
   intro:'인트로',itnow:'IT Now',axfield:'AX현장',solution:'솔루션',dsnews:'KT DS 소식',
   lead:'리드',body1:'본문 1',body2:'본문 2',
   card1:'카드1',card2:'카드2',card3:'카드3',
