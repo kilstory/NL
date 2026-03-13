@@ -2864,7 +2864,7 @@ async function genHero() {
     // 1. AI Times에서 최신 소식 긁어오기 (통찰력 있는 슬로건을 위해)
     let newsContext = '';
     try {
-      const newsRes = await fetch(`/api/news?source=aitimes&keyword=ai+technology`);
+      const newsRes = await fetch(`/api/news?source=aitimes&keyword=ai+ax+디지털전환`);
       if (newsRes.ok) {
         const newsData = await newsRes.json();
         if (newsData.items && newsData.items.length > 0) {
@@ -2885,7 +2885,8 @@ async function genHero() {
     }
     renderCopyPanel();
 
-    mainVisual.genDone = true;
+    // genDone은 false 유지 → 항상 ✦ 버튼으로 재생성 가능
+    mainVisual.genDone = false;
 
     // 사이드바 히어로 카드 DOM 직접 교체 (전체 secList 재렌더 없이)
     const scHero = document.getElementById('sc-hero');
@@ -2894,9 +2895,9 @@ async function genHero() {
       tmp.innerHTML = renderHeroCard();
       scHero.replaceWith(tmp.firstElementChild);
     }
-    // 버튼 상태 업데이트 (새로 렌더된 버튼에 적용)
+    // 버튼 상태 복구 (새로 렌더된 버튼에 적용)
     const newBtn = document.getElementById('tg-hero');
-    if(newBtn) { newBtn.textContent='✓'; newBtn.classList.add('done'); newBtn.disabled=false; }
+    if(newBtn) { newBtn.textContent='✦'; newBtn.classList.remove('done'); newBtn.disabled=false; }
 
     // 메인 프리뷰: 히어로 영역만 교체 (하단 섹션 유지)
     const frame = document.getElementById('nlFrame');
@@ -3168,18 +3169,11 @@ function onHeroImg(input) {
 
 
 function buildHeroHTML(brand, vol) {
-  const metaSub = document.getElementById('rSub').value || 'AX 전문 파트너';
-  const sl = mainVisual.slogan;
+  const sl  = mainVisual.slogan;
   const img = mainVisual.image;
-  
-  // Prioritize manually edited content if available
-  // Remove brand fallback to focus on Slogan as requested
-  const title = getSel('heroTitle') || sl?.title || ''; 
-  const displayTitle = title || 'NEWSLETTER';
-  const sub = getSel('heroSub') || sl?.sub || metaSub;
-  const kws = sl?.keywords || [];
-  
-  const titleHTML = displayTitle;
+  const title = getSel('heroTitle') || sl?.title || '';
+  const sub   = getSel('heroSub')   || sl?.sub   || '';
+  const kws   = sl?.keywords || [];
 
   return `
 <div class="hero-visual">
@@ -3191,7 +3185,7 @@ function buildHeroHTML(brand, vol) {
   </div>
   <div class="hero-content">
     ${kws.length?`<div class="hero-kws">${kws.slice(0,4).map(k=>`<span class="hero-kw">${k}</span>`).join('')}</div>`:''}
-    <div class="hero-title">${titleHTML}</div>
+    ${title?`<div class="hero-title">${title}</div>`:''}
     ${sub?`<div class="hero-sub">${sub}</div>`:''}
   </div>
 </div>`;
