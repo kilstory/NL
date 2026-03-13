@@ -15,11 +15,9 @@ export default async function handler(req, res) {
   try {
     const { keyword } = req.query;
 
-    let url = 'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko';
-    if (keyword) {
-      // Use Google News search RSS
-      url = `https://news.google.com/rss/search?q=${encodeURIComponent(keyword)}&hl=ko&gl=KR&ceid=KR:ko`;
-    }
+    // Append after:2026-01-01 to ensure recent/future news
+    const query = keyword ? `${keyword} after:2026-01-01` : `최신뉴스 after:2026-01-01`;
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
 
     const response = await fetch(url);
     if (!response.ok) {

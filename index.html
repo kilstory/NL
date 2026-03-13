@@ -2388,6 +2388,10 @@ async function generateAll() {
     if(introCopy) {
       try { mainVisual.slogan = await extractSlogan(apiKey, introCopy, brand, brandSub); } catch(e){}
     }
+    if(!mainVisual.slogan) {
+      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 AI 트렌드 및 혁신';
+      try { mainVisual.slogan = await extractSlogan(apiKey, fbTopic, brand, brandSub); } catch(e){}
+    }
     if(!mainVisual.slogan) mainVisual.slogan={title:brand, sub:brandSub, keywords:[], mood:'professional editorial'};
 
     // 3. 메인 비주얼 이미지
@@ -2691,12 +2695,17 @@ function buildPrompts(keys, name, topic) {
 /* ═══════════════════════════════════════
    HERO VISUAL
 ═══════════════════════════════════════ */
-async function extractSlogan(apiKey, introCopy, brand, brandSub) {
-  const p=`다음 뉴스레터 인트로 카피에서 메인 비주얼 슬로건을 추출해줘.
+async function extractSlogan(apiKey, sourceText, brand, brandSub) {
+  const isTopic = sourceText.toString().startsWith('주제:');
+  const instruction = isTopic 
+    ? `주어진 주제를 바탕으로 강렬한 메인 비주얼 슬로건과 서브카피를 작성해줘.`
+    : `다음 뉴스레터 인트로 카피에서 핵심 내용을 뽑아 강렬한 메인 비주얼 슬로건을 추출해줘.`;
+
+  const p=`${instruction}
 브랜드: ${brand} (${brandSub})
 
-인트로:
-"""${introCopy}"""
+${isTopic ? '주제' : '인트로'}:
+"""${sourceText}"""
 
 JSON만 출력, 마크다운 없이:
 {"title":"강렬한 메인 타이틀(최대20자)","sub":"서브카피 한줄(최대35자)","keywords":["키워드1","키워드2","키워드3"],"mood":"영어 이미지 무드"}`;
@@ -2725,7 +2734,7 @@ async function genHero() {
   if(btn) { btn.disabled=true; btn.textContent='⏳'; }
   const brand    = document.getElementById('rBrand').value||'kt ds';
   const brandSub = document.getElementById('rSub').value||'AX 전문 파트너';
-  const topic    = mainVisual.topic || brand;
+  const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 AI 트렌드 및 혁신';
   try {
     mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub);
     mainVisual.genDone = true;
