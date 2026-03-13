@@ -269,10 +269,11 @@ select.r-inp { cursor:pointer; }
 .ly-news { padding:18px 26px; border-bottom:1px solid #f0ede8; }
 .ly-news-hd { font-size:13px; font-weight:900; color:#1a1816; margin-bottom:14px; font-family:'Noto Serif KR',serif; padding-bottom:10px; border-bottom:2px solid #e5332a; }
 .ly-news-items { display:flex; flex-direction:column; }
-.ly-news-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ede8; align-items:flex-start; }
-.ly-news-item.has-lnk { cursor:pointer; transition:background .2s; }
-.ly-news-item.has-lnk:hover .ly-news-tit { text-decoration:underline; color:#1a56db; }
-.ly-news-item:last-child { border-bottom:none; }
+.ly-news-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ede8; align-items:flex-start; transition:background .2s; border-radius:6px; margin-bottom:2px; }
+.ly-news-item.has-lnk { cursor:pointer; padding:10px 8px; }
+.ly-news-item.has-lnk:hover { background:rgba(26,86,219,.04); }
+.ly-news-item.has-lnk:hover .ly-news-tit { color:#1a56db; }
+.ly-news-item:last-child { border-bottom:none; margin-bottom:0; }
 .ly-news-dot { width:6px; height:6px; border-radius:50%; background:#e5332a; flex-shrink:0; margin-top:5px; }
 .ly-news-body { flex:1; }
 .ly-news-tit  { font-size:12px; font-weight:700; color:#1a1816; line-height:1.4; margin-bottom:3px; font-family:'Noto Serif KR',serif; transition:color .2s; }
@@ -3549,7 +3550,8 @@ function renderSecLayout(s, img, lines, text, skin) {
       <div class="ly-news-items">
         ${(newsItems.length >= 2 ? newsItems : [title, desc]).filter(Boolean).slice(0,5).map((item, idx) => {
           const p = item.split('\n').map(l=>l.trim()).filter(Boolean);
-          const iLnk = (s.crawledLinks && s.crawledLinks[idx]) ? s.crawledLinks[idx] : '#';
+          // 3개 소식에 각각 링크 대응
+          const iLnk = (s.crawledLinks && s.crawledLinks[idx]) ? s.crawledLinks[idx] : (s.link && s.link !== '#' ? s.link : '#');
           return `<div class="ly-news-item ${iLnk !== '#' ? 'has-lnk' : ''}" ${iLnk !== '#' ? `onclick="window.open('${iLnk}','_blank')"` : ''}>
             <div class="ly-news-dot"></div>
             <div class="ly-news-body">
