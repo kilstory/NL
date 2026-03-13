@@ -2854,38 +2854,28 @@ async function genHero() {
   const brandSub = document.getElementById('rSub').value||'AX 전문 파트너';
   const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
   try {
-    mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub);
-    if (!mainVisual.slogan) throw new Error('슬로건 데이터가 생성되지 않았습니다.');
+    const res = await extractSlogan(apiKey, topic, brand, brandSub);
+    if (!res) throw new Error('슬로건 데이터가 생성되지 않았습니다.');
     
-    // Sync to heroTitle and heroSub copyData
-    if (mainVisual.slogan.title) {
-        copyData['heroTitle'] = { variants: [mainVisual.slogan.title], selected: 0, edited: [mainVisual.slogan.title] };
-    }
-    if (mainVisual.slogan.sub) {
-        copyData['heroSub'] = { variants: [mainVisual.slogan.sub], selected: 0, edited: [mainVisual.slogan.sub] };
-    }
-    renderCopyPanel();
+    mainVisual.slogan = res;
+    console.log('Hero Slogan Generated:', mainVisual.slogan);
 
-    mainVisual.genDone = true;
-    // 슬로건 텍스트 업데이트
-    const wrap = document.querySelector('#sc-hero .mv-preview-wrap');
-    const existing = document.querySelector('#sc-hero .mv-slogan-txt');
-    const sloganTxt = `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-    if(existing) {
-      existing.textContent = sloganTxt;
-    } else if(wrap) {
-      const d = document.createElement('div');
-      d.className = 'mv-slogan-txt';
-      d.textContent = sloganTxt;
-      wrap.appendChild(d);
+    // Sync to heroTitle and heroSub copyData
+    if (res.title) {
+        copyData['heroTitle'] = { variants: [res.title], selected: 0, edited: [res.title] };
     }
+    if (res.sub) {
+        copyData['heroSub'] = { variants: [res.sub], selected: 0, edited: [res.sub] };
+    }
+    
+    mainVisual.genDone = true;
     if(btn) { btn.textContent='✓'; btn.classList.add('done'); }
     
-    // Force immediate preview rebuild to show the new slogan in the main canvas
-    rebuildPreview();
-    // Also refresh the sidebar hero card
-    renderHeroCard(); 
+    // Refresh UI
+    renderCopyPanel(); 
+    rebuildPreview(); 
   } catch(e) {
+    console.error('Slogan Gen Error:', e);
     alert('슬로건 생성 실패: '+e.message);
     if(btn) { btn.textContent='✦'; }
   }
@@ -2966,44 +2956,24 @@ function updateHeroPanel() {
   if(mainVisual.slogan) {
     if(mvSlogan) {
       mvSlogan.textContent = `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-    } else {
-      const wrap = document.querySelector('#sc-hero .mv-preview-wrap');
-      if(wrap && mainVisual.slogan) {
-        const d = document.createElement('div');
-        d.className = 'mv-slogan-txt';
-        d.textContent = `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-        wrap.appendChild(d);
-      }
     }
   }
-  // 오른쪽 패널도 호환성 유지
-  const wrap=document.getElementById('heroThumbWrap');
-  const thumb=document.getElementById('heroThumb');
-  const txt=document.getElementById('heroSloganTxt');
-  if(wrap && (mainVisual.image||mainVisual.slogan)) {
-    wrap.style.display='';
-    if(mainVisual.image&&thumb) thumb.src=mainVisual.image;
-    if(mainVisual.slogan&&txt)
-      txt.textContent=`"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-  }
 }
+
+function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'):'';}
+
 function renderHeroCard() {
   const src = mainVisual.imgSrc || 'ai';
   const imgEl = mainVisual.image
     ? `<img class="mv-thumb" id="mvThumb" src="${mainVisual.image}" alt="">`
     : ``;
   
-  // Prioritize manually edited content for preview too
+  // Prioritize manually edited content for preview
   const sl = mainVisual.slogan;
   const title = getSel('heroTitle') || sl?.title || '';
   const sub = getSel('heroSub') || sl?.sub || '';
-  
   const sloganTxt = (title || sub) ? `"${title}" — ${sub}` : '';
   const sloganHTML = sloganTxt ? `<div class="mv-slogan-txt">${sloganTxt}</div>` : '';
-  
-  const previewWrap = (mainVisual.image || sloganTxt)
-    ? `<div class="mv-preview-wrap">${imgEl}${sloganHTML}</div>`
-    : ``;
   
   return `<div class="sc active mv-card" id="sc-hero">
     <div class="sc-hd">
@@ -3023,9 +2993,10 @@ function renderHeroCard() {
         <button class="t-gen ${mainVisual.genDone?'done':''}" id="tg-hero"
           onclick="genHero()">${mainVisual.genDone?'✓':'✦'}</button>
       </div>
-      <div class="mv-preview-wrap" style="position:relative;">
-        ${previewWrap}
+      <div class="mv-preview-wrap" style="position:relative; background:#000; border-radius:6px; overflow:hidden; min-height:120px; display:flex; align-items:center; justify-content:center;">
+        ${imgEl}
         ${sloganHTML}
+        ${!mainVisual.image && !sloganTxt ? '<span style="color:var(--dim);font-size:10px;">이미지 또는 슬로건 없음</span>' : ''}
       </div>
       <div class="sis-row3" id="sis-hero">
         <select class="sis-ai-sel ${src==='ai'?'sis-ai-on':''}" 
