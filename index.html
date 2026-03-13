@@ -462,6 +462,7 @@ select.r-inp { cursor:pointer; }
 
 /* ════════════ HERO VISUAL ════════════ */
 .hero-vis { position:relative; width:100%; min-height:280px; background:linear-gradient(135deg,#0a0e1a,#111827,#0d1520); overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
+.hero-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
 .hero-grad { position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,.72) 65%,rgba(0,0,0,.93) 100%); z-index:1; }
 .hero-body { position:relative; z-index:2; padding:28px 32px 32px; }
 .hero-main { font-size:32px; font-weight:900; color:#4a7cf8; font-family:'Noto Serif KR',serif; line-height:1.25; margin-bottom:12px; letter-spacing:-.5px; text-shadow:0 2px 20px rgba(74,124,248,.35); }
@@ -1698,7 +1699,7 @@ let imageData   = {};
 let finalHTML   = '';
 let imgSrc      = 'ai'; // 'ai' | 'web' | 'none'
 let isDark      = false;
-let mainVisual  = { slogan: '', sub: '', topic: 'AI AX 디지털전환' };
+let mainVisual  = { slogan: '', sub: '', topic: 'AI AX 디지털전환', image: '', imgStyle: '', imgSrc: 'ai' };
 
 const TYPE_LABELS = { ktds:'kt ds형', general:'일반형', product:'제품형' };
 
@@ -1797,8 +1798,8 @@ function initSections(type) {
 function buildHeroHTML() {
   const main = mainVisual.slogan || '';
   const copy = mainVisual.sub || '';
-  if (!main && !copy) return '';
   return `<div class="hero-vis">
+    ${mainVisual.image ? `<img class="hero-bg" src="${mainVisual.image}" alt="">` : ''}
     <div class="hero-grad"></div>
     <div class="hero-body">
       ${main ? `<div class="hero-main">${main}</div>` : ''}
@@ -1808,10 +1809,20 @@ function buildHeroHTML() {
 }
 
 function renderHeroCard() {
+  const aiSelOpts = `
+    <option value="">🤖 AI · 랜덤</option>
+    <option value="professional business editorial photography">🤖 비즈니스</option>
+    <option value="candid office lifestyle photography Korean professionals">🤖 인물/라이프</option>
+    <option value="technology concept digital futuristic dark">🤖 테크 컨셉</option>
+    <option value="flat design illustration clean modern colorful">🤖 플랫 일러스트</option>
+    <option value="isometric 3d illustration colorful tech">🤖 아이소메트릭</option>
+    <option value="cinematic dramatic lighting high contrast">🤖 시네마틱</option>
+    <option value="abstract digital art flowing lines neon glow dark">🤖 추상/네온</option>
+    <option value="watercolor soft illustration pastel warm tones">🤖 수채화</option>`;
   return `<div class="hero-card" id="heroCard">
     <div class="hero-card-head">
       <span class="hero-card-ico">✦</span>
-      <span class="hero-card-title">히어로 배너 슬로건</span>
+      <span class="hero-card-title">히어로 배너</span>
     </div>
     <div class="hero-card-body">
       <input class="hero-topic-inp" id="heroTopicInp" placeholder="AI AX 디지털전환"
@@ -1823,6 +1834,15 @@ function renderHeroCard() {
         <div class="hero-preview-main">${mainVisual.slogan}</div>
         <div class="hero-preview-copy">${mainVisual.sub}</div>
       </div>
+      <div class="sis-row3" style="margin-top:10px">
+        <select class="sis-ai-sel ${mainVisual.imgSrc==='ai'?'sis-ai-on':''}" id="heroImgStyleSel"
+          onchange="mainVisual.imgStyle=this.value;this.className='sis-ai-sel sis-ai-on'">
+          ${aiSelOpts}
+        </select>
+        <button class="sis-btn ${mainVisual.imgSrc==='none'?'sis-none':''}" onclick="mainVisual.imgSrc='none';livePreview();renderSecList()">✕ 없음</button>
+      </div>
+      <button class="mv-regen-btn" id="heroImgBtn" onclick="regenHeroImg()" style="margin-top:6px">🔄 배경 이미지 생성</button>
+      ${mainVisual.image ? `<img id="heroImgThumb" src="${mainVisual.image}" style="width:100%;border-radius:6px;margin-top:8px;display:block" alt="">` : '<img id="heroImgThumb" style="display:none" alt="">'}
     </div>
   </div>`;
 }
@@ -1831,38 +1851,24 @@ async function genHero() {
   const btn = document.getElementById('heroGenBtn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span>⏳</span> 생성 중...'; }
 
-  const apiKey = document.getElementById('apiInp').value.trim();
-  if (!apiKey || !apiKey.startsWith('AIza')) {
-    alert('Gemini API 키를 입력해주세요.');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<span>✦</span> 슬로건 생성'; }
-    return;
-  }
-
   const topic = (document.getElementById('heroTopicInp')?.value || mainVisual.topic || 'AI AX 디지털전환').trim();
   mainVisual.topic = topic;
 
   try {
-    // 1. Fetch latest news via CORS proxy
+    // 1. 최신 뉴스 가져오기 (서버 /api/news)
     let newsContext = '';
     try {
-      const bingQ = encodeURIComponent(topic + ' 2026 최신');
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.bing.com/news/search?q=' + bingQ + '&cc=kr&format=rss')}`;
-      const nr = await fetch(proxyUrl, { signal: AbortSignal.timeout(6000) });
+      const nr = await fetch(`/api/news?keyword=${encodeURIComponent(topic)}`);
       if (nr.ok) {
-        const xml = await nr.text();
-        const titles = [];
-        const re = /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/g;
-        let m;
-        while ((m = re.exec(xml)) !== null && titles.length < 5) {
-          const t = (m[1] || m[2] || '').trim();
-          if (t && !t.toLowerCase().includes('bing') && t.length > 5) titles.push(t);
+        const nd = await nr.json();
+        if (nd.items && nd.items.length > 0) {
+          newsContext = '최신 뉴스 헤드라인:\n' + nd.items.map((t, i) => `${i + 1}. ${t.title}`).join('\n') + '\n\n';
         }
-        if (titles.length) newsContext = '최신 뉴스 헤드라인:\n' + titles.map((t, i) => `${i + 1}. ${t}`).join('\n') + '\n\n';
       }
     } catch (e) { /* 뉴스 실패해도 계속 */ }
 
-    // 2. Call Gemini directly from browser
-    const prompt = `당신은 B2B IT 기업 뉴스레터 카피라이터입니다.
+    // 2. 슬로건 생성 (서버 /api/gemini-copy)
+    const p = `당신은 B2B IT 기업 뉴스레터 카피라이터입니다.
 ${newsContext}위 최신 트렌드를 참고해서 "${topic}" 주제로 뉴스레터 히어로 배너 카피를 작성하세요.
 
 요구사항:
@@ -1872,44 +1878,56 @@ ${newsContext}위 최신 트렌드를 참고해서 "${topic}" 주제로 뉴스�
 JSON만 출력 (마크다운 없이):
 {"main": "메인 슬로건", "sub": "서브 카피 문장들"}`;
 
-    const body = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.9, maxOutputTokens: 512 }
-    };
-
-    const gr = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const r = await fetch('/api/gemini-copy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({ model: 'gemini-2.0-flash', p, supportsJson: false })
     });
-
-    if (!gr.ok) {
-      const errBody = await gr.json().catch(() => ({}));
-      throw new Error(errBody?.error?.message || `Gemini API 오류: ${gr.status}`);
-    }
-
-    const gd = await gr.json();
-    const rawText = gd?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleaned = rawText.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(cleaned);
+    if (!r.ok) throw new Error('슬로건 생성 API 오류: ' + r.status);
+    const d = await r.json();
+    const rawText = (d.rawText || JSON.stringify(d.parsed || {})).replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(rawText);
 
     mainVisual.slogan = (parsed.main || '').trim();
     mainVisual.sub = (parsed.sub || '').trim();
 
-    // Update sidebar preview
+    // 사이드바 미리보기 업데이트
     const prev = document.getElementById('heroPreview');
     if (prev) {
       prev.style.display = 'block';
       prev.innerHTML = `<div class="hero-preview-main">${mainVisual.slogan}</div><div class="hero-preview-copy">${mainVisual.sub}</div>`;
     }
 
-    // Update newsletter preview (hero section only)
     livePreview();
 
   } catch (e) {
     alert('슬로건 생성 실패: ' + e.message);
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<span>✦</span> 슬로건 재생성'; }
+  }
+}
+
+async function regenHeroImg() {
+  const btn = document.getElementById('heroImgBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 생성 중...'; }
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
+  const topic = mainVisual.topic || 'AI AX 디지털전환';
+  const style = mainVisual.imgStyle || 'technology concept digital futuristic dark';
+  try {
+    const imgData = await nanoBanana(apiKey, topic + ' 뉴스레터 히어로 배너', style);
+    if (imgData) {
+      mainVisual.image = imgData;
+      mainVisual.imgSrc = 'ai';
+      const thumb = document.getElementById('heroImgThumb');
+      if (thumb) { thumb.src = imgData; thumb.style.display = 'block'; }
+      livePreview();
+    } else {
+      alert('이미지 생성에 실패했습니다.');
+    }
+  } catch (e) {
+    alert('이미지 생성 오류: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 배경 이미지 재생성'; }
   }
 }
 
