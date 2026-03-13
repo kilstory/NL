@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
-<title>Newsletter Studio (0313-19)</title>
+<title>Newsletter Studio (0313-20)</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@400;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
@@ -1830,7 +1830,10 @@ function initSections(type) {
     keys:[...t.keys], ph:t.ph,
     img:t.img, multi:t.multi||false,
     allowedLayouts: t.allowedLayouts !== undefined ? t.allowedLayouts : null,
-    on:true, topic:'', topic2:'', image:null, image2:null, custom:false, genDone:false, genDone2:false, imgSrc:'ai', imgSrc2:'ai', imgUrl:'', imgUrl2:'', imgStyle:'', imgStyle2:'', layout:t.defaultLayout||'full', link:'',
+    on:true, topic:'', topic2:'', image:null, image2:null, custom:false, genDone:false, genDone2:false, 
+    imgSrc: (t.keys.some(k => ['news','dsnews','itnow','axfield','solution'].includes(k) || k.includes('news'))) ? 'web' : 'ai', 
+    imgSrc2: (t.keys.some(k => ['news','dsnews','itnow','axfield','solution'].includes(k) || k.includes('news'))) ? 'web' : 'ai', 
+    imgUrl:'', imgUrl2:'', imgStyle:'', imgStyle2:'', layout:t.defaultLayout||'full', link:'',
   }));
   renderSecList(); updateInfo(); livePreview(); renderFontPkgGrid();
 }
@@ -2502,7 +2505,11 @@ async function crawlNewsForSection(s, skipImage = false) {
                 const imgR = await fetch(`/api/image?url=${encodeURIComponent(pick.link)}`);
                 if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
               } catch {}
-              if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
+              if (!imageData['ai_'+s.id]) {
+                s.imgSrc = 'web';
+              } else {
+                s.imgSrc = 'none'; // 이미지가 직접 설정됨
+              }
             }
           }
 
@@ -2549,7 +2556,11 @@ async function crawlNewsForSection(s, skipImage = false) {
               const imgR = await fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`);
               if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
             } catch {}
-            if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
+            if (!imageData['ai_'+s.id]) {
+              s.imgSrc = 'web';
+            } else {
+              s.imgSrc = 'none'; // 이미지가 직접 설정됨
+            }
           }
         }
         const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
