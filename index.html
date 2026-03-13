@@ -2360,6 +2360,29 @@ async function generateAll() {
   try {
     // 1. Copy
     setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
+    
+    // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST
+    const newsSections = ['news', 'dsnews', 'itnow', 'axfield'];
+    for (const s of active) {
+      if (s.keys.some(k => newsSections.includes(k) || k.includes('news'))) {
+        try {
+          const topic = s.topic || s.name;
+          setLoading(true, `🌐 뉴스 크롤링 중 (${topic})`, '최신 소식을 수집합니다');
+          const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
+          const r = await fetch(url);
+          if (r.ok) {
+            const data = await r.json();
+            if (data.items && data.items.length > 0) {
+              const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}`).join('\\n');
+              // Append to topic prompt so Gemini uses it
+              s.topic = `(다음 실제 뉴스 헤드라인들을 반드시 참고하여 작성할 것:\\n${newsContext})\\n\\n원래주제: ${topic}`;
+            }
+          }
+        } catch(e) { console.warn('뉴스 크롤링 실패:', e); }
+      }
+    }
+    setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
+
     let allP={};
     active.forEach(s => Object.assign(allP, buildPrompts(s.keys, s.name, s.topic||s.name, imgSt)));
     const res = await callGemini(apiKey, brand, brandSub, allP, vars);
@@ -2462,60 +2485,21 @@ async function fetchImage(apiKey, src, prompt, style, hint='') {
 }
 
 async function fetchWebImage(prompt, hint='') {
-  const apiKey = document.getElementById('gcpInp')?.value?.trim() || document.getElementById('apiInp')?.value?.trim();
-  const cx = document.getElementById('cxInp')?.value?.trim();
-  
-  if(!apiKey || !cx) {
-    console.warn('Google Custom Search API 키 또는 CX가 없습니다.');
-    return makePlaceholder(prompt);
-  }
-
   const keyword = (prompt+' '+hint).replace(/['"。、]/g,' ').trim();
   
-  // Google Custom Search API 호출 (이미지 검색 전용)
-  // 사이트 제한을 쿼리에 직접 포함 (etnews, ddaily, zdnet, g2b, okky)
-  const searchQuery = `${keyword} site:etnews.com OR site:ddaily.co.kr OR site:zdnet.co.kr OR site:g2b.go.kr OR site:okky.kr OR site:blog.naver.com/ktds_official`;
-  const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(searchQuery)}&searchType=image&num=3`;
-
   try {
+    const url = `/api/image?keyword=${encodeURIComponent(keyword)}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Custom Search API 오류: ${res.status}`);
+    if (!res.ok) throw new Error(`서버 이미지 검색 API 오류: ${res.status}`);
     const data = await res.json();
     
-    if (data.items && data.items.length > 0) {
-      // 검색된 이미지 URL 목록
-      const allUrls = data.items.map(item => item.link).filter(Boolean);
-      let firstUrl = allUrls[0];
-      
-      // CORS 프록시를 통해 base64로 변환 시도
-      for(const imgUrl of allUrls) {
-        try {
-          const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(imgUrl);
-          const ir = await fetch(proxyUrl, {mode:'cors', cache:'no-store'});
-          if(!ir.ok) continue;
-          
-          const blob = await ir.blob();
-          if(!blob.type.startsWith('image/') || blob.size < 3000) continue;
-          
-          const b64 = await new Promise((res, rej) => {
-            const reader = new FileReader();
-            reader.onload = () => res(reader.result);
-            reader.onerror = rej;
-            reader.readAsDataURL(blob);
-          });
-          return b64; // ✅ 변환 성공
-        } catch(e) { 
-          // 프록시 실패 시 원본 URL 사용 폴백
-          console.warn('CORS 프록시 실패. 원본 URL을 사용합니다:', imgUrl);
-          return imgUrl; 
-        }
-      }
-      if (firstUrl) return firstUrl;
+    if (data.url) {
+      return data.url;
     } else {
-      console.warn('Google Custom Search API: 검색 결과가 없습니다.', keyword);
+      console.warn('이미지 검색 결과가 없습니다.', keyword);
     }
   } catch(e) { 
-    console.error('Google Custom Search 연동 실패:', e); 
+    console.error('웹 이미지 연동 실패:', e); 
   }
 
   // 최후: placeholder
