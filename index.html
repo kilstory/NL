@@ -2801,11 +2801,16 @@ function buildPrompts(keys, name, topic) {
 /* ═══════════════════════════════════════
    HERO VISUAL
 ═══════════════════════════════════════ */
-async function extractSlogan(apiKey, sourceText, brand, brandSub) {
+async function extractSlogan(apiKey, sourceText, brand, brandSub, newsContext = '') {
   const isTopic = sourceText.toString().startsWith('주제:');
-  const instruction = isTopic 
+  let instruction = isTopic 
     ? `주어진 주제를 바탕으로 강렬한 메인 비주얼 슬로건과 서브카피를 작성해줘.`
     : `다음 뉴스레터 인트로 카피에서 핵심 내용을 뽑아 강렬한 메인 비주얼 슬로건을 추출해줘.`;
+
+  if (newsContext) {
+    instruction = `다음 최신 AI/IT 뉴스들을 참고하여, 브랜드 "${brand}"의 정체성에 맞는 통찰력 있고 강렬한 메인 비주얼 슬로건과 서브카피를 새로 창조해줘. 
+참고 뉴스:\n${newsContext}`;
+  }
 
   const p=`${instruction}
 브랜드: ${brand} (${brandSub})
@@ -2854,8 +2859,21 @@ async function genHero() {
   const brand    = document.getElementById('rBrand').value||'kt ds';
   const brandSub = document.getElementById('rSub').value||'AX 전문 파트너';
   const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
+  
   try {
-    mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub);
+    // 1. AI Times에서 최신 소식 긁어오기 (통찰력 있는 슬로건을 위해)
+    let newsContext = '';
+    try {
+      const newsRes = await fetch(`/api/news?source=aitimes&keyword=ai+technology`);
+      if (newsRes.ok) {
+        const newsData = await newsRes.json();
+        if (newsData.items && newsData.items.length > 0) {
+          newsContext = newsData.items.map(it => `[${it.title}] ${it.description}`).join('\n');
+        }
+      }
+    } catch(err) { console.warn('Hero news crawl failed', err); }
+
+    mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub, newsContext);
     if (!mainVisual.slogan) throw new Error('슬로건 데이터가 생성되지 않았습니다.');
     
     // Sync to heroTitle and heroSub copyData
