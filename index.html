@@ -2364,10 +2364,12 @@ async function generateAll() {
               if (firstNews.link) {
                 s.link = firstNews.link;
                 s.crawledLink = firstNews.link;
+                // Force web image so we try to extract the article og:image
+                s.imgSrc = 'web';
               }
-              const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}`).join('\\n');
+              const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\\n내용 요약: ${item.description}`).join('\\n\\n');
               // Append to topic prompt so Gemini uses it
-              s.topic = `(다음 실제 뉴스 헤드라인들을 반드시 참고하여 작성할 것:\\n${newsContext})\\n\\n원래주제: ${topic}`;
+              s.topic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\\n${newsContext})\\n\\n원래주제: ${topic}`;
             }
           }
         } catch(e) { console.warn('뉴스 크롤링 실패:', e); }

@@ -48,7 +48,14 @@ export default async function handler(req, res) {
       const pubDateMatch = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
       const pubDate = pubDateMatch ? pubDateMatch[1] : '';
 
-      items.push({ title, link, pubDate });
+      const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/);
+      let description = descMatch ? descMatch[1] : '';
+      description = description.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
+                               .replace(/<[^>]+>/g, '') // strip HTML tags
+                               .replace(/&nbsp;/g, ' ')
+                               .trim();
+
+      items.push({ title, link, pubDate, description });
     }
 
     res.status(200).json({ items });
