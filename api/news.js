@@ -13,13 +13,51 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { keyword } = req.query;
-    let q = (keyword || '최신뉴스').trim();
-    const isNaverTarget = q.toLowerCase().includes('kt ds') || q.toLowerCase().includes('ktds');
+    const { keyword, source } = req.query;
+    let q = (keyword || '최신뉴스').trim().toLowerCase();
+    
+    // 1. Explicit AI Times check or keyword-based detection
+    const isAiTimesTarget = source === 'aitimes' || q.includes('it now') || q.includes('itnow') || q.includes('ai times');
+
+    if (isAiTimesTarget) {
+      const aiTimesUrl = 'https://cdn.aitimes.com/rss/gn_rss_allArticle.xml';
+      const response = await fetch(aiTimesUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        }
+      });
+      if (response.ok) {
+        const xmlText = await response.text();
+        const items = [];
+        const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+        let match;
+        while ((match = itemRegex.exec(xmlText)) !== null) {
+          if (items.length >= 5) break;
+          const itemXml = match[1];
+          
+          const titleMatch = itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || itemXml.match(/<title>(.*?)<\/title>/);
+          const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
+          const descMatch = itemXml.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || itemXml.match(/<description>(.*?)<\/description>/);
+          const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
+
+          if (titleMatch && linkMatch) {
+            items.push({
+              title: titleMatch[1].trim(),
+              link: linkMatch[1].trim(),
+              description: descMatch ? descMatch[1].replace(/<[^>]+>/g, '').replace(/\\'/g, "'").trim() : '',
+              pubDate: pubDateMatch ? pubDateMatch[1].trim() : ''
+            });
+          }
+        }
+        if (items.length > 0) return res.status(200).json({ items, source: 'aitimes' });
+      }
+    }
+
+    const isNaverTarget = q.includes('kt ds') || q.includes('ktds');
 
     if (isNaverTarget) {
-      // 1. Fetch from Naver News Search if it's KT DS related
-      const naverUrl = `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(q)}`;
+      // 2. Fetch from Naver News Search if it's KT DS related
+      const naverUrl = `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(keyword)}`;
       const response = await fetch(naverUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
@@ -28,9 +66,6 @@ export default async function handler(req, res) {
       if (response.ok) {
         const html = await response.text();
         const items = [];
-        // Naver's Fender renderer structure analysis (as found in testing)
-        // Headlines are in sds-comps-text-ellipsis-1, snippets in sds-comps-text-ellipsis-3
-        // Links are in <a> tags with fender-ui classes
         const splitItems = html.split('data-fender-root="true"').slice(1);
         
         for (let itemHtml of splitItems) {
@@ -51,18 +86,16 @@ export default async function handler(req, res) {
           }
         }
         
-        // If we found results, return them
-        if (items.length > 0) {
-          return res.status(200).json({ items, source: 'naver' });
-        }
+        if (items.length > 0) return res.status(200).json({ items, source: 'naver' });
       }
     }
 
-    // 2. Fallback to Bing News RSS for general news or if Naver fails
-    if (!q.includes('2026') && !isNaverTarget) {
-      q += ' 2026';
+    // 3. Fallback to Bing News RSS for general news or if others fail
+    let bingQ = keyword || '최신뉴스';
+    if (!bingQ.includes('2026') && !isNaverTarget && !isAiTimesTarget) {
+      bingQ += ' 2026';
     }
-    const bingUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(q)}&cc=kr&format=rss`;
+    const bingUrl = `https://www.bing.com/news/search?q=${encodeURIComponent(bingQ)}&cc=kr&format=rss`;
 
     const bingResponse = await fetch(bingUrl, {
       headers: {

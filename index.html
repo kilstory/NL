@@ -2388,6 +2388,7 @@ async function generateAll() {
           // 커스텀 키워드 보정 (사용자 입력이 없을 때만)
           if(!s.topic) {
             if(s.keys.includes('dsnews')) topic = 'kt ds';
+            else if(s.keys.includes('itnow')) topic = 'it now'; // Trigger AI Times in backend
             else if(s.keys.includes('solution')) topic = 'kt ds 솔루션';
           }
           
