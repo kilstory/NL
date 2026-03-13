@@ -270,10 +270,12 @@ select.r-inp { cursor:pointer; }
 .ly-news-hd { font-size:13px; font-weight:900; color:#1a1816; margin-bottom:14px; font-family:'Noto Serif KR',serif; padding-bottom:10px; border-bottom:2px solid #e5332a; }
 .ly-news-items { display:flex; flex-direction:column; }
 .ly-news-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ede8; align-items:flex-start; }
+.ly-news-item.has-lnk { cursor:pointer; transition:background .2s; }
+.ly-news-item.has-lnk:hover .ly-news-tit { text-decoration:underline; color:#1a56db; }
 .ly-news-item:last-child { border-bottom:none; }
 .ly-news-dot { width:6px; height:6px; border-radius:50%; background:#e5332a; flex-shrink:0; margin-top:5px; }
 .ly-news-body { flex:1; }
-.ly-news-tit  { font-size:12px; font-weight:700; color:#1a1816; line-height:1.4; margin-bottom:3px; font-family:'Noto Serif KR',serif; }
+.ly-news-tit  { font-size:12px; font-weight:700; color:#1a1816; line-height:1.4; margin-bottom:3px; font-family:'Noto Serif KR',serif; transition:color .2s; }
 .ly-news-desc { font-size:10px; line-height:1.6; color:#777; }
 
 .sec-layout-row { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-top:0; }
@@ -2473,6 +2475,7 @@ async function crawlNewsForSection(s, skipImage = false) {
         }
         const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
         s.newsContext = newsContext;
+        s.crawledLinks = data.items.map(item => item.link);
         return newsContext;
       }
     }
@@ -3532,8 +3535,7 @@ function renderSecLayout(s, img, lines, text, skin) {
         <div class="ly-sol-lbl">${s.name.toUpperCase()}</div>
         <div class="ly-sol-tit">${title}</div>
         <div class="ly-sol-desc">${desc || lines.slice(1).join(' ')}</div>
-        <div class="ly-sol-foot">
-          ${src ? `<span class="ly-sol-src">📰 <a href="${artLink||'#'}" onclick="event.preventDefault();${artLink?`window.open('${artLink}','_blank')`:''};">${src}</a></span>` : '<span></span>'}
+        <div class="ly-sol-foot" style="justify-content:flex-end;">
           ${artLink ? `<a class="ly-sol-btn" href="${artLink}" onclick="event.preventDefault();window.open(this.getAttribute('href'),'_blank');">기사 보기 →</a>` : ''}
         </div>
       </div>
@@ -3545,9 +3547,10 @@ function renderSecLayout(s, img, lines, text, skin) {
     return `<div class="ly-news">
       <div class="ly-news-hd">${title}</div>
       <div class="ly-news-items">
-        ${(newsItems.length >= 2 ? newsItems : [title, desc]).filter(Boolean).slice(0,5).map(item => {
+        ${(newsItems.length >= 2 ? newsItems : [title, desc]).filter(Boolean).slice(0,5).map((item, idx) => {
           const p = item.split('\n').map(l=>l.trim()).filter(Boolean);
-          return `<div class="ly-news-item">
+          const iLnk = (s.crawledLinks && s.crawledLinks[idx]) ? s.crawledLinks[idx] : '#';
+          return `<div class="ly-news-item ${iLnk !== '#' ? 'has-lnk' : ''}" ${iLnk !== '#' ? `onclick="window.open('${iLnk}','_blank')"` : ''}>
             <div class="ly-news-dot"></div>
             <div class="ly-news-body">
               <div class="ly-news-tit">${p[0]||item}</div>
