@@ -37,13 +37,40 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Fallback to Google Image Search
     if (!keyword) {
       return res.status(400).json({ error: 'Keyword is required if URL extraction fails' });
     }
 
-    // Standard Google Image Search URL
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(keyword)}&tbm=isch`;
+    const q = keyword.trim();
+    const isNaverTarget = q.toLowerCase().includes('kt ds') || q.toLowerCase().includes('ktds');
+
+    if (isNaverTarget) {
+      // 2. Try Naver Image Search if it's KT DS related
+      const naverUrl = `https://search.naver.com/search.naver?where=image&query=${encodeURIComponent(q)}`;
+      const response = await fetch(naverUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        }
+      });
+      if (response.ok) {
+        const html = await response.text();
+        // Look for original image URLs in Naver's hosting domain
+        const imgMatches = html.match(/https:\/\/search\.pstatic\.net\/[^\"]+/g);
+        if (imgMatches && imgMatches.length > 0) {
+          // Clean up encoded unicode or other characters if present
+          let imgUrl = imgMatches[0].replace(/\\u0026/g, '&');
+          // If it's a thumbnail service URL, try to extract the source URL if possible
+          const srcMatch = imgUrl.match(/src=([^&]+)/);
+          if (srcMatch) {
+            imgUrl = decodeURIComponent(srcMatch[1]);
+          }
+          return res.status(200).json({ url: imgUrl, source: 'naver' });
+        }
+      }
+    }
+
+    // 3. Fallback to Google Image Search for general or if Naver fails
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(q)}&tbm=isch`;
     
     const response = await fetch(searchUrl, {
       headers: {
@@ -58,24 +85,20 @@ export default async function handler(req, res) {
     const html = await response.text();
 
     // Enhanced regex to find image URLs in the large Google HTML response
-    // We look for direct image links (jpg, png, etc.)
     const imgMatches = html.match(/https?:\/\/[^\s\"']+?\.(?:jpg|jpeg|png|gif)/gi) || [];
     let imgUrl = null;
 
     for (let candidate of imgMatches) {
-      // Filter out common trackers, icons, and small thumbnails
       if (candidate.includes('gstatic') || candidate.includes('googleusercontent') || candidate.includes('al-icon')) continue;
-      // Also avoid icons/logo keywords
       if (candidate.toLowerCase().includes('logo') || candidate.toLowerCase().includes('icon')) continue;
-      
       imgUrl = candidate;
       break;
     }
 
     if (imgUrl) {
-      return res.status(200).json({ url: imgUrl });
+      return res.status(200).json({ url: imgUrl, source: 'google' });
     } else {
-      return res.status(404).json({ error: 'No image found on Google' });
+      return res.status(404).json({ error: 'No image found' });
     }
 
   } catch (error) {
