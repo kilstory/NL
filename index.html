@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NL Studio | Generator</title>
+<meta name="referrer" content="no-referrer">
+<title>Newsletter Studio (0313-19)</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@400;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ════════════ TOKENS ════════════ */
@@ -42,7 +44,7 @@
   --red:   #d94040;
 }
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--tx); height:100vh; overflow:hidden; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
+body { font-family:'Pretendard',sans-serif; background:var(--bg); color:var(--tx); height:100vh; overflow:hidden; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
 ::-webkit-scrollbar { width:3px; height:3px; }
 ::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:2px; }
 
@@ -53,11 +55,11 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .nav-name { font-size:13px; font-weight:700; color:var(--tx); letter-spacing:-.2px; }
 .nav-sub { font-size:12px; color:var(--mu); padding-left:16px; }
 .nav-types { display:flex; gap:3px; margin-left:20px; }
-.nav-type { padding:4px 11px; border-radius:5px; border:none; font-size:11px; font-weight:600; cursor:pointer; font-family:'Noto Sans KR',sans-serif; color:var(--mu); background:transparent; transition:all .14s; }
+.nav-type { padding:4px 11px; border-radius:5px; border:none; font-size:11px; font-weight:600; cursor:pointer; font-family:'Pretendard',sans-serif; color:var(--mu); background:transparent; transition:all .14s; }
 .nav-type:hover { color:var(--tx); background:var(--card); }
 .nav-type.on { background:var(--blue); color:#fff; }
 .nav-right { margin-left:auto; display:flex; align-items:center; gap:7px; }
-.nav-theme { display:flex; align-items:center; gap:5px; padding:5px 10px; border-radius:6px; border:1px solid var(--bd2); background:var(--card); font-size:11px; font-weight:600; color:var(--mu); cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all .14s; }
+.nav-theme { display:flex; align-items:center; gap:5px; padding:5px 10px; border-radius:6px; border:1px solid var(--bd2); background:var(--card); font-size:11px; font-weight:600; color:var(--mu); cursor:pointer; font-family:'Pretendard',sans-serif; transition:all .14s; }
 .nav-theme:hover { border-color:var(--blue); color:var(--tx); }
 .nav-api { display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:6px; border:1px solid var(--bd2); background:var(--card); font-size:11px; font-weight:600; color:var(--mu); cursor:pointer; transition:all .14s; }
 .nav-api:hover { border-color:var(--blue); color:var(--tx); }
@@ -84,7 +86,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .sc-num.custom { border-color:rgba(74,124,248,.4); color:var(--blue); }
 .sc-titles { flex:1; min-width:0; }
 .sc-sublbl { font-size:8px; color:var(--dim); line-height:1; margin-bottom:1px; }
-.sc-name { background:transparent; border:none; outline:none; font-family:'Noto Sans KR',sans-serif; font-size:11px; font-weight:700; color:var(--tx); width:100%; line-height:1.2; cursor:text; }
+.sc-name { background:transparent; border:none; outline:none; font-family:'Pretendard',sans-serif; font-size:11px; font-weight:700; color:var(--tx); width:100%; line-height:1.2; cursor:text; }
 .sc-name::placeholder { color:var(--dim); }
 .sc-tog { width:26px; height:14px; border-radius:7px; background:var(--inp); border:1px solid var(--bd); position:relative; cursor:pointer; flex-shrink:0; transition:all .18s; }
 .sc-tog::after { content:''; width:8px; height:8px; border-radius:50%; background:var(--dim); position:absolute; top:2px; left:2px; transition:all .18s; }
@@ -94,7 +96,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .sc-x:hover { background:rgba(240,111,111,.12); color:var(--red); }
 .sc-body { border-top:1px solid var(--bd); padding:8px 9px; display:flex; flex-direction:column; gap:6px; }
 .t-row { display:flex; gap:5px; align-items:flex-start; }
-.t-inp { flex:1; background:var(--inp); border:1px solid var(--bd); border-radius:6px; padding:5px 8px; font-family:'Noto Sans KR',sans-serif; font-size:10px; color:var(--tx); outline:none; resize:none; line-height:1.5; min-height:28px; transition:border-color .14s; }
+.t-inp { flex:1; background:var(--inp); border:1px solid var(--bd); border-radius:6px; padding:5px 8px; font-family:'Pretendard',sans-serif; font-size:10px; color:var(--tx); outline:none; resize:none; line-height:1.5; min-height:28px; transition:border-color .14s; }
 .t-inp:focus { border-color:rgba(74,124,248,.6); }
 .t-inp::placeholder { color:var(--dim); }
 .t-gen { width:28px; height:28px; border-radius:6px; border:1px solid rgba(74,124,248,.5); background:var(--blb); color:var(--blue); font-size:13px; font-weight:700; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .14s; }
@@ -256,17 +258,26 @@ select.r-inp { cursor:pointer; }
 .ly-sol-lbl  { font-size:7px; font-weight:700; color:#1a56db; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
 .ly-sol-tit  { font-size:14px; font-weight:800; color:#1a1816; margin-bottom:7px; font-family:'Noto Serif KR',serif; line-height:1.4; }
 .ly-sol-desc { font-size:11px; line-height:1.7; color:#555; margin-bottom:12px; }
-.ly-sol-btn  { display:inline-block; background:#1a1816; color:#fff; font-size:9px; font-weight:700; padding:8px 16px; border-radius:4px; text-decoration:none; }
+.ly-sol-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; }
+.ly-sol-src  { font-size:9px; color:#999; display:flex; align-items:center; gap:3px; }
+.ly-sol-src a { color:#1a56db; text-decoration:none; font-weight:600; }
+.ly-sol-src a:hover { text-decoration:underline; }
+.ly-sol-btn  { display:inline-block; background:#1a1816; color:#fff; font-size:9px; font-weight:700; padding:8px 16px; border-radius:4px; text-decoration:none; flex-shrink:0; }
+.ly-sol-img-lnk { display:block; }
+.ly-sol-img-lnk:hover img { opacity:.88; transition:opacity .15s; }
 
 /* ─ Layout: news (아이템 리스트) ─ */
 .ly-news { padding:18px 26px; border-bottom:1px solid #f0ede8; }
 .ly-news-hd { font-size:13px; font-weight:900; color:#1a1816; margin-bottom:14px; font-family:'Noto Serif KR',serif; padding-bottom:10px; border-bottom:2px solid #e5332a; }
 .ly-news-items { display:flex; flex-direction:column; }
-.ly-news-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ede8; align-items:flex-start; }
-.ly-news-item:last-child { border-bottom:none; }
+.ly-news-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ede8; align-items:flex-start; transition:background .2s; border-radius:6px; margin-bottom:2px; }
+.ly-news-item.has-lnk { cursor:pointer; padding:10px 8px; }
+.ly-news-item.has-lnk:hover { background:rgba(26,86,219,.04); }
+.ly-news-item.has-lnk:hover .ly-news-tit { color:#1a56db; }
+.ly-news-item:last-child { border-bottom:none; margin-bottom:0; }
 .ly-news-dot { width:6px; height:6px; border-radius:50%; background:#e5332a; flex-shrink:0; margin-top:5px; }
 .ly-news-body { flex:1; }
-.ly-news-tit  { font-size:12px; font-weight:700; color:#1a1816; line-height:1.4; margin-bottom:3px; font-family:'Noto Serif KR',serif; }
+.ly-news-tit  { font-size:12px; font-weight:700; color:#1a1816; line-height:1.4; margin-bottom:3px; font-family:'Noto Serif KR',serif; transition:color .2s; }
 .ly-news-desc { font-size:10px; line-height:1.6; color:#777; }
 
 .sec-layout-row { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-top:0; }
@@ -423,15 +434,6 @@ select.r-inp { cursor:pointer; }
   transition:background .15s;
 }
 .mv-regen-btn:hover { background:rgba(74,124,248,.14); }
-/* Hero visual regen */
-.hero-regen-wrap { margin-top:10px; padding-top:10px; border-top:1px solid var(--bd); }
-.hero-regen-lbl { font-size:9px; font-weight:700; letter-spacing:1px; color:var(--mu); margin-bottom:7px; }
-.hero-thumb-wrap { display:none; margin-bottom:7px; }
-.hero-slogan-txt { font-size:9px; color:var(--dim); margin-bottom:4px; line-height:1.4; }
-.hero-thumb { width:100%; height:64px; object-fit:cover; border-radius:5px; border:1px solid var(--bd); display:block; }
-.hero-regen-btn { width:100%; padding:7px 10px; border-radius:6px; border:1px solid rgba(74,124,248,.4); background:var(--blb); color:var(--blue); font-size:10px; font-weight:700; cursor:pointer; font-family:'Noto Sans KR',sans-serif; display:flex; align-items:center; justify-content:center; gap:5px; transition:all .15s; }
-.hero-regen-btn:hover { background:var(--bla); border-color:var(--blue); }
-.hero-regen-btn:disabled { opacity:.35; cursor:not-allowed; }
 
 /* Copy panel */
 .copy-hd { display:flex; align-items:center; justify-content:space-between; padding:10px 14px 8px; border-bottom:1px solid var(--bd); }
@@ -470,31 +472,26 @@ select.r-inp { cursor:pointer; }
 .bot-main:disabled { opacity:.35; cursor:not-allowed; transform:none; box-shadow:none; }
 
 /* ════════════ HERO VISUAL ════════════ */
-.hero-visual { position:relative; width:100%; min-height:280px; background:linear-gradient(135deg,#0f1621,#1a2540,#0d1a30); overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
+.hero-vis { position:relative; width:100%; min-height:280px; background:linear-gradient(135deg,#0a0e1a,#111827,#0d1520); overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
 .hero-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
-.hero-visual::after { content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:2; }
-.hero-grad { position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,.22) 35%,rgba(0,0,0,.78) 75%,rgba(0,0,0,.93) 100%); z-index:1; }
-.hero-top { position:absolute; top:0; left:0; right:0; background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent); padding:14px 26px; display:flex; align-items:center; justify-content:space-between; z-index:3; }
-.hero-brand { font-size:11px; font-weight:900; color:rgba(255,255,255,.9); font-family:'DM Mono',monospace; letter-spacing:2px; text-transform:uppercase; }
-.hero-vol { font-size:9px; color:rgba(255,255,255,.4); font-family:'DM Mono',monospace; letter-spacing:1px; }
-.hero-content { position:relative; z-index:3; padding:0 28px 26px; }
-.hero-kws { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
-.hero-kw { font-size:8px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,.55); background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); padding:3px 9px; border-radius:2px; backdrop-filter:blur(4px); }
-.hero-title { font-size:36px; font-weight:900; color:#4a7cf8; font-family:'Noto Serif KR',serif; line-height:1.2; margin-bottom:10px; letter-spacing:-.5px; text-shadow:0 2px 24px rgba(74,124,248,.3); }
-.hero-accent { color:#4a7cf8; }
-.hero-label { display:none; }
-.hero-div { display:none; }
-.hero-sub { font-size:13px; color:rgba(180,200,220,.75); font-family:'Noto Sans KR',sans-serif; font-weight:400; line-height:1.7; max-width:480px; }
-.hero-ph { position:absolute; inset:0; z-index:0; background:radial-gradient(ellipse at 20% 50%,rgba(74,124,248,.25) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,.2) 0%,transparent 55%),linear-gradient(135deg,#0a0e1a,#111827,#0d1520); }
-
-/* Editor Hero Slogan */
-.mv-slogan-txt { 
-  position: absolute; left: 24px; bottom: 20px; z-index: 10;
-  font-size: 13px; font-weight: 800; color: #fff;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-  font-family: 'Noto Serif KR', serif;
-  background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 4px; border-left: 3px solid #4a7cf8;
-}
+.hero-grad { position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,.72) 65%,rgba(0,0,0,.93) 100%); z-index:1; }
+.hero-body { position:relative; z-index:2; padding:28px 32px 32px; }
+.hero-main { font-size:32px; font-weight:900; color:#ffffff; font-family:'Noto Serif KR',serif; line-height:1.25; margin-bottom:12px; letter-spacing:-.5px; text-shadow:0 2px 15px rgba(0,0,0,.45); }
+.hero-copy { font-size:13px; color:rgba(180,200,220,.8); font-family:'Noto Sans KR',sans-serif; font-weight:400; line-height:1.7; max-width:520px; }
+/* Sidebar hero card */
+.hero-card { background:var(--card); border:1px solid var(--bd); border-radius:10px; overflow:hidden; margin-bottom:10px; }
+.hero-card-head { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--bd); background:linear-gradient(135deg,rgba(74,124,248,.08),rgba(124,58,237,.08)); }
+.hero-card-ico { font-size:15px; }
+.hero-card-title { font-size:12px; font-weight:700; color:var(--tx); flex:1; }
+.hero-card-body { padding:12px 14px; }
+.hero-topic-inp { width:100%; box-sizing:border-box; padding:7px 10px; background:var(--bg); border:1px solid var(--bd); border-radius:7px; font-size:11px; color:var(--tx); font-family:'Noto Sans KR',sans-serif; outline:none; margin-bottom:8px; }
+.hero-topic-inp:focus { border-color:var(--bd2); }
+.hero-gen-btn { width:100%; padding:8px; background:linear-gradient(135deg,#3a6df0,#7c3aed); color:white; border:none; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; font-family:'Noto Sans KR',sans-serif; display:flex; align-items:center; justify-content:center; gap:6px; transition:opacity .15s; }
+.hero-gen-btn:hover { opacity:.88; }
+.hero-gen-btn:disabled { opacity:.4; cursor:not-allowed; }
+.hero-preview { margin-top:10px; padding:10px; background:var(--bg); border-radius:7px; border:1px solid var(--bd); display:none; }
+.hero-preview-main { font-size:12px; font-weight:700; color:#4a7cf8; line-height:1.4; margin-bottom:5px; }
+.hero-preview-copy { font-size:11px; color:var(--mu); line-height:1.6; }
 
 /* ════════════ NL RENDER ════════════ */
 /* KT DS */
@@ -1520,6 +1517,15 @@ select.r-inp { cursor:pointer; }
 /* ── 레이아웃 피커 라벨 ── */
 .sly-wrap { margin-top:2px; }
 .sly-lbl  { font-size:9px; font-weight:700; color:var(--dim); margin-bottom:3px; letter-spacing:.3px; text-transform:uppercase; }
+
+/* ── 폰트 패키지 셀렉터 ── */
+.font-pkg-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+.font-pkg-card { padding:8px 9px; border:1px solid var(--bd); border-radius:7px; cursor:pointer; transition:all .14s; background:var(--inp); text-align:left; }
+.font-pkg-card:hover { border-color:var(--bd2); background:var(--card); }
+.font-pkg-card.active { border-color:var(--blue); background:var(--blb); }
+.font-pkg-nm { font-size:9px; font-weight:700; color:var(--mu); letter-spacing:.5px; text-transform:uppercase; margin-bottom:3px; }
+.font-pkg-t { font-size:13px; color:var(--tx); line-height:1.2; }
+.font-pkg-b { font-size:9px; color:var(--dim); margin-top:1px; }
 </style>
   
 </head>
@@ -1659,7 +1665,9 @@ select.r-inp { cursor:pointer; }
         <span class="range-val" id="rVarR">3</span>
       </div>
 
-      <!-- 메인 비주얼 -->
+      <!-- 폰트 패키지 -->
+      <span class="r-lbl" style="margin-top:10px">폰트 패키지</span>
+      <div class="font-pkg-grid" id="fontPkgGrid"></div>
     </div>
 
 
@@ -1692,9 +1700,13 @@ select.r-inp { cursor:pointer; }
     <button class="bot-btn" onclick="doCopy()">📋 HTML 복사</button>
     <button class="bot-btn" onclick="doDownload()">⬇ 다운로드</button>
     
-    <button class="bot-main" id="botMain" onclick="generateAll()">
+    <button class="bot-main" id="genAllCopyBtn" onclick="generateAll('copy')" style="margin-right:8px;">
       <span style="font-size:13px;">✦</span>
-      <span id="botMainTxt">뉴스레터 최종 생성하기</span>
+      <span id="genAllCopyTxt">카피 전체 생성</span>
+    </button>
+    <button class="bot-main" id="genAllImgBtn" onclick="generateAll('image')" style="background:var(--blue);">
+      <span style="font-size:13px;">🖼️</span>
+      <span id="genAllImgTxt">이미지 전체 생성</span>
     </button>
   </div>
 </div>
@@ -1711,11 +1723,28 @@ let sections    = [];
 let copyData    = {};
 let imageData   = {};
 let finalHTML   = '';
-let mainVisual  = { image: null, slogan: null, imgSrc: 'ai', imgStyle: '', topic: '', genDone: false };
 let imgSrc      = 'ai'; // 'ai' | 'web' | 'none'
 let isDark      = false;
+let mainVisual  = { 
+  slogan: '신뢰를 넘어 미래로 혁신하는 디지털 파트너, KT DS', 
+  sub: '우리는 클라우드와 AI 기술을 선도하며 고객의 디지털 전환을 성공으로 이끕니다.', 
+  topic: 'AI AX 디지털전환', 
+  image: '', 
+  imgStyle: '', 
+  imgSrc: 'ai' 
+};
 
 const TYPE_LABELS = { ktds:'kt ds형', general:'일반형', product:'제품형' };
+
+/* ── 폰트 패키지 ── */
+const FONT_PKGS = {
+  basic:   { name:'기본',    title:"'Pretendard',sans-serif",     body:"'Pretendard',sans-serif",   gFont:'' },
+  modern:  { name:'모던',    title:"'Gmarket Sans',sans-serif",  body:"'Pretendard',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&display=swap' },
+  classic: { name:'클래식',  title:"'Nanum Myeongjo',serif",     body:"'Nanum Gothic',sans-serif",    gFont:'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700;800&display=swap' },
+  bold:    { name:'볼드',    title:"'Black Han Sans',sans-serif", body:"'Pretendard',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap' },
+  elegant: { name:'엘레강트', title:"'Sunflower',serif",          body:"'Pretendard',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Sunflower:wght@300;500;700&display=swap' },
+};
+let currentFontPkg = 'basic';
 
 const IMG_SRC_NOTES = {
   ai:   'Nano Banana 2로 AI 이미지를 생성합니다',
@@ -1803,13 +1832,181 @@ function initSections(type) {
     allowedLayouts: t.allowedLayouts !== undefined ? t.allowedLayouts : null,
     on:true, topic:'', topic2:'', image:null, image2:null, custom:false, genDone:false, genDone2:false, imgSrc:'ai', imgSrc2:'ai', imgUrl:'', imgUrl2:'', imgStyle:'', imgStyle2:'', layout:t.defaultLayout||'full', link:'',
   }));
-  renderSecList(); updateInfo(); livePreview();
+  renderSecList(); updateInfo(); livePreview(); renderFontPkgGrid();
+}
+
+/* ═══════════════════════════════════════
+   HERO VISUAL
+═══════════════════════════════════════ */
+function buildHeroHTML() {
+  const main = copyData['mvMain'] ? getSel('mvMain') : mainVisual.slogan;
+  const copy = copyData['mvSub']  ? getSel('mvSub')  : mainVisual.sub;
+  return `<div class="hero-vis">
+    ${mainVisual.image ? `<img class="hero-bg" src="${mainVisual.image}" alt="">` : ''}
+    <div class="hero-grad"></div>
+    <div class="hero-body">
+      ${main ? `<div class="hero-main">${main}</div>` : ''}
+      ${copy ? `<div class="hero-copy">${copy}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderHeroCard() {
+  const aiSelOpts = `
+    <option value="">🤖 AI · 랜덤</option>
+    <option value="professional business editorial photography">🤖 비즈니스</option>
+    <option value="candid office lifestyle photography Korean professionals">🤖 인물/라이프</option>
+    <option value="technology concept digital futuristic dark">🤖 테크 컨셉</option>
+    <option value="flat design illustration clean modern colorful">🤖 플랫 일러스트</option>
+    <option value="isometric 3d illustration colorful tech">🤖 아이소메트릭</option>
+    <option value="cinematic dramatic lighting high contrast">🤖 시네마틱</option>
+    <option value="abstract digital art flowing lines neon glow dark">🤖 추상/네온</option>
+    <option value="watercolor soft illustration pastel warm tones">🤖 수채화</option>`;
+  const hasFile = mainVisual.image && mainVisual.imgSrc === 'url';
+  return `<div class="hero-card" id="heroCard">
+    <div class="hero-card-head">
+      <span class="hero-card-ico">✦</span>
+      <span class="hero-card-title">히어로 배너</span>
+    </div>
+    <div class="hero-card-body">
+      <input class="hero-topic-inp" id="heroTopicInp" placeholder="AI AX 디지털전환"
+        value="${mainVisual.topic}" oninput="mainVisual.topic=this.value">
+      <button class="hero-gen-btn" id="heroGenBtn" onclick="genHero()">
+        <span>✦</span> 슬로건 생성
+      </button>
+      <div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:10px">
+        <div style="font-size:10px;color:var(--mu);margin-bottom:6px;font-weight:600">배경 이미지</div>
+        <div class="sis-row3">
+          <select class="sis-ai-sel ${mainVisual.imgSrc==='ai'?'sis-ai-on':''}" id="heroImgStyleSel"
+            onchange="mainVisual.imgStyle=this.value;this.className='sis-ai-sel sis-ai-on'">
+            ${aiSelOpts}
+          </select>
+          <button class="sis-btn ${mainVisual.imgSrc==='none'?'sis-none':''}" onclick="mainVisual.imgSrc='none';mainVisual.image='';livePreview();renderSecList()">✕ 없음</button>
+        </div>
+        <button class="mv-regen-btn" id="heroImgBtn" onclick="regenHeroImg()" style="margin-top:6px">🔄 ${mainVisual.image ? 'AI 배경 재생성' : 'AI 배경 생성'}</button>
+        <label class="img-lbl ${hasFile?'has':''}" id="heroImgLbl" style="margin-top:6px">
+          <input type="file" accept="image/*" onchange="onHeroImg(this)">
+          <span class="img-ico">${hasFile?'':'📎'}</span>
+          <div class="img-txt">
+            <div class="img-name" id="heroImgName">${hasFile?'이미지 첨부됨':'배경 직접 첨부'}</div>
+            <div class="img-sub">JPG · PNG · GIF</div>
+          </div>
+          <span class="img-clr ${hasFile?'show':''}" onclick="clrHeroImg(event)">✕</span>
+        </label>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function genHero() {
+  const btn = document.getElementById('heroGenBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span>⏳</span> 생성 중...'; }
+
+  const topic = (document.getElementById('heroTopicInp')?.value || mainVisual.topic || 'AI AX 디지털전환').trim();
+  mainVisual.topic = topic;
+
+  try {
+    // 1. 최신 뉴스 (서버 /api/news)
+    let newsContext = '';
+    try {
+      const nr = await fetch(`/api/news?keyword=${encodeURIComponent(topic)}`);
+      if (nr.ok) {
+        const nd = await nr.json();
+        if (nd.items?.length) {
+          newsContext = '최신 뉴스 헤드라인:\n' + nd.items.map((t, i) => `${i+1}. ${t.title}`).join('\n') + '\n\n';
+        }
+      }
+    } catch (e) {}
+
+    // 2. 슬로건 n가지 생성 (서버 /api/gemini-copy)
+    const vars = +document.getElementById('rVar').value || 3;
+    const p = `당신은 B2B IT 기업 뉴스레터 카피라이터입니다.
+${newsContext}위 최신 트렌드를 참고해서 "${topic}" 주제로 히어로 배너 카피를 ${vars}가지 버전으로 작성하세요.
+
+요구사항:
+- mvMain: 임팩트 있는 한국어 슬로건 (15-25자), AI/AX 트렌드 반영, 버전마다 톤이 달라야 함
+- mvSub: 2문장 서브카피 (50-70자), 기업 독자 대상, 구체적 가치 제안
+
+${vars}가지 버전을 JSON으로만 출력 (마크다운 없이):
+{"mvMain": ["버전1","버전2",...], "mvSub": ["버전1","버전2",...]}`;
+
+    const r = await fetch('/api/gemini-copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'gemini-2.0-flash', p, supportsJson: false })
+    });
+    if (!r.ok) throw new Error('슬로건 생성 API 오류: ' + r.status);
+    const d = await r.json();
+    const rawText = (d.rawText || JSON.stringify(d.parsed || {})).replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(rawText);
+
+    const mains = (parsed.mvMain || []).map(v => String(v).trim()).filter(Boolean);
+    const subs  = (parsed.mvSub  || []).map(v => String(v).trim()).filter(Boolean);
+    if (!mains.length) throw new Error('슬로건 파싱 실패');
+
+    copyData['mvMain'] = { variants: mains, selected: 0, edited: [...mains] };
+    copyData['mvSub']  = { variants: subs,  selected: 0, edited: [...subs]  };
+
+    renderCopyPanel();
+    rebuildPreview();
+
+  } catch (e) {
+    alert('슬로건 생성 실패: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span>✦</span> 슬로건 재생성'; }
+  }
+}
+
+async function regenHeroImg() {
+  const btn = document.getElementById('heroImgBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 생성 중...'; }
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
+  const topic = mainVisual.topic || 'AI AX 디지털전환';
+  const style = mainVisual.imgStyle || 'technology concept digital futuristic dark';
+  try {
+    const imgData = await nanoBanana(apiKey, topic + ' 뉴스레터 히어로 배너', style);
+    if (imgData) {
+      mainVisual.image = imgData;
+      mainVisual.imgSrc = 'ai';
+      livePreview();
+    } else {
+      alert('이미지 생성에 실패했습니다.');
+    }
+  } catch (e) {
+    alert('이미지 생성 오류: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 AI 배경 재생성'; }
+  }
+}
+
+function onHeroImg(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    mainVisual.image = e.target.result;
+    mainVisual.imgSrc = 'url';
+    const nm = document.getElementById('heroImgName');
+    const lbl = document.getElementById('heroImgLbl');
+    if (nm) nm.textContent = file.name;
+    if (lbl) { lbl.classList.add('has'); lbl.querySelector('.img-ico').textContent = ''; lbl.querySelector('.img-clr').classList.add('show'); }
+    livePreview();
+  };
+  reader.readAsDataURL(file);
+}
+function clrHeroImg(e) {
+  e.preventDefault(); e.stopPropagation();
+  mainVisual.image = ''; mainVisual.imgSrc = 'ai';
+  const nm = document.getElementById('heroImgName');
+  const lbl = document.getElementById('heroImgLbl');
+  if (nm) nm.textContent = '배경 직접 첨부';
+  if (lbl) { lbl.classList.remove('has'); lbl.querySelector('.img-ico').textContent = '📎'; lbl.querySelector('.img-clr').classList.remove('show'); }
+  livePreview();
 }
 
 function renderSecList() {
-  const heroHtml = renderHeroCard();
-  document.getElementById('secList').innerHTML = heroHtml + sections.map(renderCard).join('');
-  // 섹션별 imgStyle 초기값 반영
+  document.getElementById('secList').innerHTML = renderHeroCard() + sections.map(renderCard).join('');
+  const heroSel = document.getElementById('heroImgStyleSel');
+  if (heroSel && mainVisual.imgStyle) { heroSel.value = mainVisual.imgStyle; heroSel.className = 'sis-ai-sel sis-ai-on'; }
   sections.forEach(s => {
     const sel = document.getElementById('sis-style-'+s.id);
     if(sel) {
@@ -1817,11 +2014,6 @@ function renderSecList() {
       sel.className = 'sis-ai-sel' + (s.imgSrc==='ai' ? ' sis-ai-on' : '');
     }
   });
-  const heroSel = document.getElementById('sis-style-hero');
-  if(heroSel) {
-    if(mainVisual.imgStyle) heroSel.value = mainVisual.imgStyle;
-    heroSel.className = 'sis-ai-sel' + (mainVisual.imgSrc==='ai' ? ' sis-ai-on' : '');
-  }
   updateInfo();
 }
 
@@ -1888,7 +2080,7 @@ function renderCard(s) {
         onclick="event.preventDefault();${fnClr}">✕</span>
     </label>
     ${src !== 'none' ? `<button class="mv-regen-btn" id="ri-${idSfx}"
-      onclick="${fnReg}">🔄 이미지 재생성</button>` : ''}`;
+      onclick="${fnReg}">🔄 ${img ? '이미지 재생성' : '이미지 생성'}</button>` : ''}`;
   };
 
   return `
@@ -2205,6 +2397,52 @@ function toggleTheme() {
   document.getElementById('themeTxt').textContent = isDark ? '라이트' : '다크';
 }
 
+/* ══ 폰트 패키지 ══ */
+function renderFontPkgGrid() {
+  const grid = document.getElementById('fontPkgGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(FONT_PKGS).map(([k, p]) => `
+    <button class="font-pkg-card ${k === currentFontPkg ? 'active' : ''}" data-key="${k}" onclick="setFontPkg('${k}')">
+      <div class="font-pkg-nm">${p.name}</div>
+      <div class="font-pkg-t" style="font-family:${p.title}">가나다</div>
+      <div class="font-pkg-b" style="font-family:${p.body}">본문체</div>
+    </button>`).join('');
+}
+function setFontPkg(key) {
+  currentFontPkg = key;
+  const pkg = FONT_PKGS[key];
+  if (pkg.gFont && !document.getElementById('gf-' + key)) {
+    const link = document.createElement('link');
+    link.id = 'gf-' + key;
+    link.rel = 'stylesheet';
+    link.href = pkg.gFont;
+    document.head.appendChild(link);
+  }
+  // Update override style
+  let el = document.getElementById('fontPkgOverride');
+  if (!el) { el = document.createElement('style'); el.id = 'fontPkgOverride'; document.head.appendChild(el); }
+  if (key === 'basic') {
+    el.textContent = '';
+  } else {
+    el.textContent = `
+      #nlFrame .hero-main,
+      #nlFrame .ly-sol-tit, #nlFrame .ly-news-hd, #nlFrame .ly-news-tit,
+      #nlFrame .ly-list-hd, #nlFrame .ly-card-hd, #nlFrame .ly-card-tit,
+      #nlFrame .ly-banner-tit, #nlFrame .g-brand, #nlFrame .g-lead,
+      #nlFrame .g-hero-tit, #nlFrame .g-card-tit, #nlFrame .g-cta-tit,
+      #nlFrame .g-foot-brand, #nlFrame .dg-feat-tit, #nlFrame .dg-sec-tit,
+      #nlFrame .k-logo-b { font-family: ${pkg.title} !important; }
+      ${pkg.body !== "'Noto Sans KR',sans-serif" ? `
+      #nlFrame .ly-sol-desc, #nlFrame .ly-news-desc, #nlFrame .k-intro,
+      #nlFrame .g-text, #nlFrame .g-hero-sub, #nlFrame .ly-card-txt,
+      #nlFrame .hero-copy { font-family: ${pkg.body} !important; }` : ''}
+    `;
+  }
+  // Update UI
+  document.querySelectorAll('.font-pkg-card').forEach(c => c.classList.toggle('active', c.dataset.key === key));
+  livePreview();
+}
+
 /* ═══════════════════════════════════════
    STRING HELPERS
 ═══════════════════════════════════════ */
@@ -2234,19 +2472,56 @@ function getImg2(s) {
    GENERATE SECTION (single)
 ═══════════════════════════════════════ */
 // 뉴스 크롤링 헬퍼 (공통 사용)
-async function crawlNewsForSection(s) {
+async function crawlNewsForSection(s, skipImage = false) {
   const newsSections = ['news', 'dsnews', 'itnow', 'axfield', 'solution'];
   if (!s.keys.some(k => newsSections.includes(k) || k.includes('news'))) return;
 
   try {
+    // ── 솔루션: KT DS 공식 블로그에서 최신 5개 중 랜덤 1개 ──
+    if (s.keys.includes('solution')) {
+      setStatus('🌐 KT DS 블로그 크롤링 중...');
+      const r = await fetch('/api/news?source=ktds_blog');
+      if (r.ok) {
+        const data = await r.json();
+        if (data.items && data.items.length > 0) {
+          // 최신 5개 중 랜덤 선택
+          const pick = data.items[Math.floor(Math.random() * data.items.length)];
+          s.link = pick.link;
+          s.crawledLink = pick.link;
+          s.crawledTitle = pick.title || '';
+          s.crawledSource = 'blog.naver.com/ktds_official';
+
+          // 썸네일 처리: skipImage가 아닐 때만 업데이트
+          if (!skipImage) {
+            if (pick.thumbnail) {
+              imageData['ai_'+s.id] = pick.thumbnail;
+              s.imgSrc = 'none';
+            } else {
+              // await로 동기적으로 처리 (generateAll('image')에서도 즉시 반영)
+              try {
+                const imgR = await fetch(`/api/image?url=${encodeURIComponent(pick.link)}`);
+                if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
+              } catch {}
+              if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
+            }
+          }
+
+          // 전체 5개를 Gemini 컨텍스트로 사용
+          const newsContext = data.items.map((item, idx) =>
+            `[${idx+1}] 제목: ${item.title}\n내용: ${item.description}`
+          ).join('\n\n');
+          s.newsContext = newsContext;
+          return newsContext;
+        }
+      }
+    }
+
+    // ── 그 외 섹션: 기존 뉴스 크롤링 ──
     let topic = s.topic || s.name;
-    // 커스텀 키워드 보정 (사용자 입력이 없을 때만)
     if(!s.topic) {
       if(s.keys.includes('dsnews')) topic = 'kt ds';
       else if(s.keys.includes('itnow')) topic = 'it now';
-      else if(s.keys.includes('solution')) topic = 'kt ds 솔루션';
     }
-    
     s.originalTopic = topic;
     setStatus(`🌐 뉴스 크롤링 중 (${topic})...`);
     const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
@@ -2258,11 +2533,28 @@ async function crawlNewsForSection(s) {
         if (firstNews.link) {
           s.link = firstNews.link;
           s.crawledLink = firstNews.link;
-          s.imgSrc = 'web'; // 기사 이미지를 사용하도록 유도
+          s.crawledTitle = firstNews.title || '';
+          try {
+            const u = new URL(firstNews.link);
+            s.crawledSource = u.hostname.replace(/^www\./, '');
+          } catch(e) { s.crawledSource = ''; }
+        }
+        if (!skipImage) {
+          if (firstNews.thumbnail) {
+            imageData['ai_'+s.id] = firstNews.thumbnail;
+            s.imgSrc = 'none';
+          } else if (firstNews.link) {
+            // await로 동기적으로 처리
+            try {
+              const imgR = await fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`);
+              if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
+            } catch {}
+            if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
+          }
         }
         const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
-        // Gemini 프롬프트에 실시간 뉴스 컨텍스트 주입
         s.newsContext = newsContext;
+        s.crawledLinks = data.items.map(item => item.link);
         return newsContext;
       }
     }
@@ -2280,8 +2572,8 @@ async function genSec(id) {
   const imgSt=(document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const vars=+document.getElementById('rVar').value;
   try {
-    // 1. 뉴스 크롤링 (해당하는 경우)
-    const newsContext = await crawlNewsForSection(s);
+    // 1. 뉴스 크롤링 (해당하는 경우 - 카피용이므로 이미지 업데이트 스킵)
+    const newsContext = await crawlNewsForSection(s, true);
     let promptTopic = s.topic || s.name;
     if (newsContext) {
       promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${newsContext})\n\n원래주제: ${promptTopic}`;
@@ -2349,14 +2641,19 @@ async function genSec2(id) {
 async function regenSecImg(id) {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
+  
+  // 이미지 생성 시 뉴스 출처/링크 업데이트가 필요할 수 있으므로 crawl 실행 (이미지 업데이트 허용)
+  if (s.imgSrc === 'web') await crawlNewsForSection(s, false);
+
   const btn = document.getElementById('ri-'+id);
   if(btn) { btn.disabled=true; btn.textContent='⏳'; }
   const imgSt = (document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const src = s.imgSrc || 'ai';
   const secStyle = src==='ai' ? (s.imgStyle || imgSt) : imgSt;
-  setStatus(`🖼️ [${s.name}] 이미지 재생성 중...`);
+  setStatus(`🖼️ [${s.name}] 이미지 생성 중...`);
   try {
-    const img = await fetchImage(apiKey, src, s.topic||s.name, secStyle, s.name);
+    const imgTopic = s.originalTopic || s.topic || s.name;
+    const img = await fetchImage(apiKey, src, imgTopic, secStyle, s.name, s.crawledLink);
     if(img) {
       imageData['ai_'+id] = img;
       // 카드 썸네일 즉시 업데이트
@@ -2371,23 +2668,28 @@ async function regenSecImg(id) {
       if(nm)  nm.textContent='이미지 생성됨';
       if(sb)  sb.textContent='클릭해서 변경';
       if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
-      setStatus(`✓ [${s.name}] 이미지 재생성 완료`);
+      setStatus(`✓ [${s.name}] 이미지 생성 완료`);
     }
-  } catch(e) { alert('이미지 재생성 실패: '+e.message); }
+  } catch(e) { alert('이미지 생성 실패: '+e.message); }
   if(btn) { btn.disabled=false; btn.textContent='🔄'; }
 }
 
 async function regenSecImg2(id) {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
+  
+  // 이미지 생성 시 뉴스 출처/링크 업데이트가 필요할 수 있으므로 crawl 실행 (이미지 업데이트 허용)
+  if (s.imgSrc2 === 'web') await crawlNewsForSection(s, false);
+
   const btn = document.getElementById('ri2-'+id);
   if(btn) { btn.disabled=true; btn.textContent='⏳'; }
   const imgSt = (document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const src = s.imgSrc2 || 'ai';
   const secStyle = src==='ai' ? (s.imgStyle2 || imgSt) : imgSt;
-  setStatus(`🖼️ [${s.name}] 카드2 이미지 재생성 중...`);
+  setStatus(`🖼️ [${s.name}] 카드2 이미지 생성 중...`);
   try {
-    const img = await fetchImage(apiKey, src, s.topic2||s.topic||s.name, secStyle, s.name);
+    const imgTopic2 = s.topic2 || s.topic || s.name;
+    const img = await fetchImage(apiKey, src, imgTopic2, secStyle, s.name, s.crawledLink);
     if(img) {
       imageData['ai_'+id+'_c2'] = img;
       // 카드2 썸네일 즉시 업데이트
@@ -2402,9 +2704,9 @@ async function regenSecImg2(id) {
       if(nm)  nm.textContent='이미지 생성됨';
       if(sb)  sb.textContent='클릭해서 변경';
       if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
-      setStatus(`✓ [${s.name}] 카드2 이미지 재생성 완료`);
+      setStatus(`✓ [${s.name}] 카드2 이미지 생성 완료`);
     }
-  } catch(e) { alert('이미지 재생성 실패: '+e.message); }
+  } catch(e) { alert('이미지 생성 실패: '+e.message); }
   if(btn) { btn.disabled=false; btn.textContent='🔄'; }
 }
 
@@ -2412,16 +2714,24 @@ async function regenSecImg2(id) {
 /* ═══════════════════════════════════════
    GENERATE ALL
 ═══════════════════════════════════════ */
-async function generateAll() {
+async function generateAll(mode = 'copy') {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const active = sections.filter(s=>s.on);
   if(!active.length) { alert('활성 섹션이 없습니다.'); return; }
 
-  const genBtn=document.getElementById('genAllBtn');
-  const botMain=document.getElementById('botMain');
-  genBtn.disabled=botMain.disabled=true;
-  document.getElementById('genAllTxt').textContent='생성 중...';
-  document.getElementById('botMainTxt').textContent='생성 중...';
+  const copyBtn = document.getElementById('genAllCopyBtn');
+  const imgBtn  = document.getElementById('genAllImgBtn');
+  const copyTxt = document.getElementById('genAllCopyTxt');
+  const imgTxt  = document.getElementById('genAllImgTxt');
+
+  if(mode === 'copy') {
+    copyBtn.disabled = true;
+    copyTxt.textContent = '카피 생성 중...';
+  } else {
+    imgBtn.disabled = true;
+    imgTxt.textContent = '이미지 생성 중...';
+  }
+  
   switchTab('pv');
 
   const brand=document.getElementById('rBrand').value||'kt ds';
@@ -2430,152 +2740,99 @@ async function generateAll() {
   const vars=+document.getElementById('rVar').value;
 
   try {
-    // 1. Copy
-    setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
-    
-    // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST
-    for (const s of active) {
-      const newsContext = await crawlNewsForSection(s);
-      if (newsContext) {
-        // s.topic is already updated inside crawlNewsForSection if needed via s.newsContext etc.
-        // But we need to update the prompt topic specifically for Gemini
-        // We'll trust the newsContext returned.
+    if(mode === 'copy') {
+      // 1. Copy
+      setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
+      
+      // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST (skipImage = true)
+      for (const s of active) {
+        await crawlNewsForSection(s, true);
       }
-    }
-    setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
+      setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
 
-    let allP={};
-    active.forEach(s => {
-      let promptTopic = s.topic || s.name;
-      if (s.newsContext) {
-        promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${s.newsContext})\n\n원래주제: ${s.originalTopic || promptTopic}`;
-      }
-      Object.assign(allP, buildPrompts(s.keys, s.name, promptTopic, imgSt));
-    });
-    const res = await callGemini(apiKey, brand, brandSub, allP, vars);
-    copyData={};
-    for(const[k,arr] of Object.entries(res)) copyData[k]={variants:arr, selected:0, edited:[...arr]};
-    renderCopyPanel();
-
-    // 2. 메인 비주얼 슬로건 추출
-    setLoading(true,'✦ 메인 비주얼 슬로건 추출 중','인트로 카피 분석');
-    const introFirst = copyData['intro']?.variants?.[0] || '';
-    if(introFirst) {
-      try { mainVisual.slogan = await extractSlogan(apiKey, introFirst, brand, brandSub); } catch(e){}
-    }
-    if(!mainVisual.slogan) {
-      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
-      try { mainVisual.slogan = await extractSlogan(apiKey, fbTopic, brand, brandSub); } catch(e){}
-    }
-    if(!mainVisual.slogan) mainVisual.slogan={title:brand, sub:brandSub, keywords:[], mood:'professional editorial'};
-    
-    // Sync to heroTitle and heroSub copyData if they exist, so user can edit them
-    if (mainVisual.slogan.title) {
-        copyData['heroTitle'] = { variants: [mainVisual.slogan.title], selected: 0, edited: [mainVisual.slogan.title] };
-    }
-    if (mainVisual.slogan.sub) {
-        copyData['heroSub'] = { variants: [mainVisual.slogan.sub], selected: 0, edited: [mainVisual.slogan.sub] };
-    }
-    
-    // Refresh Hero Card in editor side-bar to show the new slogan
-    renderHeroCard();
-    renderCopyPanel(); // Ensure text areas update too
-
-    // 3. 메인 비주얼 이미지
-    const heroSrc   = mainVisual.imgSrc || imgSrc;
-    const heroImgSt = mainVisual.imgStyle || imgSt;
-    if(heroSrc !== 'none') {
-      const heroLabel = heroSrc==='web' ? '🌐 메인 웹 이미지 검색 중' : '🖼️ 메인 비주얼 이미지 생성 중';
-      setLoading(true, heroLabel, mainVisual.slogan.title||brand);
-      try {
-        if(heroSrc === 'web') {
-          // Use Pinterest for Hero via /api/pinterest and explicit 'it ai'
-          const heroKeyword = ['it ai', mainVisual.slogan?.title, ...(mainVisual.slogan?.keywords || [])].filter(Boolean).join(' ');
-          try {
-            const url = `/api/pinterest?keyword=${encodeURIComponent(heroKeyword)}`;
-            const res = await fetch(url);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.url) mainVisual.image = data.url;
-            }
-          } catch(e) { console.warn('Pinterest fetch failed, falling back to Google', e); }
-          
-          if(!mainVisual.image) {
-            try {
-              const url = `/api/image?keyword=${encodeURIComponent(heroKeyword)}`;
-              const res = await fetch(url);
-              if (res.ok) {
-                const data = await res.json();
-                if (data.url) mainVisual.image = data.url;
-              }
-            } catch(e) {}
-          }
-        } else {
-          const heroPrompt = buildHeroPrompt(mainVisual.slogan, brand, heroImgSt);
-          const heroImg = await fetchImage(apiKey, 'ai', heroPrompt, heroImgSt, 'hero banner wide');
-          if(heroImg) mainVisual.image = heroImg;
+      let allP={};
+      active.forEach(s => {
+        let promptTopic = s.topic || s.name;
+        if (s.newsContext) {
+          promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${s.newsContext})\n\n원래주제: ${s.originalTopic || promptTopic}`;
         }
-      } catch(e){}
+        Object.assign(allP, buildPrompts(s.keys, s.name, promptTopic, imgSt));
+      });
+      const res = await callGemini(apiKey, brand, brandSub, allP, vars);
+      
+      // Merge into copyData
+      for(const[k,arr] of Object.entries(res)) copyData[k]={variants:arr, selected:0, edited:[...arr]};
+      renderCopyPanel();
+      setStatus('✓ 전체 카피 생성 완료');
+    } else {
+      // 2. Images
+      setLoading(true, '🖼️ 이미지 전체 생성 중...', `${active.length}개 섹션`);
+
+      // 뉴스/솔루션 섹션은 먼저 크롤링해서 RSS 썸네일 직접 가져오기
+      const newsSectionKeys = ['news', 'dsnews', 'itnow', 'axfield', 'solution'];
+      for (const s of active) {
+        if (s.keys.some(k => newsSectionKeys.includes(k) || k.includes('news'))) {
+          setLoading(true, `📰 뉴스 크롤링 (${s.name})`, '썸네일 이미지 수집 중');
+          await crawlNewsForSection(s, false); // skipImage=false → imageData 직접 설정
+        }
+      }
+
+      const imgSecs = active.filter(s => s.imgSrc !== 'none');
+      for(let i=0; i<imgSecs.length; i++) {
+        const s = imgSecs[i];
+        // 크롤링으로 이미 이미지가 설정된 경우 건너뜀
+        if (imageData['ai_'+s.id]) continue;
+        const srcLabel = s.imgSrc==='web' ? '🌐 웹 검색' : '🤖 AI 생성';
+        setLoading(true, `이미지 ${srcLabel} (${i+1}/${imgSecs.length})`, s.name);
+        try {
+          const secStyle = s.imgSrc === 'ai'
+            ? (s.imgStyle || getVariedImgStyle(i, imgSecs.length, imgSt))
+            : imgSt;
+          const imgTopic = s.originalTopic || s.topic || s.name;
+          const img = await fetchImage(apiKey, s.imgSrc, imgTopic, secStyle, s.name, s.crawledLink);
+          if(img) imageData['ai_'+s.id]=img;
+        } catch(e){}
+      }
+
+      // Card 2 images
+      const cardSecs = imgSecs.filter(s => (s.layout||'full') === 'card' && s.imgSrc2 !== 'none');
+      for(let i=0; i<cardSecs.length; i++) {
+        const s = cardSecs[i];
+        setLoading(true, `카드2 이미지 생성 (${i+1}/${cardSecs.length})`, s.name);
+        try {
+          const secStyle2 = s.imgSrc2 === 'ai'
+            ? (s.imgStyle2 || getVariedImgStyle(i, cardSecs.length, imgSt))
+            : imgSt;
+          const img2 = await fetchImage(apiKey, s.imgSrc2, s.topic2||s.topic||s.name, secStyle2, s.name);
+          if(img2) imageData['ai_'+s.id+'_c2']=img2;
+        } catch(e){}
+      }
+      setStatus('✓ 전체 이미지 생성 완료');
     }
 
-    // 4. 섹션 이미지 (섹션별 소스 개별 적용)
-    imageData={};
-    const imgSecs = active.filter(s => s.imgSrc !== 'none');
-    for(let i=0; i<imgSecs.length; i++) {
-      const s = imgSecs[i];
-      if(s.image) { imageData['user_'+s.id]=s.image; continue; } // 직접 업로드 우선
-      const srcLabel = s.imgSrc==='web' ? '🌐 웹 검색' : '🤖 AI 생성';
-      setLoading(true, `이미지 ${srcLabel} (${i+1}/${imgSecs.length})`, s.name);
-      try {
-        const secStyle = s.imgSrc === 'ai'
-          ? (s.imgStyle || getVariedImgStyle(i, imgSecs.length, imgSt))
-          : imgSt;
-        const imgTopic = s.originalTopic || s.topic || s.name;
-        const img = await fetchImage(apiKey, s.imgSrc, imgTopic, secStyle, s.name, s.crawledLink);
-        if(img) imageData['ai_'+s.id]=img;
-      } catch(e){}
-    }
-    // 수동 업로드 보존
-    active.forEach(s => { if(s.image) imageData['user_'+s.id]=s.image; });
-
-    // 카드 레이아웃 섹션의 카드2 이미지 생성
-    const cardSecs = imgSecs.filter(s => (s.layout||'full') === 'card' && s.imgSrc2 !== 'none');
-    for(let i=0; i<cardSecs.length; i++) {
-      const s = cardSecs[i];
-      if(s.image2) { imageData['user_'+s.id+'_c2']=s.image2; continue; }
-      setLoading(true, `카드2 이미지 생성 (${i+1}/${cardSecs.length})`, s.name);
-      try {
-        const secStyle2 = s.imgSrc2 === 'ai'
-          ? (s.imgStyle2 || getVariedImgStyle(i, cardSecs.length, imgSt))
-          : imgSt;
-        const img2 = await fetchImage(apiKey, s.imgSrc2, s.topic2||s.topic||s.name, secStyle2, s.name);
-        if(img2) imageData['ai_'+s.id+'_c2']=img2;
-      } catch(e){}
-    }
-    active.forEach(s => { if(s.image2) imageData['user_'+s.id+'_c2']=s.image2; });
-
-    // 5. Render
+    // common finalization
     setLoading(false);
     document.getElementById('cEmpty').style.display='none';
     document.getElementById('nlFrame').classList.add('show');
     rebuildPreview();
-    updateHeroPanel();
-    setStatus('✓ 뉴스레터 생성 완료 — 우측에서 카피를 선택·편집하세요');
-    active.forEach(s => {
-      s.genDone=true;
-      const btn=document.getElementById('tg-'+s.id);
-      if(btn){btn.textContent='✓';btn.classList.add('done');}
-      document.getElementById('ok-'+s.id)?.classList.add('show');
-    });
+    
+    if(mode === 'copy') {
+      active.forEach(s => {
+        s.genDone=true;
+        const btn=document.getElementById('tg-'+s.id);
+        if(btn){btn.textContent='✓';btn.classList.add('done');}
+        document.getElementById('ok-'+s.id)?.classList.add('show');
+      });
+    }
   } catch(e) {
     setLoading(false);
-    document.getElementById('cEmpty').style.display='';
     setStatus('❌ '+e.message);
     alert('오류: '+e.message);
   }
-  genBtn.disabled=botMain.disabled=false;
-  document.getElementById('genAllTxt').textContent='전체 카피 생성하기';
-  document.getElementById('botMainTxt').textContent='뉴스레터 최종 생성하기';
+  
+  copyBtn.disabled = imgBtn.disabled = false;
+  copyTxt.textContent = '카피 전체 생성';
+  imgTxt.textContent = '이미지 전체 생성';
 }
 
 /* ═══════════════════════════════════════
@@ -2801,316 +3058,6 @@ function buildPrompts(keys, name, topic) {
 /* ═══════════════════════════════════════
    HERO VISUAL
 ═══════════════════════════════════════ */
-async function extractSlogan(apiKey, sourceText, brand, brandSub, newsContext = '') {
-  const isTopic = sourceText.toString().startsWith('주제:');
-  let instruction = isTopic 
-    ? `주어진 주제를 바탕으로 강렬한 메인 비주얼 슬로건과 서브카피를 작성해줘.`
-    : `다음 뉴스레터 인트로 카피에서 핵심 내용을 뽑아 강렬한 메인 비주얼 슬로건을 추출해줘.`;
-
-  if (newsContext) {
-    instruction = `다음 최신 AI/IT 뉴스들을 참고하여, 브랜드 "${brand}"의 정체성에 맞는 통찰력 있고 강렬한 메인 비주얼 슬로건과 서브카피를 새로 창조해줘. 
-참고 뉴스:\n${newsContext}`;
-  }
-
-  const p=`${instruction}
-브랜드: ${brand} (${brandSub})
-
-${isTopic ? '주제' : '인트로'}:
-"""${sourceText}"""
-
-규칙:
-1. title: 15자 내외로 강렬하고 임팩트 있게. 메인 이미지 위에 크게 올라갈 파란색 슬로건.
-2. sub: 슬로건 아래 회색 서브카피. 2~3문장, 60자 이상으로 충분히 길고 통찰력 있게 작성. 브랜드의 가치와 이번 뉴스레터 핵심을 담을 것.
-3. JSON만 출력, 마크다운 없이:
-{"title":"임팩트 있는 슬로건","sub":"슬로건을 뒷받침하는 2~3문장의 길고 통찰력 있는 서브카피. 브랜드 가치와 핵심 메시지를 담아 독자의 공감을 이끌어낼 것.","keywords":["키워드1","키워드2"],"mood":"professional"}`;
-  
-  const r=await fetch('/api/gemini-copy', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ model: 'gemini-2.0-flash', p: p, supportsJson: true })
-  });
-  if(!r.ok) {
-    const errorData = await r.json().catch(() => ({}));
-    throw new Error(`Gemini 카피 API 오류: ${r.status} ${errorData.error || r.statusText}`);
-  }
-  const d=await r.json();
-  
-  let parsed;
-  if (d.parsed) {
-      parsed = d.parsed;
-  } else if (d.rawText) {
-      try {
-        const cleaned = d.rawText.replace(/```json/g,'').replace(/```/g,'').trim();
-        parsed = JSON.parse(cleaned);
-      } catch (e) {
-        console.error('Failed to parse slogan JSON:', d.rawText);
-        // Fallback slogan if parsing fails but text exists
-        parsed = { title: brand, sub: brandSub, keywords: [], mood: 'professional' };
-      }
-  } else {
-      throw new Error('Gemini로부터 유효한 응답을 받지 못했습니다.');
-  }
-  return parsed;
-}
-async function genHero() {
-  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
-  const btn = document.getElementById('tg-hero');
-  if(btn) { btn.disabled=true; btn.textContent='⏳'; }
-  const brand    = document.getElementById('rBrand').value||'kt ds';
-  const brandSub = document.getElementById('rSub').value||'AX 전문 파트너';
-  const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
-  
-  try {
-    // 1. AI Times에서 최신 소식 긁어오기 (통찰력 있는 슬로건을 위해)
-    let newsContext = '';
-    try {
-      const newsRes = await fetch(`/api/news?source=aitimes&keyword=ai+technology`);
-      if (newsRes.ok) {
-        const newsData = await newsRes.json();
-        if (newsData.items && newsData.items.length > 0) {
-          newsContext = newsData.items.map(it => `[${it.title}] ${it.description}`).join('\n');
-        }
-      }
-    } catch(err) { console.warn('Hero news crawl failed', err); }
-
-    mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub, newsContext);
-    if (!mainVisual.slogan) throw new Error('슬로건 데이터가 생성되지 않았습니다.');
-    
-    // Sync to heroTitle and heroSub copyData
-    if (mainVisual.slogan.title) {
-        copyData['heroTitle'] = { variants: [mainVisual.slogan.title], selected: 0, edited: [mainVisual.slogan.title] };
-    }
-    if (mainVisual.slogan.sub) {
-        copyData['heroSub'] = { variants: [mainVisual.slogan.sub], selected: 0, edited: [mainVisual.slogan.sub] };
-    }
-    renderCopyPanel();
-
-    mainVisual.genDone = true;
-
-    // 사이드바 히어로 카드 DOM 직접 교체 (전체 secList 재렌더 없이)
-    const scHero = document.getElementById('sc-hero');
-    if (scHero) {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = renderHeroCard();
-      scHero.replaceWith(tmp.firstElementChild);
-    }
-    // 버튼 상태 업데이트 (새로 렌더된 버튼에 적용)
-    const newBtn = document.getElementById('tg-hero');
-    if(newBtn) { newBtn.textContent='✓'; newBtn.classList.add('done'); newBtn.disabled=false; }
-
-    // 메인 프리뷰: 히어로 영역만 교체 (하단 섹션 유지)
-    const frame = document.getElementById('nlFrame');
-    if (frame) {
-      const heroEl = frame.querySelector('.hero-visual');
-      if (heroEl) {
-        const brand2 = document.getElementById('rBrand').value || 'kt ds';
-        const vol2   = document.getElementById('rVol').value   || 'Vol.1 / 2026';
-        const tmp2 = document.createElement('div');
-        tmp2.innerHTML = buildHeroHTML(brand2, vol2);
-        heroEl.replaceWith(tmp2.firstElementChild);
-      } else {
-        // 아직 프리뷰가 없으면 전체 빌드
-        rebuildPreview();
-      }
-    }
-  } catch(e) {
-    alert('슬로건 생성 실패: '+e.message);
-    // catch 시 최신 버튼 참조로 복구
-    const errBtn = document.getElementById('tg-hero');
-    if(errBtn) { errBtn.textContent='✦'; errBtn.disabled=false; }
-    else if(btn) { btn.textContent='✦'; btn.disabled=false; }
-  }
-}
-
-function updHeroTopic(v) {
-  mainVisual.topic = v;
-  mainVisual.genDone = false;
-  const btn = document.getElementById('tg-hero');
-  if(btn) { btn.classList.remove('done'); btn.textContent='✦'; }
-}
-
-
-function buildHeroPrompt(sl, brand, style) {
-  const mood=sl.mood||'dramatic futuristic'; const kw=(sl.keywords||[]).join(', ');
-  return `${mood}, ${kw}, ${style}, Korean business professionals, cinematic editorial newsletter hero banner, wide format, deep atmospheric color, NO text in image`;
-}
-
-async function regenHero() {
-  const apiKey=document.getElementById('apiInp').value.trim() || 'server';
-  setStatus('메인 비주얼 재생성 중...');
-  setStatus('메인 비주얼 재생성 중...');
-  const brand=document.getElementById('rBrand').value||'kt ds';
-  const brandSub=document.getElementById('rSub').value||'AX 전문 파트너';
-  const imgSt=document.getElementById('rImgStyle').value;
-  const heroSrcR  = mainVisual.imgSrc || imgSrc;
-  const heroStR   = mainVisual.imgStyle || imgSt;
-  try {
-    const introCopy=getSel('intro');
-    if(introCopy) mainVisual.slogan=await extractSlogan(apiKey,introCopy,brand,brandSub);
-    if(!mainVisual.slogan) {
-      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
-      try { mainVisual.slogan = await extractSlogan(apiKey, fbTopic, brand, brandSub); } catch(e){ console.error(e); }
-    }
-    if(!mainVisual.slogan) mainVisual.slogan={title:brand,sub:brandSub,keywords:[],mood:'professional editorial'};
-    let hi;
-    if(heroSrcR === 'web') {
-      const heroKeyword = ['it ai', mainVisual.slogan?.title, ...(mainVisual.slogan?.keywords || [])].filter(Boolean).join(' ');
-      try {
-        const urlP = `/api/pinterest?keyword=${encodeURIComponent(heroKeyword)}`;
-        const resP = await fetch(urlP);
-        if (resP.ok) {
-          const dataP = await resP.json();
-          if (dataP.url) hi = dataP.url;
-        }
-      } catch(e) {}
-      
-      if(!hi) {
-        try {
-          const urlG = `/api/image?keyword=${encodeURIComponent(heroKeyword)}`;
-          const resG = await fetch(urlG);
-          if (resG.ok) {
-            const dataG = await resG.json();
-            if (dataG.url) hi = dataG.url;
-          }
-        } catch(e) {}
-      }
-    } else if(heroSrcR !== 'none') {
-      hi = await fetchImage(apiKey,'ai',buildHeroPrompt(mainVisual.slogan,brand,heroStR),heroStR,'hero banner');
-    }
-    if(hi) mainVisual.image=hi;
-    updateHeroPanel();
-    if(Object.keys(copyData).length) rebuildPreview();
-    setStatus('✓ 메인 비주얼 재생성 완료');
-  } catch(e){ alert('재생성 실패: '+e.message); }
-}
-
-function updateHeroPanel() {
-  // 왼쪽 패널 메인 비주얼 카드 업데이트
-  const mvThumb = document.getElementById('mvThumb');
-  if(mvThumb && mainVisual.image) {
-    mvThumb.src = mainVisual.image;
-    mvThumb.classList.remove('mv-thumb-ph');
-    mvThumb.classList.add('show');
-  }
-  const mvSlogan = document.querySelector('#sc-hero .mv-slogan-txt');
-  if(mainVisual.slogan) {
-    if(mvSlogan) {
-      mvSlogan.textContent = `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-    } else {
-      const wrap = document.querySelector('#sc-hero .mv-preview-wrap');
-      if(wrap && mainVisual.slogan) {
-        const d = document.createElement('div');
-        d.className = 'mv-slogan-txt';
-        d.textContent = `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-        wrap.appendChild(d);
-      }
-    }
-  }
-  // 오른쪽 패널도 호환성 유지
-  const wrap=document.getElementById('heroThumbWrap');
-  const thumb=document.getElementById('heroThumb');
-  const txt=document.getElementById('heroSloganTxt');
-  if(wrap && (mainVisual.image||mainVisual.slogan)) {
-    wrap.style.display='';
-    if(mainVisual.image&&thumb) thumb.src=mainVisual.image;
-    if(mainVisual.slogan&&txt)
-      txt.textContent=`"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-  }
-}
-function renderHeroCard() {
-  const src = mainVisual.imgSrc || 'ai';
-  const imgEl = mainVisual.image
-    ? `<img class="mv-thumb" id="mvThumb" src="${mainVisual.image}" alt="">`
-    : ``;
-  
-  // Prioritize manually edited content for preview
-  const sl = mainVisual.slogan;
-  const title = getSel('heroTitle') || sl?.title || '';
-  const sub = getSel('heroSub') || sl?.sub || '';
-  
-  const titleHTML = title ? `<div style="font-size:14px; font-weight:900; line-height:1.2; margin-bottom:4px; color:#4a7cf8;">${title}</div>` : '';
-  const subHTML = sub ? `<div style="font-size:10px; color:rgba(180,200,220,.75); line-height:1.5;">${sub}</div>` : '';
-
-  const previewHTML = (imgEl || titleHTML)
-    ? `<div class="mv-preview-wrap" style="position:relative;">
-        ${imgEl}
-        <div class="mv-slogan-txt" style="display:flex; flex-direction:column; justify-content:flex-end;">
-          ${titleHTML}
-          ${subHTML}
-        </div>
-       </div>`
-    : ``;
-  
-  return `<div class="sc active mv-card" id="sc-hero">
-    <div class="sc-hd">
-      <div class="sc-num">✦</div>
-      <div class="sc-titles">
-        <div class="sc-sublbl">메인 비주얼</div>
-        <div class="sc-name" style="font-size:11px;font-weight:700;color:var(--tx);padding:0;">Hero Banner</div>
-      </div>
-      <span class="mv-badge">HERO</span>
-    </div>
-    <div class="sc-body">
-      <div class="t-row">
-        <input type="text" class="t-inp" id="tp-hero"
-          placeholder="슬로건 주제 (예: AI로 미래를 여는 kt ds)"
-          value="${esc(mainVisual.topic||'')}"
-          oninput="updHeroTopic(this.value)">
-        <button class="t-gen ${mainVisual.genDone?'done':''}" id="tg-hero"
-          onclick="genHero()">${mainVisual.genDone?'✓':'✦'}</button>
-      </div>
-      ${previewHTML}
-      <div class="sis-row3" id="sis-hero">
-        <select class="sis-ai-sel ${src==='ai'?'sis-ai-on':''}" 
-          id="sis-style-hero"
-          onchange="setAiStyleForHero(this.value)">
-          <option value="">🤖 AI · 랜덤</option>
-          <option value="professional business editorial photography">🤖 비즈니스</option>
-          <option value="candid office lifestyle photography Korean professionals">🤖 인물/라이프</option>
-          <option value="technology concept digital futuristic dark">🤖 테크 컨셉</option>
-          <option value="flat design illustration clean modern colorful">🤖 플랫 일러스트</option>
-          <option value="isometric 3d illustration colorful tech">🤖 아이소메트릭</option>
-          <option value="cinematic dramatic lighting high contrast">🤖 시네마틱</option>
-          <option value="abstract digital art flowing lines neon glow dark">🤖 추상/네온</option>
-          <option value="watercolor soft illustration pastel warm tones">🤖 수채화</option>
-        </select>
-        <button class="sis-btn ${src==='web'?'sis-web':''}" 
-          onclick="setHeroSrc('web')">🌐 웹</button>
-        <button class="sis-btn ${src==='none'?'sis-none':''}" 
-          onclick="setHeroSrc('none')">✕ 없음</button>
-      </div>
-      <label class="img-lbl ${mainVisual.image?'has':''}" id="il-hero"
-        style="${src==='none'&&!mainVisual.image?'display:none':''}">
-        <input type="file" accept="image/*" onchange="onHeroImg(this)">
-        <img class="img-thumb ${mainVisual.image?'show':''}" id="it-hero" src="${mainVisual.image||''}" alt="">
-        <span class="img-ico" id="ii-hero">${mainVisual.image?'':'📎'}</span>
-        <div class="img-txt">
-          <div class="img-name" id="in-hero">${mainVisual.image?'이미지 첨부됨':'이미지 직접 첨부'}</div>
-          <div class="img-sub" id="is-hero">${mainVisual.image?'클릭해서 변경':'JPG · PNG · GIF'}</div>
-        </div>
-      </label>
-      <button class="mv-regen-btn" onclick="regenHero()">
-        <span id="heroRegenIco">✦</span> 이미지 재생성
-      </button>
-    </div>
-  </div>`;
-}
-
-function setHeroSrc(v) {
-  mainVisual.imgSrc = v;
-  const sisEl = document.getElementById('sis-hero');
-  if(sisEl) {
-    sisEl.querySelectorAll('.sis-btn').forEach(btn => {
-      const isWeb  = btn.textContent.includes('웹');
-      const isNone = btn.textContent.includes('없음');
-      btn.className = 'sis-btn' + (isWeb&&v==='web'?' sis-web':isNone&&v==='none'?' sis-none':'');
-    });
-    const aiSel = sisEl.querySelector('.sis-ai-sel');
-    if(aiSel) aiSel.className = 'sis-ai-sel' + (v==='ai'?' sis-ai-on':'');
-  }
-  const lbl = document.getElementById('il-hero');
-  if(lbl) lbl.style.display = (v==='none'&&!mainVisual.image)?'none':'';
-}
 function setAiStyleForSec(id, style) {
   const s = find(id); if(!s) return;
   s.imgSrc   = 'ai';
@@ -3126,83 +3073,14 @@ function setAiStyleForSec(id, style) {
   if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
 }
 
-function setAiStyleForHero(style) {
-  mainVisual.imgSrc   = 'ai';
-  mainVisual.imgStyle = style;
-  const sisEl = document.getElementById('sis-hero');
-  if(sisEl) {
-    sisEl.querySelectorAll('.sis-btn').forEach(b => b.className = 'sis-btn');
-    const sel = sisEl.querySelector('.sis-ai-sel');
-    if(sel) sel.className = 'sis-ai-sel sis-ai-on';
-  }
-  const lbl = document.getElementById('il-hero');
-  if(lbl) lbl.style.display = '';
-}
-
-
-function setHeroStyle(v) {
-  mainVisual.imgStyle = v;
-}
-
-function onHeroImg(input) {
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    mainVisual.image = e.target.result;
-    const th = document.getElementById('it-hero');
-    const mv = document.getElementById('mvThumb');
-    if(th) { th.src = e.target.result; th.classList.add('show'); }
-    if(mv) { mv.src = e.target.result; mv.classList.add('show'); mv.classList.remove('mv-thumb-ph'); }
-    const lbl = document.getElementById('il-hero');
-    if(lbl) lbl.classList.add('has');
-    const nm = document.getElementById('in-hero');
-    const sb = document.getElementById('is-hero');
-    const ic = document.getElementById('ii-hero');
-    if(nm) nm.textContent = '이미지 첨부됨';
-    if(sb) sb.textContent = '클릭해서 변경';
-    if(ic) ic.textContent = '';
-    if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
-  };
-  reader.readAsDataURL(file);
-}
-
-
-function buildHeroHTML(brand, vol) {
-  const metaSub = document.getElementById('rSub').value || 'AX 전문 파트너';
-  const sl = mainVisual.slogan;
-  const img = mainVisual.image;
-  
-  // Prioritize manually edited content if available
-  // Remove brand fallback to focus on Slogan as requested
-  const title = getSel('heroTitle') || sl?.title || ''; 
-  const displayTitle = title || 'NEWSLETTER';
-  const sub = getSel('heroSub') || sl?.sub || metaSub;
-  const kws = sl?.keywords || [];
-  
-  const titleHTML = displayTitle;
-
-  return `
-<div class="hero-visual">
-  ${img?`<img class="hero-bg" src="${img}" alt="">`:`<div class="hero-ph"></div>`}
-  <div class="hero-grad"></div>
-  <div class="hero-top">
-    <span class="hero-brand"></span>
-    <span class="hero-vol">${vol}</span>
-  </div>
-  <div class="hero-content">
-    ${kws.length?`<div class="hero-kws">${kws.slice(0,4).map(k=>`<span class="hero-kw">${k}</span>`).join('')}</div>`:''}
-    <div class="hero-title">${titleHTML}</div>
-    ${sub?`<div class="hero-sub">${sub}</div>`:''}
-  </div>
-</div>`;
-}
 
 /* ═══════════════════════════════════════
    COPY PANEL
 ═══════════════════════════════════════ */
 const COPY_LABELS={
+  mvMain:'히어로 메인',mvSub:'히어로 서브',
   intro:'인트로',itnow:'IT Now',axfield:'AX현장',solution:'솔루션',dsnews:'KT DS 소식',
-  heroTitle:'히어로 제목',heroSub:'히어로 서브',lead:'리드',body1:'본문 1',body2:'본문 2',
+  lead:'리드',body1:'본문 1',body2:'본문 2',
   card1:'카드1',card2:'카드2',card3:'카드3',
   ctaTitle:'CTA 제목',ctaSub:'CTA 서브',ctaBtn:'CTA 버튼',
   p1:'제품1',p2:'제품2',p3:'제품3',
@@ -3736,13 +3614,20 @@ function renderSecLayout(s, img, lines, text, skin) {
     </div>`;
   }
   if(lay === 'solution') {
+    const artLink = (link && link !== '#') ? link : '';
+    const src = s.crawledSource || '';
+    const imgEl = img
+      ? `<img class="ly-sol-img" src="${img}" alt="">`
+      : `<div class="ly-sol-ph">${s.icon}</div>`;
     return `<div class="ly-sol"><div class="ly-sol-in">
-      ${img ? `<img class="ly-sol-img" src="${img}" alt="">` : `<div class="ly-sol-ph">${s.icon}</div>`}
+      ${artLink ? `<a class="ly-sol-img-lnk" href="${artLink}" onclick="event.preventDefault();window.open('${artLink}','_blank')">${imgEl}</a>` : imgEl}
       <div class="ly-sol-body">
         <div class="ly-sol-lbl">${s.name.toUpperCase()}</div>
         <div class="ly-sol-tit">${title}</div>
         <div class="ly-sol-desc">${desc || lines.slice(1).join(' ')}</div>
-        <a class="ly-sol-btn" href="${link}" onclick="event.preventDefault();window.open(this.getAttribute('href'),'_blank');">알아보기 →</a>
+        <div class="ly-sol-foot" style="justify-content:flex-end;">
+          ${artLink ? `<a class="ly-sol-btn" href="${artLink}" onclick="event.preventDefault();window.open(this.getAttribute('href'),'_blank');">기사 보기 →</a>` : ''}
+        </div>
       </div>
     </div></div>`;
   }
@@ -3752,9 +3637,11 @@ function renderSecLayout(s, img, lines, text, skin) {
     return `<div class="ly-news">
       <div class="ly-news-hd">${title}</div>
       <div class="ly-news-items">
-        ${(newsItems.length >= 2 ? newsItems : [title, desc]).filter(Boolean).slice(0,5).map(item => {
+        ${(newsItems.length >= 2 ? newsItems : [title, desc]).filter(Boolean).slice(0,5).map((item, idx) => {
           const p = item.split('\n').map(l=>l.trim()).filter(Boolean);
-          return `<div class="ly-news-item">
+          // 3개 소식에 각각 링크 대응
+          const iLnk = (s.crawledLinks && s.crawledLinks[idx]) ? s.crawledLinks[idx] : (s.link && s.link !== '#' ? s.link : '#');
+          return `<div class="ly-news-item ${iLnk !== '#' ? 'has-lnk' : ''}" ${iLnk !== '#' ? `onclick="window.open('${iLnk}','_blank')"` : ''}>
             <div class="ly-news-dot"></div>
             <div class="ly-news-body">
               <div class="ly-news-tit">${p[0]||item}</div>
@@ -3849,9 +3736,6 @@ function buildLetter(brand, sub, vol, secs) {
 
 function buildMagazine(brand, sub, vol, secs) {
   const today = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
-  const heroImg = mainVisual.image;
-  const heroSl  = mainVisual.slogan;
-
   // 섹션 key 기반 매핑
   const introSec    = secs.find(s => s.keys.includes('intro'));
   const coverSec    = secs.find(s => s.keys.includes('cover'));
@@ -3880,15 +3764,15 @@ function buildMagazine(brand, sub, vol, secs) {
   let h = `<div class="mg-wrap">
   <div class="mg-cover">
     <div class="mg-cover-rule"></div>
-    ${heroImg ? `<img class="mg-cover-img" src="${heroImg}" alt="">` : '<div style="position:absolute;inset:0;background:linear-gradient(155deg,#1a1816 0%,#2d1a0f 45%,#0d1520 100%);"></div>'}
+    <div style="position:absolute;inset:0;background:linear-gradient(155deg,#1a1816 0%,#2d1a0f 45%,#0d1520 100%);"></div>
     <div class="mg-cover-overlay"></div>
     <div class="mg-cover-content">
       <div class="mg-cover-eyebrow">
         <div class="mg-cover-badge">NEWSLETTER</div>
         <div class="mg-cover-vol">${vol}</div>
       </div>
-      <div class="mg-cover-title">${heroSl?.title || brand}</div>
-      <div class="mg-cover-deck">${heroSl?.sub || sub}</div>
+      <div class="mg-cover-title">${brand}</div>
+      <div class="mg-cover-deck">${sub}</div>
       <a class="mg-cover-cta" href="#">이번 호 읽기 →</a>
     </div>
   </div>
@@ -4149,7 +4033,7 @@ function buildDigest(brand, sub, vol, secs) {
 }
 
 function buildKtds(brand, sub, vol, secs) {
-  let h = buildHeroHTML(brand, vol);
+  let h = buildHeroHTML();
   h += `<div class="k-top"><div class="k-top-in">
     <div class="k-logo"><div class="k-logo-b">${brand}</div><div class="k-logo-t">NEWSLETTER</div></div>
     <div class="k-meta"><div class="k-meta-v">${vol}</div><div class="k-meta-d">${sub}가 드리는 소식지</div></div>
@@ -4186,7 +4070,7 @@ function buildKtds(brand, sub, vol, secs) {
 
 function buildGeneral(brand, vol, secs) {
   const today=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
-  let h=buildHeroHTML(brand,vol);
+  let h=buildHeroHTML();
   h+=`<div class="g-top"><div class="g-brand">${brand}</div><div class="g-date">${today}</div></div>`;
   h+=`<div class="g-body">`;
   secs.forEach(s=>{
@@ -4236,7 +4120,7 @@ function buildGeneral(brand, vol, secs) {
 }
 
 function buildProduct(brand, vol, secs) {
-  let h=buildHeroHTML(brand,vol);
+  let h=buildHeroHTML();
   h+=`<div class="g-top"><div class="g-brand">${brand}</div><div class="g-date">${vol}</div></div>`;
   h+=`<div class="g-body">`;
   secs.forEach(s=>{
@@ -4517,7 +4401,7 @@ function setSkin(v) {
 
   // 섹션 구성 리셋 (레이아웃 전용 DEFAULTS 사용)
   const sectionKey = ['digest','magazine','letter'].includes(v) ? v : currentType;
-  copyData = {}; imageData = {}; finalHTML = ''; mainVisual = {image:null, slogan:null};
+  copyData = {}; imageData = {}; finalHTML = '';
   initSections(sectionKey);
 
   // 카피패널 초기화
@@ -4525,21 +4409,18 @@ function setSkin(v) {
   if(cp) cp.innerHTML = '<div class="copy-empty"><div class="copy-empty-ico">✍️</div><p>생성 후 이곳에서<br>카피를 선택·편집할 수 있어요</p></div>';
   const cb = document.getElementById('copyBadge');
   if(cb) cb.textContent = '0';
-  const hw = document.getElementById('heroThumbWrap');
-  if(hw) hw.style.display = 'none';
 }
 
 function switchType(type) {
   currentType=type;
   document.querySelectorAll('.nav-type').forEach((b,i)=>
     b.classList.toggle('on',['ktds','general','product'][i]===type));
-  copyData={}; imageData={}; finalHTML=''; mainVisual={image:null,slogan:null};
+  copyData={}; imageData={}; finalHTML='';
   initSections(type);
   document.getElementById('copyPanel').innerHTML='<div class="copy-empty"><div class="copy-empty-ico">✍️</div><p>생성 후 이곳에서<br>카피를 선택·편집할 수 있어요</p></div>';
   document.getElementById('copyBadge').textContent='0';
   document.getElementById('cEmpty').style.display='';
   document.getElementById('nlFrame').classList.remove('show');
-  document.getElementById('heroThumbWrap').style.display='none';
 }
 function switchTab(tab) {
   const isPv=tab==='pv';
@@ -4550,13 +4431,12 @@ function switchTab(tab) {
 }
 function doReset() {
   if(!confirm('모든 내용을 초기화할까요?')) return;
-  copyData={}; imageData={}; finalHTML=''; mainVisual={image:null,slogan:null};
+  copyData={}; imageData={}; finalHTML='';
   initSections(currentType);
   document.getElementById('copyPanel').innerHTML='<div class="copy-empty"><div class="copy-empty-ico">✍️</div><p>생성 후 이곳에서<br>카피를 선택·편집할 수 있어요</p></div>';
   document.getElementById('copyBadge').textContent='0';
   document.getElementById('cEmpty').style.display='';
   document.getElementById('nlFrame').classList.remove('show');
-  document.getElementById('heroThumbWrap').style.display='none';
   setStatus('초기화 완료');
 }
 function doCopy() {
