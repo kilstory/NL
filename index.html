@@ -2436,21 +2436,16 @@ async function generateAll() {
       setLoading(true, heroLabel, mainVisual.slogan.title||brand);
       try {
         if(heroSrc === 'web') {
-          // Use Pinterest for Hero via /api/pinterest and explicit 'it ai'
+          // Use Google for Hero via /api/image and explicit 'it ai'
           const heroKeyword = ['it ai', mainVisual.slogan?.title, ...(mainVisual.slogan?.keywords || [])].filter(Boolean).join(' ');
           try {
-            const url = `/api/pinterest?keyword=${encodeURIComponent(heroKeyword)}`;
+            const url = `/api/image?keyword=${encodeURIComponent(heroKeyword)}`;
             const res = await fetch(url);
             if (res.ok) {
               const data = await res.json();
               if (data.url) mainVisual.image = data.url;
             }
-          } catch(e) { console.warn('Pinterest fetch failed, falling back', e); }
-          
-          if(!mainVisual.image) {
-            const heroImg = await fetchWebImage(heroKeyword, brand);
-            if(heroImg) mainVisual.image = heroImg;
-          }
+          } catch(e) { console.warn('Google image fetch failed for hero', e); }
         } else {
           const heroPrompt = buildHeroPrompt(mainVisual.slogan, brand, heroImgSt);
           const heroImg = await fetchImage(apiKey, 'ai', heroPrompt, heroImgSt, 'hero banner wide');
@@ -2846,17 +2841,13 @@ async function regenHero() {
     if(heroSrcR === 'web') {
       const heroKeyword = ['it ai', mainVisual.slogan?.title, ...(mainVisual.slogan?.keywords || [])].filter(Boolean).join(' ');
       try {
-        const url = `/api/pinterest?keyword=${encodeURIComponent(heroKeyword)}`;
+        const url = `/api/image?keyword=${encodeURIComponent(heroKeyword)}`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           if (data.url) hi = data.url;
         }
       } catch(e) {}
-      
-      if(!hi) {
-        hi = await fetchWebImage(heroKeyword, brand);
-      }
     } else if(heroSrcR !== 'none') {
       hi = await fetchImage(apiKey,'ai',buildHeroPrompt(mainVisual.slogan,brand,heroStR),heroStR,'hero banner');
     }

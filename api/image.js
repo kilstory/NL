@@ -37,41 +37,51 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Fallback to Bing Image Search
+    // 2. Fallback to Google Image Search
     if (!keyword) {
       return res.status(400).json({ error: 'Keyword is required if URL extraction fails' });
     }
 
-    const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(keyword)}&qft=+filterui:photo-photo`;
+    // Use tbm=isch for Google Image Search
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(keyword)}&tbm=isch&asearch=ichunk&async=_id:rg_s,_pms:s,_fmt:pc`;
     
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Bing Image fetch failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Google Image fetch failed: ${response.status} ${response.statusText}`);
     }
 
     const html = await response.text();
 
-    // Extract first image URL using Regex
-    // Bing images usually have m="{murl:'https://...'}"
-    const match = html.match(/murl&quot;:&quot;(.*?)&quot;/);
-    
-    if (match && match[1]) {
-      let imgUrl = match[1];
-      // Clean up encoded ampersands if any
-      imgUrl = imgUrl.replace(/&amp;/g, '&');
+    // Google uses data-src for lazy loading images in search results
+    // We look for the first occurrence of an image URL that looks like a real image (jpg, png)
+    // and is not a small thumbnail if possible.
+    const imgMatches = html.match(/\"(https:\/\/[^\"]+?\.(?:jpg|jpeg|png|gif))\"/g) || [];
+    let imgUrl = null;
+
+    for (let m of imgMatches) {
+      let candidate = m.replace(/\"/g, '');
+      // Filter out small icons or trackers
+      if (candidate.includes('googleusercontent') || candidate.includes('gstatic')) continue;
+      imgUrl = candidate;
+      break;
+    }
+
+    if (!imgUrl) {
+      // Fallback: search for any https image link
+      const fallbackMatches = html.match(/https:\/\/[^\s"']+?\.(?:jpg|jpeg|png|gif)/gi) || [];
+      imgUrl = fallbackMatches.find(u => !u.includes('gstatic') && !u.includes('googleusercontent'));
+    }
+
+    if (imgUrl) {
       return res.status(200).json({ url: imgUrl });
     } else {
-      // Fallback regex pattern for Bing
-      const fallBackMatch = html.match(/(http|https):\/\/([^\s"']+?\.(?:jpg|jpeg|png|gif))/i);
-      if (fallBackMatch && fallBackMatch[0]) {
-        return res.status(200).json({ url: fallBackMatch[0] });
-      }
-      return res.status(404).json({ error: 'No image found' });
+      return res.status(404).json({ error: 'No image found on Google' });
     }
 
   } catch (error) {
