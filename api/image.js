@@ -42,13 +42,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Keyword is required if URL extraction fails' });
     }
 
-    // Use tbm=isch for Google Image Search
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(keyword)}&tbm=isch&asearch=ichunk&async=_id:rg_s,_pms:s,_fmt:pc`;
+    // Standard Google Image Search URL
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(keyword)}&tbm=isch`;
     
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
       }
     });
 
@@ -58,24 +57,19 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    // Google uses data-src for lazy loading images in search results
-    // We look for the first occurrence of an image URL that looks like a real image (jpg, png)
-    // and is not a small thumbnail if possible.
-    const imgMatches = html.match(/\"(https:\/\/[^\"]+?\.(?:jpg|jpeg|png|gif))\"/g) || [];
+    // Enhanced regex to find image URLs in the large Google HTML response
+    // We look for direct image links (jpg, png, etc.)
+    const imgMatches = html.match(/https?:\/\/[^\s\"']+?\.(?:jpg|jpeg|png|gif)/gi) || [];
     let imgUrl = null;
 
-    for (let m of imgMatches) {
-      let candidate = m.replace(/\"/g, '');
-      // Filter out small icons or trackers
-      if (candidate.includes('googleusercontent') || candidate.includes('gstatic')) continue;
+    for (let candidate of imgMatches) {
+      // Filter out common trackers, icons, and small thumbnails
+      if (candidate.includes('gstatic') || candidate.includes('googleusercontent') || candidate.includes('al-icon')) continue;
+      // Also avoid icons/logo keywords
+      if (candidate.toLowerCase().includes('logo') || candidate.toLowerCase().includes('icon')) continue;
+      
       imgUrl = candidate;
       break;
-    }
-
-    if (!imgUrl) {
-      // Fallback: search for any https image link
-      const fallbackMatches = html.match(/https:\/\/[^\s"']+?\.(?:jpg|jpeg|png|gif)/gi) || [];
-      imgUrl = fallbackMatches.find(u => !u.includes('gstatic') && !u.includes('googleusercontent'));
     }
 
     if (imgUrl) {

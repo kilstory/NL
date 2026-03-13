@@ -2768,7 +2768,10 @@ JSON만 출력, 마크다운 없이:
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ model: 'gemini-2.0-flash', p: p, supportsJson: true })
   });
-  if(!r.ok) throw new Error(r.statusText);
+  if(!r.ok) {
+    const errorData = await r.json().catch(() => ({}));
+    throw new Error(`Gemini 카피 API 오류: ${r.status} ${errorData.error || r.statusText}`);
+  }
   const d=await r.json();
   
   let parsed;
@@ -2780,10 +2783,11 @@ JSON만 출력, 마크다운 없이:
         parsed = JSON.parse(cleaned);
       } catch (e) {
         console.error('Failed to parse slogan JSON:', d.rawText);
-        throw new Error('슬로건 형식이 올바르지 않습니다 (JSON 파싱 에러)');
+        // Fallback slogan if parsing fails but text exists
+        parsed = { title: brand, sub: brandSub, keywords: [], mood: 'professional' };
       }
   } else {
-      throw new Error('No valid response from Gemini');
+      throw new Error('Gemini로부터 유효한 응답을 받지 못했습니다.');
   }
   return parsed;
 }
@@ -2796,6 +2800,8 @@ async function genHero() {
   const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
   try {
     mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub);
+    if (!mainVisual.slogan) throw new Error('슬로건 데이터가 생성되지 않았습니다.');
+    
     mainVisual.genDone = true;
     // 슬로건 텍스트 업데이트
     const wrap = document.querySelector('#sc-hero .mv-preview-wrap');
