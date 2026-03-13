@@ -2223,6 +2223,43 @@ function getImg2(s) {
 /* ═══════════════════════════════════════
    GENERATE SECTION (single)
 ═══════════════════════════════════════ */
+// 뉴스 크롤링 헬퍼 (공통 사용)
+async function crawlNewsForSection(s) {
+  const newsSections = ['news', 'dsnews', 'itnow', 'axfield', 'solution'];
+  if (!s.keys.some(k => newsSections.includes(k) || k.includes('news'))) return;
+
+  try {
+    let topic = s.topic || s.name;
+    // 커스텀 키워드 보정 (사용자 입력이 없을 때만)
+    if(!s.topic) {
+      if(s.keys.includes('dsnews')) topic = 'kt ds';
+      else if(s.keys.includes('itnow')) topic = 'it now';
+      else if(s.keys.includes('solution')) topic = 'kt ds 솔루션';
+    }
+    
+    s.originalTopic = topic;
+    setStatus(`🌐 뉴스 크롤링 중 (${topic})...`);
+    const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
+    const r = await fetch(url);
+    if (r.ok) {
+      const data = await r.json();
+      if (data.items && data.items.length > 0) {
+        const firstNews = data.items[0];
+        if (firstNews.link) {
+          s.link = firstNews.link;
+          s.crawledLink = firstNews.link;
+          s.imgSrc = 'web'; // 기사 이미지를 사용하도록 유도
+        }
+        const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
+        // Gemini 프롬프트에 실시간 뉴스 컨텍스트 주입
+        s.newsContext = newsContext;
+        return newsContext;
+      }
+    }
+  } catch(e) { console.warn('뉴스 크롤링 실패:', e); }
+  return null;
+}
+
 async function genSec(id) {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
@@ -2233,7 +2270,14 @@ async function genSec(id) {
   const imgSt=(document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const vars=+document.getElementById('rVar').value;
   try {
-    const prompts = buildPrompts(s.keys, s.name, s.topic||s.name, imgSt);
+    // 1. 뉴스 크롤링 (해당하는 경우)
+    const newsContext = await crawlNewsForSection(s);
+    let promptTopic = s.topic || s.name;
+    if (newsContext) {
+      promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${newsContext})\n\n원래주제: ${promptTopic}`;
+    }
+
+    const prompts = buildPrompts(s.keys, s.name, promptTopic, imgSt);
     const res = await callGemini(apiKey, brand, brandSub, prompts, vars);
     for(const[k,arr] of Object.entries(res))
       copyData[k]={variants:arr, selected:0, edited:[...arr]};
@@ -2380,44 +2424,24 @@ async function generateAll() {
     setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
     
     // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST
-    const newsSections = ['news', 'dsnews', 'itnow', 'axfield', 'solution'];
     for (const s of active) {
-      if (s.keys.some(k => newsSections.includes(k) || k.includes('news'))) {
-        try {
-          let topic = s.topic || s.name;
-          // 커스텀 키워드 보정 (사용자 입력이 없을 때만)
-          if(!s.topic) {
-            if(s.keys.includes('dsnews')) topic = 'kt ds';
-            else if(s.keys.includes('itnow')) topic = 'it now'; // Trigger AI Times in backend
-            else if(s.keys.includes('solution')) topic = 'kt ds 솔루션';
-          }
-          
-          s.originalTopic = topic; // Save for image fetching
-          setLoading(true, `🌐 뉴스 크롤링 중 (${topic})`, '최신 소식을 수집합니다');
-          const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
-          const r = await fetch(url);
-          if (r.ok) {
-            const data = await r.json();
-            if (data.items && data.items.length > 0) {
-              const firstNews = data.items[0];
-              if (firstNews.link) {
-                s.link = firstNews.link;
-                s.crawledLink = firstNews.link;
-                // Force web image so we try to extract the article og:image
-                s.imgSrc = 'web';
-              }
-              const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\\n내용 요약: ${item.description}`).join('\\n\\n');
-              // Append to topic prompt so Gemini uses it
-              s.topic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\\n${newsContext})\\n\\n원래주제: ${topic}`;
-            }
-          }
-        } catch(e) { console.warn('뉴스 크롤링 실패:', e); }
+      const newsContext = await crawlNewsForSection(s);
+      if (newsContext) {
+        // s.topic is already updated inside crawlNewsForSection if needed via s.newsContext etc.
+        // But we need to update the prompt topic specifically for Gemini
+        // We'll trust the newsContext returned.
       }
     }
     setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
 
     let allP={};
-    active.forEach(s => Object.assign(allP, buildPrompts(s.keys, s.name, s.topic||s.name, imgSt)));
+    active.forEach(s => {
+      let promptTopic = s.topic || s.name;
+      if (s.newsContext) {
+        promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${s.newsContext})\n\n원래주제: ${s.originalTopic || promptTopic}`;
+      }
+      Object.assign(allP, buildPrompts(s.keys, s.name, promptTopic, imgSt));
+    });
     const res = await callGemini(apiKey, brand, brandSub, allP, vars);
     copyData={};
     for(const[k,arr] of Object.entries(res)) copyData[k]={variants:arr, selected:0, edited:[...arr]};
