@@ -2323,6 +2323,37 @@ async function regenSecImg(id) {
   if(btn) { btn.disabled=false; btn.textContent='🔄'; }
 }
 
+async function regenSecImg2(id) {
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
+  const s = find(id); if(!s) return;
+  const btn = document.getElementById('ri2-'+id);
+  if(btn) { btn.disabled=true; btn.textContent='⏳'; }
+  const imgSt = (document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
+  const src = s.imgSrc2 || 'ai';
+  const secStyle = src==='ai' ? (s.imgStyle2 || imgSt) : imgSt;
+  setStatus(`🖼️ [${s.name}] 카드2 이미지 재생성 중...`);
+  try {
+    const img = await fetchImage(apiKey, src, s.topic2||s.topic||s.name, secStyle, s.name);
+    if(img) {
+      imageData['ai_'+id+'_c2'] = img;
+      // 카드2 썸네일 즉시 업데이트
+      const th = document.getElementById('it2-'+id);
+      const lbl= document.getElementById('il2-'+id);
+      const ico= document.getElementById('ii2-'+id);
+      const nm = document.getElementById('in2-'+id);
+      const sb = document.getElementById('is2-'+id);
+      if(th) { th.src=img; th.classList.add('show'); }
+      if(lbl) lbl.classList.add('has');
+      if(ico) ico.textContent='';
+      if(nm)  nm.textContent='이미지 생성됨';
+      if(sb)  sb.textContent='클릭해서 변경';
+      if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
+      setStatus(`✓ [${s.name}] 카드2 이미지 재생성 완료`);
+    }
+  } catch(e) { alert('이미지 재생성 실패: '+e.message); }
+  if(btn) { btn.disabled=false; btn.textContent='🔄'; }
+}
+
 
 /* ═══════════════════════════════════════
    GENERATE ALL
@@ -2392,7 +2423,7 @@ async function generateAll() {
       try { mainVisual.slogan = await extractSlogan(apiKey, introCopy, brand, brandSub); } catch(e){}
     }
     if(!mainVisual.slogan) {
-      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 AI 트렌드 및 혁신';
+      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
       try { mainVisual.slogan = await extractSlogan(apiKey, fbTopic, brand, brandSub); } catch(e){}
     }
     if(!mainVisual.slogan) mainVisual.slogan={title:brand, sub:brandSub, keywords:[], mood:'professional editorial'};
@@ -2729,7 +2760,7 @@ JSON만 출력, 마크다운 없이:
   const r=await fetch('/api/gemini-copy', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ model: 'gemini-2.0-flash', p: p, supportsJson: true })
+    body:JSON.stringify({ model: 'gemini-2.5-flash', p: p, supportsJson: true })
   });
   if(!r.ok) throw new Error(r.statusText);
   const d=await r.json();
@@ -2738,7 +2769,13 @@ JSON만 출력, 마크다운 없이:
   if (d.parsed) {
       parsed = d.parsed;
   } else if (d.rawText) {
-      parsed = JSON.parse(d.rawText.replace(/```json|```/g,'').trim());
+      try {
+        const cleaned = d.rawText.replace(/```json/g,'').replace(/```/g,'').trim();
+        parsed = JSON.parse(cleaned);
+      } catch (e) {
+        console.error('Failed to parse slogan JSON:', d.rawText);
+        throw new Error('슬로건 형식이 올바르지 않습니다 (JSON 파싱 에러)');
+      }
   } else {
       throw new Error('No valid response from Gemini');
   }
@@ -2750,7 +2787,7 @@ async function genHero() {
   if(btn) { btn.disabled=true; btn.textContent='⏳'; }
   const brand    = document.getElementById('rBrand').value||'kt ds';
   const brandSub = document.getElementById('rSub').value||'AX 전문 파트너';
-  const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 AI 트렌드 및 혁신';
+  const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
   try {
     mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub);
     mainVisual.genDone = true;
@@ -2801,8 +2838,8 @@ async function regenHero() {
     const introCopy=getSel('intro');
     if(introCopy) mainVisual.slogan=await extractSlogan(apiKey,introCopy,brand,brandSub);
     if(!mainVisual.slogan) {
-      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 AI 트렌드 및 혁신';
-      try { mainVisual.slogan = await extractSlogan(apiKey, fbTopic, brand, brandSub); } catch(e){}
+      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
+      try { mainVisual.slogan = await extractSlogan(apiKey, fbTopic, brand, brandSub); } catch(e){ console.error(e); }
     }
     if(!mainVisual.slogan) mainVisual.slogan={title:brand,sub:brandSub,keywords:[],mood:'professional editorial'};
     let hi;
