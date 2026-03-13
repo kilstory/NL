@@ -37,6 +37,47 @@ export default async function handler(req, res) {
     const { keyword, source } = req.query;
     let q = (keyword || '최신뉴스').trim().toLowerCase();
 
+    // 0. KT DS 공식 블로그 (네이버 블로그)
+    if (source === 'ktds_blog') {
+      const rssUrl = 'https://rss.blog.naver.com/ktds_official.xml';
+      const response = await fetch(rssUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        }
+      });
+      if (response.ok) {
+        const xmlText = await response.text();
+        const items = [];
+        const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+        let match;
+        while ((match = itemRegex.exec(xmlText)) !== null) {
+          if (items.length >= 5) break;
+          const itemXml = match[1];
+
+          const titleMatch = itemXml.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/) || itemXml.match(/<title>([\s\S]*?)<\/title>/);
+          const linkMatch  = itemXml.match(/<link>([\s\S]*?)<\/link>/);
+          const descMatch  = itemXml.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) || itemXml.match(/<description>([\s\S]*?)<\/description>/);
+          const pubMatch   = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
+
+          if (!titleMatch || !linkMatch) continue;
+
+          const rawDesc = descMatch ? descMatch[1] : '';
+          // 네이버 블로그 RSS description 안 첫 번째 <img src>를 썸네일로 사용
+          const thumbnail = extractRssThumbnail(itemXml) || extractDescThumbnail(rawDesc);
+          const description = rawDesc.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim().slice(0, 200);
+
+          items.push({
+            title: titleMatch[1].trim(),
+            link: linkMatch[1].trim(),
+            description,
+            pubDate: pubMatch ? pubMatch[1].trim() : '',
+            thumbnail
+          });
+        }
+        if (items.length > 0) return res.status(200).json({ items, source: 'ktds_blog' });
+      }
+    }
+
     // 1. Explicit AI Times check or keyword-based detection
     const isAiTimesTarget = source === 'aitimes' || q.includes('it now') || q.includes('itnow') || q.includes('ai times');
 
