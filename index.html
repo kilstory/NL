@@ -2468,8 +2468,17 @@ async function generateAll() {
     }
     if(!mainVisual.slogan) mainVisual.slogan={title:brand, sub:brandSub, keywords:[], mood:'professional editorial'};
     
+    // Sync to heroTitle and heroSub copyData if they exist, so user can edit them
+    if (mainVisual.slogan.title) {
+        copyData['heroTitle'] = { variants: [mainVisual.slogan.title], selected: 0, edited: [mainVisual.slogan.title] };
+    }
+    if (mainVisual.slogan.sub) {
+        copyData['heroSub'] = { variants: [mainVisual.slogan.sub], selected: 0, edited: [mainVisual.slogan.sub] };
+    }
+    
     // Refresh Hero Card in editor side-bar to show the new slogan
     renderHeroCard();
+    renderCopyPanel(); // Ensure text areas update too
 
     // 3. 메인 비주얼 이미지
     const heroSrc   = mainVisual.imgSrc || imgSrc;
@@ -2848,6 +2857,15 @@ async function genHero() {
     mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub);
     if (!mainVisual.slogan) throw new Error('슬로건 데이터가 생성되지 않았습니다.');
     
+    // Sync to heroTitle and heroSub copyData
+    if (mainVisual.slogan.title) {
+        copyData['heroTitle'] = { variants: [mainVisual.slogan.title], selected: 0, edited: [mainVisual.slogan.title] };
+    }
+    if (mainVisual.slogan.sub) {
+        copyData['heroSub'] = { variants: [mainVisual.slogan.sub], selected: 0, edited: [mainVisual.slogan.sub] };
+    }
+    renderCopyPanel();
+
     mainVisual.genDone = true;
     // 슬로건 텍스트 업데이트
     const wrap = document.querySelector('#sc-hero .mv-preview-wrap');
@@ -2970,13 +2988,18 @@ function renderHeroCard() {
   const imgEl = mainVisual.image
     ? `<img class="mv-thumb" id="mvThumb" src="${mainVisual.image}" alt="">`
     : ``;
-  const previewWrap = (mainVisual.image || mainVisual.slogan)
-    ? `<div class="mv-preview-wrap">${imgEl}${sloganEl}</div>`
+  
+  // Prioritize manually edited content for preview too
+  const sl = mainVisual.slogan;
+  const title = getSel('heroTitle') || sl?.title || '';
+  const sub = getSel('heroSub') || sl?.sub || '';
+  
+  const sloganTxt = (title || sub) ? `"${title}" — ${sub}` : '';
+  const sloganHTML = sloganTxt ? `<div class="mv-slogan-txt">${sloganTxt}</div>` : '';
+  
+  const previewWrap = (mainVisual.image || sloganTxt)
+    ? `<div class="mv-preview-wrap">${imgEl}${sloganHTML}</div>`
     : ``;
-  const sloganTxt = mainVisual.slogan 
-    ? `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`
-    : '';
-  const sloganHTML = `<div class="mv-slogan-txt">${sloganTxt}</div>`;
   
   return `<div class="sc active mv-card" id="sc-hero">
     <div class="sc-hd">
@@ -3108,12 +3131,19 @@ function onHeroImg(input) {
 
 
 function buildHeroHTML(brand, vol) {
-  const sl=mainVisual.slogan; const img=mainVisual.image;
-  const title=sl?.title||brand; const sub=sl?.sub||''; const kws=sl?.keywords||[];
-  const words=title.split(' ');
-  const titleHTML=words.length>1
-    ?`<span class="hero-accent">${words[0]}</span> ${words.slice(1).join(' ')}`
-    :`<span class="hero-accent">${title}</span>`;
+  const metaSub = document.getElementById('rSub').value || 'AX 전문 파트너';
+  const sl = mainVisual.slogan;
+  const img = mainVisual.image;
+  
+  // Prioritize manually edited content if available
+  const title = getSel('heroTitle') || sl?.title || brand;
+  const sub = getSel('heroSub') || sl?.sub || '';
+  const kws = sl?.keywords || [];
+  
+  const words = title.split(' ');
+  const titleHTML = words.length > 1
+    ? `<span class="hero-accent">${words[0]}</span> ${words.slice(1).join(' ')}`
+    : `<span class="hero-accent">${title}</span>`;
   return `
 <div class="hero-visual">
   ${img?`<img class="hero-bg" src="${img}" alt="">`:`<div class="hero-ph"></div>`}
