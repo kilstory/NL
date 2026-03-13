@@ -2880,7 +2880,11 @@ async function genHero() {
       wrap.appendChild(d);
     }
     if(btn) { btn.textContent='✓'; btn.classList.add('done'); }
-    if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
+    
+    // Force immediate preview rebuild to show the new slogan in the main canvas
+    rebuildPreview();
+    // Also refresh the sidebar hero card
+    renderHeroCard(); 
   } catch(e) {
     alert('슬로건 생성 실패: '+e.message);
     if(btn) { btn.textContent='✦'; }
@@ -3137,14 +3141,15 @@ function buildHeroHTML(brand, vol) {
   
   // Prioritize manually edited content if available
   // Remove brand fallback to focus on Slogan as requested
-  const title = getSel('heroTitle') || sl?.title || 'NEWSLETTER'; 
+  const title = getSel('heroTitle') || sl?.title || ''; 
+  const displayTitle = title || 'NEWSLETTER';
   const sub = getSel('heroSub') || sl?.sub || metaSub;
   const kws = sl?.keywords || [];
   
-  const words = title.split(' ');
+  const words = displayTitle.split(' ');
   const titleHTML = words.length > 1
     ? `<span class="hero-accent">${words[0]}</span> ${words.slice(1).join(' ')}`
-    : `<span class="hero-accent">${title}</span>`;
+    : `<span class="hero-accent">${displayTitle}</span>`;
     
   return `
 <div class="hero-visual">
