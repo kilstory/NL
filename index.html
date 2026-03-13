@@ -480,11 +480,11 @@ select.r-inp { cursor:pointer; }
 .hero-content { position:relative; z-index:3; padding:0 28px 26px; }
 .hero-kws { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
 .hero-kw { font-size:8px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,.55); background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); padding:3px 9px; border-radius:2px; backdrop-filter:blur(4px); }
-.hero-title { font-size:36px; font-weight:900; color:#fff; font-family:'Noto Serif KR',serif; line-height:1.2; margin-bottom:6px; letter-spacing:-.5px; text-shadow:0 2px 24px rgba(0,0,0,.5); }
+.hero-title { font-size:36px; font-weight:900; color:#4a7cf8; font-family:'Noto Serif KR',serif; line-height:1.2; margin-bottom:10px; letter-spacing:-.5px; text-shadow:0 2px 24px rgba(74,124,248,.3); }
 .hero-accent { color:#4a7cf8; }
-.hero-label { font-size:10px; font-weight:800; color:#4a7cf8; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; display:block; font-family:'DM Mono',monospace; opacity:0.9; }
-.hero-div { width:36px; height:2px; background:linear-gradient(90deg,#4a7cf8,rgba(74,124,248,0)); margin-bottom:12px; border-radius:1px; }
-.hero-sub { font-size:13px; color:rgba(255,255,255,.65); font-family:'Noto Sans KR',sans-serif; font-weight:400; line-height:1.55; max-width:400px; }
+.hero-label { display:none; }
+.hero-div { display:none; }
+.hero-sub { font-size:13px; color:rgba(180,200,220,.75); font-family:'Noto Sans KR',sans-serif; font-weight:400; line-height:1.7; max-width:480px; }
 .hero-ph { position:absolute; inset:0; z-index:0; background:radial-gradient(ellipse at 20% 50%,rgba(74,124,248,.25) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,.2) 0%,transparent 55%),linear-gradient(135deg,#0a0e1a,#111827,#0d1520); }
 
 /* Editor Hero Slogan */
@@ -2819,10 +2819,10 @@ ${isTopic ? '주제' : '인트로'}:
 """${sourceText}"""
 
 규칙:
-1. 타이틀은 15자 내외로 매우 임팩트 있고 짧게.
-2. 메인 이미지 위에 올라갈 슬로건임을 명심할 것.
+1. title: 15자 내외로 강렬하고 임팩트 있게. 메인 이미지 위에 크게 올라갈 파란색 슬로건.
+2. sub: 슬로건 아래 회색 서브카피. 2~3문장, 60자 이상으로 충분히 길고 통찰력 있게 작성. 브랜드의 가치와 이번 뉴스레터 핵심을 담을 것.
 3. JSON만 출력, 마크다운 없이:
-{"title":"임팩트 있는 슬로건","sub":"설명 한줄","keywords":["키워드1","키워드2"],"mood":"professional"}`;
+{"title":"임팩트 있는 슬로건","sub":"슬로건을 뒷받침하는 2~3문장의 길고 통찰력 있는 서브카피. 브랜드 가치와 핵심 메시지를 담아 독자의 공감을 이끌어낼 것.","keywords":["키워드1","키워드2"],"mood":"professional"}`;
   
   const r=await fetch('/api/gemini-copy', {
     method:'POST',
@@ -2886,29 +2886,40 @@ async function genHero() {
     renderCopyPanel();
 
     mainVisual.genDone = true;
-    // 슬로건 텍스트 업데이트
-    const wrap = document.querySelector('#sc-hero .mv-preview-wrap');
-    const existing = document.querySelector('#sc-hero .mv-slogan-txt');
-    const sloganTxt = `"${mainVisual.slogan.title||''}" — ${mainVisual.slogan.sub||''}`;
-    if(existing) {
-      existing.textContent = sloganTxt;
-    } else if(wrap) {
-      const d = document.createElement('div');
-      d.className = 'mv-slogan-txt';
-      d.textContent = sloganTxt;
-      wrap.appendChild(d);
+
+    // 사이드바 히어로 카드 DOM 직접 교체 (전체 secList 재렌더 없이)
+    const scHero = document.getElementById('sc-hero');
+    if (scHero) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderHeroCard();
+      scHero.replaceWith(tmp.firstElementChild);
     }
-    if(btn) { btn.textContent='✓'; btn.classList.add('done'); }
-    
-    // Force immediate preview rebuild to show the new slogan in the main canvas
-    rebuildPreview();
-    // Also refresh the sidebar hero card
-    renderHeroCard(); 
+    // 버튼 상태 업데이트 (새로 렌더된 버튼에 적용)
+    const newBtn = document.getElementById('tg-hero');
+    if(newBtn) { newBtn.textContent='✓'; newBtn.classList.add('done'); newBtn.disabled=false; }
+
+    // 메인 프리뷰: 히어로 영역만 교체 (하단 섹션 유지)
+    const frame = document.getElementById('nlFrame');
+    if (frame) {
+      const heroEl = frame.querySelector('.hero-visual');
+      if (heroEl) {
+        const brand2 = document.getElementById('rBrand').value || 'kt ds';
+        const vol2   = document.getElementById('rVol').value   || 'Vol.1 / 2026';
+        const tmp2 = document.createElement('div');
+        tmp2.innerHTML = buildHeroHTML(brand2, vol2);
+        heroEl.replaceWith(tmp2.firstElementChild);
+      } else {
+        // 아직 프리뷰가 없으면 전체 빌드
+        rebuildPreview();
+      }
+    }
   } catch(e) {
     alert('슬로건 생성 실패: '+e.message);
-    if(btn) { btn.textContent='✦'; }
+    // catch 시 최신 버튼 참조로 복구
+    const errBtn = document.getElementById('tg-hero');
+    if(errBtn) { errBtn.textContent='✦'; errBtn.disabled=false; }
+    else if(btn) { btn.textContent='✦'; btn.disabled=false; }
   }
-  if(btn) btn.disabled=false;
 }
 
 function updHeroTopic(v) {
@@ -3017,17 +3028,14 @@ function renderHeroCard() {
   const title = getSel('heroTitle') || sl?.title || '';
   const sub = getSel('heroSub') || sl?.sub || '';
   
-  // Title -> NEWSLETTER -> Sub
-  const titleHTML = title ? `<div style="font-size:14px; font-weight:900; line-height:1.2; margin-bottom:2px;">${title}</div>` : '';
-  const labelHTML = title ? `<div style="font-size:8px; font-weight:800; color:#4a7cf8; letter-spacing:1px; margin-bottom:4px; font-family:'DM Mono',monospace;">NEWSLETTER</div>` : '';
-  const subHTML = sub ? `<div style="font-size:10px; color:rgba(255,255,255,.6); line-height:1.4;">${sub}</div>` : '';
+  const titleHTML = title ? `<div style="font-size:14px; font-weight:900; line-height:1.2; margin-bottom:4px; color:#4a7cf8;">${title}</div>` : '';
+  const subHTML = sub ? `<div style="font-size:10px; color:rgba(180,200,220,.75); line-height:1.5;">${sub}</div>` : '';
 
-  const previewHTML = (imgEl || titleHTML) 
+  const previewHTML = (imgEl || titleHTML)
     ? `<div class="mv-preview-wrap" style="position:relative;">
         ${imgEl}
         <div class="mv-slogan-txt" style="display:flex; flex-direction:column; justify-content:flex-end;">
           ${titleHTML}
-          ${labelHTML}
           ${subHTML}
         </div>
        </div>`
@@ -3171,11 +3179,8 @@ function buildHeroHTML(brand, vol) {
   const sub = getSel('heroSub') || sl?.sub || metaSub;
   const kws = sl?.keywords || [];
   
-  const words = displayTitle.split(' ');
-  const titleHTML = words.length > 1
-    ? `<span class="hero-accent">${words[0]}</span> ${words.slice(1).join(' ')}`
-    : `<span class="hero-accent">${displayTitle}</span>`;
-    
+  const titleHTML = displayTitle;
+
   return `
 <div class="hero-visual">
   ${img?`<img class="hero-bg" src="${img}" alt="">`:`<div class="hero-ph"></div>`}
@@ -3187,8 +3192,6 @@ function buildHeroHTML(brand, vol) {
   <div class="hero-content">
     ${kws.length?`<div class="hero-kws">${kws.slice(0,4).map(k=>`<span class="hero-kw">${k}</span>`).join('')}</div>`:''}
     <div class="hero-title">${titleHTML}</div>
-    <div class="hero-label">NEWSLETTER</div>
-    <div class="hero-div"></div>
     ${sub?`<div class="hero-sub">${sub}</div>`:''}
   </div>
 </div>`;
