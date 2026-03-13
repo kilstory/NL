@@ -1516,6 +1516,15 @@ select.r-inp { cursor:pointer; }
 /* ── 레이아웃 피커 라벨 ── */
 .sly-wrap { margin-top:2px; }
 .sly-lbl  { font-size:9px; font-weight:700; color:var(--dim); margin-bottom:3px; letter-spacing:.3px; text-transform:uppercase; }
+
+/* ── 폰트 패키지 셀렉터 ── */
+.font-pkg-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:4px; }
+.font-pkg-card { padding:8px 9px; border:1px solid var(--bd); border-radius:7px; cursor:pointer; transition:all .14s; background:var(--inp); text-align:left; }
+.font-pkg-card:hover { border-color:var(--bd2); background:var(--card); }
+.font-pkg-card.active { border-color:var(--blue); background:var(--blb); }
+.font-pkg-nm { font-size:9px; font-weight:700; color:var(--mu); letter-spacing:.5px; text-transform:uppercase; margin-bottom:3px; }
+.font-pkg-t { font-size:13px; color:var(--tx); line-height:1.2; }
+.font-pkg-b { font-size:9px; color:var(--dim); margin-top:1px; }
 </style>
   
 </head>
@@ -1655,7 +1664,9 @@ select.r-inp { cursor:pointer; }
         <span class="range-val" id="rVarR">3</span>
       </div>
 
-      <!-- 메인 비주얼 -->
+      <!-- 폰트 패키지 -->
+      <span class="r-lbl" style="margin-top:10px">폰트 패키지</span>
+      <div class="font-pkg-grid" id="fontPkgGrid"></div>
     </div>
 
 
@@ -1723,6 +1734,16 @@ let mainVisual  = {
 };
 
 const TYPE_LABELS = { ktds:'kt ds형', general:'일반형', product:'제품형' };
+
+/* ── 폰트 패키지 ── */
+const FONT_PKGS = {
+  basic:   { name:'기본',    title:"'Noto Serif KR',serif",     body:"'Noto Sans KR',sans-serif",   gFont:'' },
+  modern:  { name:'모던',    title:"'Gmarket Sans',sans-serif",  body:"'Noto Sans KR',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&display=swap' },
+  classic: { name:'클래식',  title:"'Nanum Myeongjo',serif",     body:"'Nanum Gothic',sans-serif",    gFont:'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700;800&display=swap' },
+  bold:    { name:'볼드',    title:"'Black Han Sans',sans-serif", body:"'Noto Sans KR',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap' },
+  elegant: { name:'엘레강트', title:"'Sunflower',serif",          body:"'Noto Sans KR',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Sunflower:wght@300;500;700&display=swap' },
+};
+let currentFontPkg = 'basic';
 
 const IMG_SRC_NOTES = {
   ai:   'Nano Banana 2로 AI 이미지를 생성합니다',
@@ -1810,7 +1831,7 @@ function initSections(type) {
     allowedLayouts: t.allowedLayouts !== undefined ? t.allowedLayouts : null,
     on:true, topic:'', topic2:'', image:null, image2:null, custom:false, genDone:false, genDone2:false, imgSrc:'ai', imgSrc2:'ai', imgUrl:'', imgUrl2:'', imgStyle:'', imgStyle2:'', layout:t.defaultLayout||'full', link:'',
   }));
-  renderSecList(); updateInfo(); livePreview();
+  renderSecList(); updateInfo(); livePreview(); renderFontPkgGrid();
 }
 
 /* ═══════════════════════════════════════
@@ -2375,6 +2396,52 @@ function toggleTheme() {
   document.getElementById('themeTxt').textContent = isDark ? '라이트' : '다크';
 }
 
+/* ══ 폰트 패키지 ══ */
+function renderFontPkgGrid() {
+  const grid = document.getElementById('fontPkgGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(FONT_PKGS).map(([k, p]) => `
+    <button class="font-pkg-card ${k === currentFontPkg ? 'active' : ''}" data-key="${k}" onclick="setFontPkg('${k}')">
+      <div class="font-pkg-nm">${p.name}</div>
+      <div class="font-pkg-t" style="font-family:${p.title}">가나다</div>
+      <div class="font-pkg-b" style="font-family:${p.body}">본문체</div>
+    </button>`).join('');
+}
+function setFontPkg(key) {
+  currentFontPkg = key;
+  const pkg = FONT_PKGS[key];
+  if (pkg.gFont && !document.getElementById('gf-' + key)) {
+    const link = document.createElement('link');
+    link.id = 'gf-' + key;
+    link.rel = 'stylesheet';
+    link.href = pkg.gFont;
+    document.head.appendChild(link);
+  }
+  // Update override style
+  let el = document.getElementById('fontPkgOverride');
+  if (!el) { el = document.createElement('style'); el.id = 'fontPkgOverride'; document.head.appendChild(el); }
+  if (key === 'basic') {
+    el.textContent = '';
+  } else {
+    el.textContent = `
+      #nlFrame .hero-main,
+      #nlFrame .ly-sol-tit, #nlFrame .ly-news-hd, #nlFrame .ly-news-tit,
+      #nlFrame .ly-list-hd, #nlFrame .ly-card-hd, #nlFrame .ly-card-tit,
+      #nlFrame .ly-banner-tit, #nlFrame .g-brand, #nlFrame .g-lead,
+      #nlFrame .g-hero-tit, #nlFrame .g-card-tit, #nlFrame .g-cta-tit,
+      #nlFrame .g-foot-brand, #nlFrame .dg-feat-tit, #nlFrame .dg-sec-tit,
+      #nlFrame .k-logo-b { font-family: ${pkg.title} !important; }
+      ${pkg.body !== "'Noto Sans KR',sans-serif" ? `
+      #nlFrame .ly-sol-desc, #nlFrame .ly-news-desc, #nlFrame .k-intro,
+      #nlFrame .g-text, #nlFrame .g-hero-sub, #nlFrame .ly-card-txt,
+      #nlFrame .hero-copy { font-family: ${pkg.body} !important; }` : ''}
+    `;
+  }
+  // Update UI
+  document.querySelectorAll('.font-pkg-card').forEach(c => c.classList.toggle('active', c.dataset.key === key));
+  livePreview();
+}
+
 /* ═══════════════════════════════════════
    STRING HELPERS
 ═══════════════════════════════════════ */
@@ -2429,11 +2496,12 @@ async function crawlNewsForSection(s, skipImage = false) {
               imageData['ai_'+s.id] = pick.thumbnail;
               s.imgSrc = 'none';
             } else {
-              fetch(`/api/image?url=${encodeURIComponent(pick.link)}`)
-                .then(r2 => r2.ok ? r2.json() : null)
-                .then(d => { if (d?.url) { imageData['ai_'+s.id] = d.url; } })
-                .catch(() => {});
-              s.imgSrc = 'web';
+              // await로 동기적으로 처리 (generateAll('image')에서도 즉시 반영)
+              try {
+                const imgR = await fetch(`/api/image?url=${encodeURIComponent(pick.link)}`);
+                if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
+              } catch {}
+              if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
             }
           }
 
@@ -2475,11 +2543,12 @@ async function crawlNewsForSection(s, skipImage = false) {
             imageData['ai_'+s.id] = firstNews.thumbnail;
             s.imgSrc = 'none';
           } else if (firstNews.link) {
-            fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`)
-              .then(r => r.ok ? r.json() : null)
-              .then(d => { if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } })
-              .catch(() => {});
-            s.imgSrc = 'web';
+            // await로 동기적으로 처리
+            try {
+              const imgR = await fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`);
+              if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
+            } catch {}
+            if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
           }
         }
         const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
@@ -2697,10 +2766,21 @@ async function generateAll(mode = 'copy') {
     } else {
       // 2. Images
       setLoading(true, '🖼️ 이미지 전체 생성 중...', `${active.length}개 섹션`);
-      
+
+      // 뉴스/솔루션 섹션은 먼저 크롤링해서 RSS 썸네일 직접 가져오기
+      const newsSectionKeys = ['news', 'dsnews', 'itnow', 'axfield', 'solution'];
+      for (const s of active) {
+        if (s.keys.some(k => newsSectionKeys.includes(k) || k.includes('news'))) {
+          setLoading(true, `📰 뉴스 크롤링 (${s.name})`, '썸네일 이미지 수집 중');
+          await crawlNewsForSection(s, false); // skipImage=false → imageData 직접 설정
+        }
+      }
+
       const imgSecs = active.filter(s => s.imgSrc !== 'none');
       for(let i=0; i<imgSecs.length; i++) {
         const s = imgSecs[i];
+        // 크롤링으로 이미 이미지가 설정된 경우 건너뜀
+        if (imageData['ai_'+s.id]) continue;
         const srcLabel = s.imgSrc==='web' ? '🌐 웹 검색' : '🤖 AI 생성';
         setLoading(true, `이미지 ${srcLabel} (${i+1}/${imgSecs.length})`, s.name);
         try {
