@@ -2233,8 +2233,7 @@ function getImg2(s) {
    GENERATE SECTION (single)
 ═══════════════════════════════════════ */
 async function genSec(id) {
-  const apiKey = document.getElementById('apiInp').value.trim();
-  if(!apiKey) { alert('Gemini API 키를 입력해주세요.'); return; }
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
   const btn = document.getElementById('tg-'+id);
   btn.disabled=true; btn.textContent='…';
@@ -2274,8 +2273,7 @@ async function genSec(id) {
   btn.disabled=false;
 }
 async function genSec2(id) {
-  const apiKey = document.getElementById('apiInp').value.trim();
-  if(!apiKey) { alert('Gemini API 키를 입력해주세요.'); return; }
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
   const btn = document.getElementById('tg2-'+id);
   if(btn) { btn.disabled=true; btn.textContent='…'; }
@@ -2304,8 +2302,7 @@ async function genSec2(id) {
 }
 
 async function regenSecImg(id) {
-  const apiKey = document.getElementById('apiInp').value.trim();
-  if(!apiKey) { alert('Gemini API 키를 입력해주세요.'); return; }
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
   const btn = document.getElementById('ri-'+id);
   if(btn) { btn.disabled=true; btn.textContent='⏳'; }
@@ -2340,8 +2337,7 @@ async function regenSecImg(id) {
    GENERATE ALL
 ═══════════════════════════════════════ */
 async function generateAll() {
-  const apiKey = document.getElementById('apiInp').value.trim();
-  if(!apiKey) { alert('Gemini API 키를 입력해주세요.'); return; }
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const active = sections.filter(s=>s.on);
   if(!active.length) { alert('활성 섹션이 없습니다.'); return; }
 
@@ -2568,26 +2564,29 @@ function getVariedImgStyle(secIndex, totalSecs, baseStyle) {
 }
 
 async function nanoBanana(key, prompt, style) {
+  // Use Vercel backend for Gemini Image Generation
   // 스타일에 따라 인물 포함 여부 자동 결정
   const hasPeople = /people|person|professional|portrait|Korean|team|candid|lifestyle|documentary/i.test(style);
   const peopleTag = hasPeople
     ? ', featuring Korean people, Korean business professionals'
     : ', no people, no text';
   const full = `${prompt}, ${style}${peopleTag}, high quality professional newsletter editorial image, NO text in image`;
+  
   const tryM = async (model) => {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-      { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:full}]}], generationConfig:{responseModalities:['IMAGE','TEXT']}}) }
-    );
-    if(!r.ok) throw new Error(r.status);
-    const d=await r.json();
-    const p=d.candidates?.[0]?.content?.parts?.find(p=>p.inlineData);
-    if(!p) throw new Error('no img');
-    return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+    const r = await fetch(`/api/gemini-image`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, fullPrompt: full })
+    });
+    if(!r.ok) throw new Error(`서버 이미지 생성 API 오류: ${r.status}`);
+    const d = await r.json();
+    if(d.error) throw new Error(d.error);
+    if(!d.image) throw new Error('no img');
+    return d.image;
   };
+
   for(const m of ['gemini-3.1-flash-image-preview','gemini-3-pro-image-preview','gemini-2.0-flash-preview-image-generation']) {
-    try { return await tryM(m); } catch(e){}
+    try { return await tryM(m); } catch(e){ console.error(e) }
   }
   return null;
 }
@@ -2610,20 +2609,25 @@ ${Object.entries(prompts).map(([k,v])=>`- ${k}: ${v}`).join('\n')}
 각 버전은 톤과 강조점이 명확히 달라야 합니다. 한국어로.`;
 
   const tryM = async (model, json) => {
-    const cfg={temperature:0.9};
-    if(json) cfg.responseMimeType='application/json';
-    const r=await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-      {method:'POST',headers:{'Content-Type':'application/json'},
-       body:JSON.stringify({contents:[{parts:[{text:p}]}],generationConfig:cfg})}
-    );
+    const r=await fetch('/api/gemini-copy', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model, p, supportsJson: json })
+    });
     if(!r.ok){
       const eb=await r.json().catch(()=>({}));
-      throw new Error(eb?.error?.message||r.status);
+      throw new Error(eb?.error || eb?.error?.message || r.statusText);
     }
     const d=await r.json();
-    let t=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
-    const parsed=JSON.parse(t.replace(/```json|```/g,'').trim());
+    
+    let parsed;
+    if (d.parsed) {
+        parsed = d.parsed;
+    } else if (d.rawText) {
+        parsed=JSON.parse(d.rawText.replace(/```json|```/g,'').trim());
+    } else {
+        throw new Error('No valid response from Gemini');
+    }
     // sanitize
     const out={};
     for(const[k,v] of Object.entries(parsed)){
@@ -2697,19 +2701,27 @@ async function extractSlogan(apiKey, introCopy, brand, brandSub) {
 
 JSON만 출력, 마크다운 없이:
 {"title":"강렬한 메인 타이틀(최대20자)","sub":"서브카피 한줄(최대35자)","keywords":["키워드1","키워드2","키워드3"],"mood":"영어 이미지 무드"}`;
-  const r=await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {method:'POST',headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({contents:[{parts:[{text:p}]}],generationConfig:{temperature:0.7}})}
-  );
-  if(!r.ok) throw new Error(r.status);
+  
+  const r=await fetch('/api/gemini-copy', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ model: 'gemini-2.0-flash', p: p, supportsJson: true })
+  });
+  if(!r.ok) throw new Error(r.statusText);
   const d=await r.json();
-  let t=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
-  return JSON.parse(t.replace(/```json|```/g,'').trim());
+  
+  let parsed;
+  if (d.parsed) {
+      parsed = d.parsed;
+  } else if (d.rawText) {
+      parsed = JSON.parse(d.rawText.replace(/```json|```/g,'').trim());
+  } else {
+      throw new Error('No valid response from Gemini');
+  }
+  return parsed;
 }
 async function genHero() {
-  const apiKey = document.getElementById('apiInp').value.trim();
-  if(!apiKey) { alert('Gemini API 키를 입력해주세요.'); return; }
+  const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const btn = document.getElementById('tg-hero');
   if(btn) { btn.disabled=true; btn.textContent='⏳'; }
   const brand    = document.getElementById('rBrand').value||'kt ds';
@@ -2753,8 +2765,7 @@ function buildHeroPrompt(sl, brand, style) {
 }
 
 async function regenHero() {
-  const apiKey=document.getElementById('apiInp').value.trim();
-  if(!apiKey){alert('Gemini API 키를 입력해주세요.');return;}
+  const apiKey=document.getElementById('apiInp').value.trim() || 'server';
   setStatus('메인 비주얼 재생성 중...');
   setStatus('메인 비주얼 재생성 중...');
   const brand=document.getElementById('rBrand').value||'kt ds';
@@ -3022,7 +3033,7 @@ function editVar(key,idx,val) {
   if(copyData[key]?.selected===idx) rebuildPreview();
 }
 async function regenKey(key) {
-  const apiKey=document.getElementById('apiInp').value.trim(); if(!apiKey) return;
+  const apiKey=document.getElementById('apiInp').value.trim() || 'server';
   const btn=document.querySelector(`#cb-${key} .regen`);
   if(btn){btn.textContent='…';btn.disabled=true;}
   const s=sections.find(s=>s.keys.includes(key));
