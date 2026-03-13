@@ -1722,7 +1722,7 @@ const DEFAULTS = {
     { name:'IT Now',        icon:'💡', keys:['itnow'],               ph:'예: AI가 기업의 무기가 되는 방법',          img:true  },
     { name:'AX현장',         icon:'🏭', keys:['axfield'],             ph:'예: BC카드 × kt ds AI 보안관제',           img:true  },
     { name:'솔루션',         icon:'🔧', keys:['solution'],            ph:'예: 폐쇄망 AI 코딩 도구 CodeBox',          img:true,  defaultLayout:'solution' },
-    { name:'DS 소식',        icon:'📢', keys:['dsnews'],              ph:'예: 보안세미나 / BI DW 현대화',             img:false, multi:true, defaultLayout:'news' },
+    { name:'KT DS 소식',        icon:'📢', keys:['dsnews'],              ph:'예: 보안세미나 / BI DW 현대화',             img:false, multi:true, defaultLayout:'news' },
   ],
   general: [
     { name:'히어로',         icon:'🖼️', keys:['heroTitle','heroSub'], ph:'예: AI 시대의 마케팅 혁신',               img:true  },
@@ -2354,6 +2354,7 @@ async function generateAll() {
       if (s.keys.some(k => newsSections.includes(k) || k.includes('news'))) {
         try {
           const topic = s.topic || s.name;
+          s.originalTopic = topic; // Save for image fetching
           setLoading(true, `🌐 뉴스 크롤링 중 (${topic})`, '최신 소식을 수집합니다');
           const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
           const r = await fetch(url);
@@ -2427,7 +2428,8 @@ async function generateAll() {
         const secStyle = s.imgSrc === 'ai'
           ? (s.imgStyle || getVariedImgStyle(i, imgSecs.length, imgSt))
           : imgSt;
-        const img = await fetchImage(apiKey, s.imgSrc, s.topic||s.name, secStyle, s.name, s.crawledLink);
+        const imgTopic = s.originalTopic || s.topic || s.name;
+        const img = await fetchImage(apiKey, s.imgSrc, imgTopic, secStyle, s.name, s.crawledLink);
         if(img) imageData['ai_'+s.id]=img;
       } catch(e){}
     }
@@ -2670,7 +2672,7 @@ const COPY_PROMPTS = (t) => ({
   itnow:    `IT Now 아티클 — 제목(첫줄)+요약2문장. 주제:"${t}"`,
   axfield:  `AX현장 케이스 — 제목(첫줄)+임팩트지표2문장. 주제:"${t}"`,
   solution: `솔루션 카드 — 제목(첫줄)+설명2문장+CTA버튼(마지막줄). 주제:"${t}"`,
-  dsnews:   `DS소식 3개, 각"제목\\n설명1문장", \\n\\n으로 구분. 주제들:"${t}"`,
+  dsnews:   `KT DS 소식 3개, 각"제목\\n설명1문장", \\n\\n으로 구분. 주제들:"${t}"`,
   heroTitle:`히어로 헤드라인 15자 내외. 주제:"${t}"`,
   heroSub:  `히어로 서브타이틀 30자. 주제:"${t}"`,
   lead:     `리드 카피 2-3문장. 주제:"${t}"`,
@@ -2999,7 +3001,7 @@ function buildHeroHTML(brand, vol) {
    COPY PANEL
 ═══════════════════════════════════════ */
 const COPY_LABELS={
-  intro:'인트로',itnow:'IT Now',axfield:'AX현장',solution:'솔루션',dsnews:'DS 소식',
+  intro:'인트로',itnow:'IT Now',axfield:'AX현장',solution:'솔루션',dsnews:'KT DS 소식',
   heroTitle:'히어로 제목',heroSub:'히어로 서브',lead:'리드',body1:'본문 1',body2:'본문 2',
   card1:'카드1',card2:'카드2',card3:'카드3',
   ctaTitle:'CTA 제목',ctaSub:'CTA 서브',ctaBtn:'CTA 버튼',

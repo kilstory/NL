@@ -15,13 +15,21 @@ export default async function handler(req, res) {
   try {
     const { keyword } = req.query;
 
-    // Append after:2026-01-01 to ensure recent/future news
-    const query = keyword ? `${keyword} after:2026-01-01` : `최신뉴스 after:2026-01-01`;
-    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
+    // Use Bing News to get direct publishers' links instead of Google's encoded redirects.
+    // Append 2026 to encourage recent results as requested by user
+    let q = keyword || '최신뉴스';
+    if (!q.includes('2026')) {
+      q += ' 2026';
+    }
+    const url = `https://www.bing.com/news/search?q=${encodeURIComponent(q)}&cc=kr&format=rss`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+      }
+    });
     if (!response.ok) {
-      throw new Error(`Google News RSS fetch failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Bing News RSS fetch failed: ${response.status} ${response.statusText}`);
     }
 
     const xmlText = await response.text();
@@ -38,12 +46,15 @@ export default async function handler(req, res) {
       
       const titleMatch = itemXml.match(/<title>([\s\S]*?)<\/title>/);
       let title = titleMatch ? titleMatch[1] : '';
-      
-      // Clean up title (remove CDATA if present)
       title = title.replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim();
 
       const linkMatch = itemXml.match(/<link>([\s\S]*?)<\/link>/);
-      const link = linkMatch ? linkMatch[1] : '';
+      let link = linkMatch ? linkMatch[1] : '';
+      // Bing News links look like: http://www.bing.com/news/apiclick.aspx?...&url=https%3a%2f%2f...
+      const urlParamMatch = link.match(/url=([^&<]+)/);
+      if (urlParamMatch) {
+        link = decodeURIComponent(urlParamMatch[1]);
+      }
 
       const pubDateMatch = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
       const pubDate = pubDateMatch ? pubDateMatch[1] : '';
