@@ -2396,90 +2396,110 @@ function getImg2(s) {
    GENERATE SECTION (single)
 ═══════════════════════════════════════ */
 // 뉴스 크롤링 헬퍼 (공통 사용)
+// _cachedArticle에 선택된 기사를 캐시 → 카피/이미지/링크가 항상 같은 기사에서 나오도록 보장
 async function crawlNewsForSection(s, skipImage = false) {
   const newsSections = ['news', 'dsnews', 'itnow', 'axfield', 'solution'];
   if (!s.keys.some(k => newsSections.includes(k) || k.includes('news'))) return;
 
   try {
-    // ── 솔루션: KT DS 공식 블로그에서 최신 5개 중 랜덤 1개 ──
+    // ── 솔루션: KT DS 공식 블로그 ──
     if (s.keys.includes('solution')) {
-      setStatus('🌐 KT DS 블로그 크롤링 중...');
-      const r = await fetch('/api/news?source=ktds_blog');
-      if (r.ok) {
+      let pick = s._cachedArticle || null;
+      let allItems = s._cachedItems || null;
+
+      if (!pick) {
+        // 첫 크롤링: 랜덤 기사 선택 후 캐시
+        setStatus('🌐 KT DS 블로그 크롤링 중...');
+        const r = await fetch('/api/news?source=ktds_blog');
+        if (!r.ok) return null;
         const data = await r.json();
-        if (data.items && data.items.length > 0) {
-          // 최신 5개 중 랜덤 선택
-          const pick = data.items[Math.floor(Math.random() * data.items.length)];
-          s.link = pick.link;
-          s.crawledLink = pick.link;
-          s.crawledTitle = pick.title || '';
-          s.crawledSource = 'blog.naver.com/ktds_official';
-
-          // 썸네일 처리: skipImage가 아닐 때만 업데이트
-          if (!skipImage) {
-            if (pick.thumbnail) {
-              imageData['ai_'+s.id] = pick.thumbnail;
-              s.imgSrc = 'none';
-            } else {
-              fetch(`/api/image?url=${encodeURIComponent(pick.link)}`)
-                .then(r2 => r2.ok ? r2.json() : null)
-                .then(d => { if (d?.url) { imageData['ai_'+s.id] = d.url; } })
-                .catch(() => {});
-              s.imgSrc = 'web';
-            }
-          }
-
-          // 전체 5개를 Gemini 컨텍스트로 사용
-          const newsContext = data.items.map((item, idx) =>
-            `[${idx+1}] 제목: ${item.title}\n내용: ${item.description}`
-          ).join('\n\n');
-          s.newsContext = newsContext;
-          return newsContext;
-        }
+        if (!data.items || data.items.length === 0) return null;
+        allItems = data.items;
+        pick = allItems[Math.floor(Math.random() * allItems.length)];
+        s._cachedArticle = pick;   // ← 캐시: 이후 호출에서도 같은 기사 사용
+        s._cachedItems   = allItems;
       }
-    }
 
-    // ── 그 외 섹션: 기존 뉴스 크롤링 ──
-    let topic = s.topic || s.name;
-    if(!s.topic) {
-      if(s.keys.includes('dsnews')) topic = 'kt ds';
-      else if(s.keys.includes('itnow')) topic = 'it now';
-    }
-    s.originalTopic = topic;
-    setStatus(`🌐 뉴스 크롤링 중 (${topic})...`);
-    const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
-    const r = await fetch(url);
-    if (r.ok) {
-      const data = await r.json();
-      if (data.items && data.items.length > 0) {
-        const firstNews = data.items[0];
-        if (firstNews.link) {
-          s.link = firstNews.link;
-          s.crawledLink = firstNews.link;
-          s.crawledTitle = firstNews.title || '';
+      // 링크/제목 동기화
+      s.link = pick.link;
+      s.crawledLink = pick.link;
+      s.crawledTitle = pick.title || '';
+      s.crawledSource = 'blog.naver.com/ktds_official';
+
+      // 이미지 처리 (skipImage=false일 때만)
+      if (!skipImage) {
+        if (pick.thumbnail) {
+          imageData['ai_'+s.id] = pick.thumbnail;
+          s.imgSrc = 'none';
+        } else {
           try {
-            const u = new URL(firstNews.link);
-            s.crawledSource = u.hostname.replace(/^www\./, '');
-          } catch(e) { s.crawledSource = ''; }
+            const imgR = await fetch(`/api/image?url=${encodeURIComponent(pick.link)}`);
+            if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
+          } catch {}
+          if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
         }
-        if (!skipImage) {
-          if (firstNews.thumbnail) {
-            imageData['ai_'+s.id] = firstNews.thumbnail;
-            s.imgSrc = 'none';
-          } else if (firstNews.link) {
-            fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`)
-              .then(r => r.ok ? r.json() : null)
-              .then(d => { if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } })
-              .catch(() => {});
-            s.imgSrc = 'web';
-          }
-        }
-        const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
-        s.newsContext = newsContext;
-        s.crawledLinks = data.items.map(item => item.link);
-        return newsContext;
+      }
+
+      // Gemini 컨텍스트: 전체 5개 기사 사용
+      const newsContext = (allItems || [pick]).map((item, idx) =>
+        `[${idx+1}] 제목: ${item.title}\n내용: ${item.description}`
+      ).join('\n\n');
+      s.newsContext = newsContext;
+      return newsContext;
+    }
+
+    // ── 그 외 섹션: 일반 뉴스 크롤링 ──
+    let firstNews = s._cachedArticle || null;
+
+    if (!firstNews) {
+      // 첫 크롤링: 기사 가져온 후 캐시
+      let topic = s.topic || s.name;
+      if(!s.topic) {
+        if(s.keys.includes('dsnews')) topic = 'kt ds';
+        else if(s.keys.includes('itnow')) topic = 'it now';
+      }
+      s.originalTopic = topic;
+      setStatus(`🌐 뉴스 크롤링 중 (${topic})...`);
+      const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const data = await r.json();
+      if (!data.items || data.items.length === 0) return null;
+      firstNews = data.items[0];
+      s._cachedArticle = firstNews;  // ← 캐시
+      s._cachedItems   = data.items;
+      s.crawledLinks   = data.items.map(item => item.link);
+      const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
+      s.newsContext = newsContext;
+    }
+
+    // 링크/제목 동기화 (캐시에서)
+    if (firstNews.link) {
+      s.link = firstNews.link;
+      s.crawledLink = firstNews.link;
+      s.crawledTitle = firstNews.title || '';
+      try {
+        const u = new URL(firstNews.link);
+        s.crawledSource = u.hostname.replace(/^www\./, '');
+      } catch(e) { s.crawledSource = ''; }
+    }
+
+    // 이미지 처리 (skipImage=false일 때만)
+    if (!skipImage) {
+      if (firstNews.thumbnail) {
+        imageData['ai_'+s.id] = firstNews.thumbnail;
+        s.imgSrc = 'none';
+      } else if (firstNews.link) {
+        try {
+          const imgR = await fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`);
+          if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } }
+        } catch {}
+        if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
       }
     }
+
+    return s.newsContext || null;
+
   } catch(e) { console.warn('뉴스 크롤링 실패:', e); }
   return null;
 }
@@ -2494,7 +2514,8 @@ async function genSec(id) {
   const imgSt=(document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const vars=+document.getElementById('rVar').value;
   try {
-    // 1. 뉴스 크롤링 (해당하는 경우 - 카피용이므로 이미지 업데이트 스킵)
+    // 1. 뉴스 크롤링: 새 생성이므로 캐시 초기화 → 새 기사 선택
+    s._cachedArticle = null; s._cachedItems = null;
     const newsContext = await crawlNewsForSection(s, true);
     let promptTopic = s.topic || s.name;
     if (newsContext) {
@@ -2563,9 +2584,18 @@ async function genSec2(id) {
 async function regenSecImg(id) {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const s = find(id); if(!s) return;
-  
-  // 이미지 생성 시 뉴스 출처/링크 업데이트가 필요할 수 있으므로 crawl 실행 (이미지 업데이트 허용)
-  if (s.imgSrc === 'web') await crawlNewsForSection(s, false);
+
+  // 뉴스/솔루션 섹션: 캐시된 기사로 이미지 가져오기 (없으면 새로 크롤)
+  const newsSectionKeys = ['news', 'dsnews', 'itnow', 'axfield', 'solution'];
+  if (s.keys.some(k => newsSectionKeys.includes(k) || k.includes('news'))) {
+    await crawlNewsForSection(s, false);
+    if (imageData['ai_'+s.id]) {
+      // 크롤에서 이미지 얻음 → fetchImage 건너뜀
+      if(Object.keys(copyData).length) rebuildPreview(); else livePreview();
+      setStatus(`✓ [${s.name}] 이미지 로드 완료`);
+      return;
+    }
+  }
 
   const btn = document.getElementById('ri-'+id);
   if(btn) { btn.disabled=true; btn.textContent='⏳'; }
@@ -2667,7 +2697,9 @@ async function generateAll(mode = 'copy') {
       setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
       
       // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST (skipImage = true)
+      // 새 생성이므로 캐시 초기화 → 새 기사 선택 (이미지 생성 시 동일 기사 재사용)
       for (const s of active) {
+        s._cachedArticle = null; s._cachedItems = null;
         await crawlNewsForSection(s, true);
       }
       setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
