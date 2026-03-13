@@ -12,9 +12,34 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { keyword } = req.query;
+    const { keyword, url } = req.query;
+    
+    // 1. Try to extract image directly from the article URL
+    if (url) {
+      try {
+        const urlFetchRes = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+          }
+        });
+        if (urlFetchRes.ok) {
+          const html = await urlFetchRes.text();
+          // Look for og:image meta tag
+          const ogMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||
+                          html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["'][^>]*>/i);
+          if (ogMatch && ogMatch[1]) {
+            let imgUrl = ogMatch[1].replace(/&amp;/g, '&');
+            return res.status(200).json({ url: imgUrl });
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to extract image from URL:', err.message);
+      }
+    }
+
+    // 2. Fallback to Bing Image Search
     if (!keyword) {
-      return res.status(400).json({ error: 'Keyword is required' });
+      return res.status(400).json({ error: 'Keyword is required if URL extraction fails' });
     }
 
     const searchUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(keyword)}&qft=+filterui:photo-photo`;
