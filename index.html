@@ -3136,20 +3136,22 @@ function buildHeroHTML(brand, vol) {
   const img = mainVisual.image;
   
   // Prioritize manually edited content if available
-  const title = getSel('heroTitle') || sl?.title || brand;
-  const sub = getSel('heroSub') || sl?.sub || '';
+  // Remove brand fallback to focus on Slogan as requested
+  const title = getSel('heroTitle') || sl?.title || 'NEWSLETTER'; 
+  const sub = getSel('heroSub') || sl?.sub || metaSub;
   const kws = sl?.keywords || [];
   
   const words = title.split(' ');
   const titleHTML = words.length > 1
     ? `<span class="hero-accent">${words[0]}</span> ${words.slice(1).join(' ')}`
     : `<span class="hero-accent">${title}</span>`;
+    
   return `
 <div class="hero-visual">
   ${img?`<img class="hero-bg" src="${img}" alt="">`:`<div class="hero-ph"></div>`}
   <div class="hero-grad"></div>
   <div class="hero-top">
-    <span class="hero-brand">${brand}</span>
+    <span class="hero-brand">${sub.substring(0, 30)}${sub.length > 30 ? '...' : ''}</span>
     <span class="hero-vol">${vol}</span>
   </div>
   <div class="hero-content">
