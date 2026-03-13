@@ -2405,9 +2405,21 @@ async function generateAll() {
       setLoading(true, heroLabel, mainVisual.slogan.title||brand);
       try {
         if(heroSrc === 'web') {
-          const heroKeyword = [brand, mainVisual.slogan?.title, mainVisual.slogan?.keywords?.slice(0,2).join(' ')].filter(Boolean).join(' ');
-          const heroImg = await fetchWebImage(heroKeyword, brand);
-          if(heroImg) mainVisual.image = heroImg;
+          // Use Pinterest for Hero via /api/pinterest and explicit 'it ai'
+          const heroKeyword = ['it ai', mainVisual.slogan?.title, ...(mainVisual.slogan?.keywords || [])].filter(Boolean).join(' ');
+          try {
+            const url = `/api/pinterest?keyword=${encodeURIComponent(heroKeyword)}`;
+            const res = await fetch(url);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.url) mainVisual.image = data.url;
+            }
+          } catch(e) { console.warn('Pinterest fetch failed, falling back', e); }
+          
+          if(!mainVisual.image) {
+            const heroImg = await fetchWebImage(heroKeyword, brand);
+            if(heroImg) mainVisual.image = heroImg;
+          }
         } else {
           const heroPrompt = buildHeroPrompt(mainVisual.slogan, brand, heroImgSt);
           const heroImg = await fetchImage(apiKey, 'ai', heroPrompt, heroImgSt, 'hero banner wide');
@@ -2788,11 +2800,26 @@ async function regenHero() {
   try {
     const introCopy=getSel('intro');
     if(introCopy) mainVisual.slogan=await extractSlogan(apiKey,introCopy,brand,brandSub);
+    if(!mainVisual.slogan) {
+      const fbTopic = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 AI 트렌드 및 혁신';
+      try { mainVisual.slogan = await extractSlogan(apiKey, fbTopic, brand, brandSub); } catch(e){}
+    }
     if(!mainVisual.slogan) mainVisual.slogan={title:brand,sub:brandSub,keywords:[],mood:'professional editorial'};
     let hi;
     if(heroSrcR === 'web') {
-      const heroKeyword = [brand, mainVisual.slogan?.title, mainVisual.slogan?.keywords?.slice(0,2).join(' ')].filter(Boolean).join(' ');
-      hi = await fetchWebImage(heroKeyword, brand);
+      const heroKeyword = ['it ai', mainVisual.slogan?.title, ...(mainVisual.slogan?.keywords || [])].filter(Boolean).join(' ');
+      try {
+        const url = `/api/pinterest?keyword=${encodeURIComponent(heroKeyword)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) hi = data.url;
+        }
+      } catch(e) {}
+      
+      if(!hi) {
+        hi = await fetchWebImage(heroKeyword, brand);
+      }
     } else if(heroSrcR !== 'none') {
       hi = await fetchImage(apiKey,'ai',buildHeroPrompt(mainVisual.slogan,brand,heroStR),heroStR,'hero banner');
     }
