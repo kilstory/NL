@@ -2717,26 +2717,59 @@ ${Object.entries(prompts).map(([k,v])=>`- ${k}: ${v}`).join('\n')}
 }
 각 버전은 톤과 강조점이 명확히 달라야 합니다. 한국어로.`;
 
+  const isDirectKey = key && key.startsWith('AIza') && key.length > 20;
+
   const tryM = async (model, json) => {
-    const r=await fetch('/api/gemini-copy', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ model, p, supportsJson: json })
-    });
-    if(!r.ok){
-      const eb=await r.json().catch(()=>({}));
-      throw new Error(eb?.error || eb?.error?.message || r.statusText);
-    }
-    const d=await r.json();
-    
-    let parsed;
-    if (d.parsed) {
-        parsed = d.parsed;
-    } else if (d.rawText) {
-        parsed=JSON.parse(d.rawText.replace(/```json|```/g,'').trim());
+    let rawText = '';
+    if (isDirectKey) {
+      // 브라우저에서 Gemini 직접 호출
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: p }] }],
+            generationConfig: { temperature: 0.85, responseMimeType: json ? 'application/json' : 'text/plain' }
+          })
+        }
+      );
+      if (!r.ok) {
+        const eb = await r.json().catch(() => ({}));
+        throw new Error(eb?.error?.message || `Gemini API 오류: ${r.status}`);
+      }
+      const data = await r.json();
+      rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     } else {
-        throw new Error('No valid response from Gemini');
+      const r = await fetch('/api/gemini-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, p, supportsJson: json })
+      });
+      if (!r.ok) {
+        const eb = await r.json().catch(() => ({}));
+        throw new Error(eb?.error || eb?.error?.message || r.statusText);
+      }
+      const d = await r.json();
+      if (d.parsed) {
+        // sanitize & return early
+        const out = {};
+        for (const [k,v] of Object.entries(d.parsed)) {
+          let arr = Array.isArray(v) ? v : [v];
+          out[k] = arr.map(item => {
+            if (typeof item === 'string') return item;
+            if (Array.isArray(item)) return item.join('\n');
+            if (typeof item === 'object' && item) return Object.values(item).join('\n');
+            return String(item ?? '');
+          });
+        }
+        return out;
+      }
+      rawText = d.rawText || '';
+      if (!rawText) throw new Error('No valid response from Gemini');
     }
+
+    const parsed = JSON.parse(rawText.replace(/```json|```/g,'').trim());
     // sanitize
     const out={};
     for(const[k,v] of Object.entries(parsed)){
@@ -2824,33 +2857,52 @@ ${isTopic ? '주제' : '인트로'}:
 3. JSON만 출력, 마크다운 없이:
 {"title":"임팩트 있는 슬로건","sub":"슬로건을 뒷받침하는 2~3문장의 길고 통찰력 있는 서브카피. 브랜드 가치와 핵심 메시지를 담아 독자의 공감을 이끌어낼 것.","keywords":["키워드1","키워드2"],"mood":"professional"}`;
   
-  const r=await fetch('/api/gemini-copy', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ model: 'gemini-2.0-flash', p: p, supportsJson: true })
-  });
-  if(!r.ok) {
-    const errorData = await r.json().catch(() => ({}));
-    throw new Error(`Gemini 카피 API 오류: ${r.status} ${errorData.error || r.statusText}`);
-  }
-  const d=await r.json();
-  
-  let parsed;
-  if (d.parsed) {
-      parsed = d.parsed;
-  } else if (d.rawText) {
-      try {
-        const cleaned = d.rawText.replace(/```json/g,'').replace(/```/g,'').trim();
-        parsed = JSON.parse(cleaned);
-      } catch (e) {
-        console.error('Failed to parse slogan JSON:', d.rawText);
-        // Fallback slogan if parsing fails but text exists
-        parsed = { title: brand, sub: brandSub, keywords: [], mood: 'professional' };
+  const isDirectKey = apiKey && apiKey.startsWith('AIza') && apiKey.length > 20;
+  let rawText = '';
+
+  if (isDirectKey) {
+    // API 키가 있으면 브라우저에서 Gemini 직접 호출 (서버 불필요)
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: p }] }],
+          generationConfig: { temperature: 0.9, responseMimeType: 'application/json' }
+        })
       }
+    );
+    if (!r.ok) {
+      const eb = await r.json().catch(() => ({}));
+      throw new Error(eb?.error?.message || `Gemini API 오류: ${r.status}`);
+    }
+    const data = await r.json();
+    rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   } else {
-      throw new Error('Gemini로부터 유효한 응답을 받지 못했습니다.');
+    // 서버 엔드포인트 경유
+    const r = await fetch('/api/gemini-copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'gemini-2.0-flash', p: p, supportsJson: true })
+    });
+    if (!r.ok) {
+      const eb = await r.json().catch(() => ({}));
+      throw new Error(`서버 API 오류: ${r.status} ${eb.error || r.statusText}`);
+    }
+    const d = await r.json();
+    if (d.parsed) return d.parsed;
+    rawText = d.rawText || '';
+    if (!rawText) throw new Error('Gemini로부터 유효한 응답을 받지 못했습니다.');
   }
-  return parsed;
+
+  try {
+    const cleaned = rawText.replace(/```json/g,'').replace(/```/g,'').trim();
+    return JSON.parse(cleaned);
+  } catch(e) {
+    console.error('Slogan JSON 파싱 실패:', rawText);
+    return { title: brand, sub: brandSub, keywords: [], mood: 'professional' };
+  }
 }
 async function genHero() {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
@@ -2861,17 +2913,38 @@ async function genHero() {
   const topic    = mainVisual.topic ? `주제: ${mainVisual.topic}` : '주제: 최신 IT, AI, AX 트렌드 및 혁신';
   
   try {
-    // 1. AI Times에서 최신 소식 긁어오기 (통찰력 있는 슬로건을 위해)
+    // 1. 최신 AI/AX 뉴스 크롤 (서버 있으면 AI Times, 없으면 Bing RSS 직접)
     let newsContext = '';
     try {
       const newsRes = await fetch(`/api/news?source=aitimes&keyword=ai+ax+디지털전환`);
       if (newsRes.ok) {
         const newsData = await newsRes.json();
         if (newsData.items && newsData.items.length > 0) {
-          newsContext = newsData.items.map(it => `[${it.title}] ${it.description}`).join('\n');
+          newsContext = newsData.items.map(it => `[${it.title}] ${it.description||''}`).join('\n');
         }
       }
-    } catch(err) { console.warn('Hero news crawl failed', err); }
+    } catch(err) { console.warn('서버 뉴스 API 실패, Bing RSS 직접 시도', err); }
+
+    // 서버 실패 시 Bing News RSS 직접 CORS 프록시로 시도
+    if (!newsContext) {
+      try {
+        const bingUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.bing.com/news/search?q=AI+AX+디지털전환+2026&cc=kr&format=rss')}`;
+        const bingRes = await fetch(bingUrl);
+        if (bingRes.ok) {
+          const xml = await bingRes.text();
+          const items = [];
+          const re = /<item>([\s\S]*?)<\/item>/g;
+          let m;
+          while ((m = re.exec(xml)) !== null && items.length < 5) {
+            const t = (m[1].match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+            const d = (m[1].match(/<description>([\s\S]*?)<\/description>/) || [])[1] || '';
+            const clean = (s) => s.replace(/<!\[CDATA\[(.*?)\]\]>/g,'$1').replace(/<[^>]+>/g,'').trim();
+            if (t) items.push(`[${clean(t)}] ${clean(d)}`);
+          }
+          if (items.length) newsContext = items.join('\n');
+        }
+      } catch(err2) { console.warn('Bing RSS 직접 실패', err2); }
+    }
 
     mainVisual.slogan = await extractSlogan(apiKey, topic, brand, brandSub, newsContext);
     if (!mainVisual.slogan) throw new Error('슬로건 데이터가 생성되지 않았습니다.');
