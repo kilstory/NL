@@ -480,9 +480,10 @@ select.r-inp { cursor:pointer; }
 .hero-content { position:relative; z-index:3; padding:0 28px 26px; }
 .hero-kws { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
 .hero-kw { font-size:8px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,.55); background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); padding:3px 9px; border-radius:2px; backdrop-filter:blur(4px); }
-.hero-title { font-size:36px; font-weight:900; color:#fff; font-family:'Noto Serif KR',serif; line-height:1.2; margin-bottom:10px; letter-spacing:-.5px; text-shadow:0 2px 24px rgba(0,0,0,.5); }
+.hero-title { font-size:36px; font-weight:900; color:#fff; font-family:'Noto Serif KR',serif; line-height:1.2; margin-bottom:6px; letter-spacing:-.5px; text-shadow:0 2px 24px rgba(0,0,0,.5); }
 .hero-accent { color:#4a7cf8; }
-.hero-div { width:36px; height:2px; background:linear-gradient(90deg,#4a7cf8,rgba(74,124,248,0)); margin-bottom:10px; border-radius:1px; }
+.hero-label { font-size:10px; font-weight:800; color:#4a7cf8; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; display:block; font-family:'DM Mono',monospace; opacity:0.9; }
+.hero-div { width:36px; height:2px; background:linear-gradient(90deg,#4a7cf8,rgba(74,124,248,0)); margin-bottom:12px; border-radius:1px; }
 .hero-sub { font-size:13px; color:rgba(255,255,255,.65); font-family:'Noto Sans KR',sans-serif; font-weight:400; line-height:1.55; max-width:400px; }
 .hero-ph { position:absolute; inset:0; z-index:0; background:radial-gradient(ellipse at 20% 50%,rgba(74,124,248,.25) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,.2) 0%,transparent 55%),linear-gradient(135deg,#0a0e1a,#111827,#0d1520); }
 
@@ -2993,16 +2994,25 @@ function renderHeroCard() {
     ? `<img class="mv-thumb" id="mvThumb" src="${mainVisual.image}" alt="">`
     : ``;
   
-  // Prioritize manually edited content for preview too
+  // Prioritize manually edited content for preview
   const sl = mainVisual.slogan;
   const title = getSel('heroTitle') || sl?.title || '';
   const sub = getSel('heroSub') || sl?.sub || '';
   
-  const sloganTxt = (title || sub) ? `"${title}" — ${sub}` : '';
-  const sloganHTML = sloganTxt ? `<div class="mv-slogan-txt">${sloganTxt}</div>` : '';
-  
-  const previewWrap = (mainVisual.image || sloganTxt)
-    ? `<div class="mv-preview-wrap">${imgEl}${sloganHTML}</div>`
+  // Title -> NEWSLETTER -> Sub
+  const titleHTML = title ? `<div style="font-size:14px; font-weight:900; line-height:1.2; margin-bottom:2px;">${title}</div>` : '';
+  const labelHTML = title ? `<div style="font-size:8px; font-weight:800; color:#4a7cf8; letter-spacing:1px; margin-bottom:4px; font-family:'DM Mono',monospace;">NEWSLETTER</div>` : '';
+  const subHTML = sub ? `<div style="font-size:10px; color:rgba(255,255,255,.6); line-height:1.4;">${sub}</div>` : '';
+
+  const previewHTML = (imgEl || titleHTML) 
+    ? `<div class="mv-preview-wrap" style="position:relative;">
+        ${imgEl}
+        <div class="mv-slogan-txt" style="display:flex; flex-direction:column; justify-content:flex-end;">
+          ${titleHTML}
+          ${labelHTML}
+          ${subHTML}
+        </div>
+       </div>`
     : ``;
   
   return `<div class="sc active mv-card" id="sc-hero">
@@ -3023,10 +3033,7 @@ function renderHeroCard() {
         <button class="t-gen ${mainVisual.genDone?'done':''}" id="tg-hero"
           onclick="genHero()">${mainVisual.genDone?'✓':'✦'}</button>
       </div>
-      <div class="mv-preview-wrap" style="position:relative;">
-        ${previewWrap}
-        ${sloganHTML}
-      </div>
+      ${previewHTML}
       <div class="sis-row3" id="sis-hero">
         <select class="sis-ai-sel ${src==='ai'?'sis-ai-on':''}" 
           id="sis-style-hero"
@@ -3156,12 +3163,13 @@ function buildHeroHTML(brand, vol) {
   ${img?`<img class="hero-bg" src="${img}" alt="">`:`<div class="hero-ph"></div>`}
   <div class="hero-grad"></div>
   <div class="hero-top">
-    <span class="hero-brand">${sub.substring(0, 30)}${sub.length > 30 ? '...' : ''}</span>
+    <span class="hero-brand"></span>
     <span class="hero-vol">${vol}</span>
   </div>
   <div class="hero-content">
     ${kws.length?`<div class="hero-kws">${kws.slice(0,4).map(k=>`<span class="hero-kw">${k}</span>`).join('')}</div>`:''}
     <div class="hero-title">${titleHTML}</div>
+    <div class="hero-label">NEWSLETTER</div>
     <div class="hero-div"></div>
     ${sub?`<div class="hero-sub">${sub}</div>`:''}
   </div>
