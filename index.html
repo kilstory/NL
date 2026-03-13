@@ -2404,14 +2404,14 @@ async function crawlNewsForSection(s) {
       if (r.ok) {
         const data = await r.json();
         if (data.items && data.items.length > 0) {
-          // 최신 5개 중 랜덤 선택
+          // 최신 5개 중 랜덤 선택 (타겟 기사)
           const pick = data.items[Math.floor(Math.random() * data.items.length)];
           s.link = pick.link;
           s.crawledLink = pick.link;
           s.crawledTitle = pick.title || '';
           s.crawledSource = 'blog.naver.com/ktds_official';
 
-          // 썸네일 처리: RSS 썸네일 → og:image 순서
+          // 썸네일 처리
           if (pick.thumbnail) {
             imageData['ai_'+s.id] = pick.thumbnail;
             s.imgSrc = 'none';
@@ -2423,10 +2423,12 @@ async function crawlNewsForSection(s) {
             s.imgSrc = 'web';
           }
 
-          // 전체 5개를 Gemini 컨텍스트로 사용
-          const newsContext = data.items.map((item, idx) =>
-            `[${idx+1}] 제목: ${item.title}\n내용: ${item.description}`
-          ).join('\n\n');
+          // [타겟 기사]를 명시하여 Gemini가 섞이지 않게 함
+          const targetText = `[메인 타겟 기사]\n제목: ${pick.title}\n내용: ${pick.description}`;
+          const otherItems = data.items.filter(it => it.link !== pick.link);
+          const othersText = otherItems.map((item, idx) => `[관련 참고 ${idx+1}] 제목: ${item.title}`).join('\n');
+          
+          const newsContext = `${targetText}\n\n(참고용 다른 최신 소식들)\n${othersText}`;
           s.newsContext = newsContext;
           return newsContext;
         }
@@ -2446,27 +2448,32 @@ async function crawlNewsForSection(s) {
     if (r.ok) {
       const data = await r.json();
       if (data.items && data.items.length > 0) {
-        const firstNews = data.items[0];
-        if (firstNews.link) {
-          s.link = firstNews.link;
-          s.crawledLink = firstNews.link;
-          s.crawledTitle = firstNews.title || '';
+        const pick = data.items[0]; // 최신 1개를 기본 타겟으로
+        if (pick.link) {
+          s.link = pick.link;
+          s.crawledLink = pick.link;
+          s.crawledTitle = pick.title || '';
           try {
-            const u = new URL(firstNews.link);
+            const u = new URL(pick.link);
             s.crawledSource = u.hostname.replace(/^www\./, '');
           } catch(e) { s.crawledSource = ''; }
         }
-        if (firstNews.thumbnail) {
-          imageData['ai_'+s.id] = firstNews.thumbnail;
+        if (pick.thumbnail) {
+          imageData['ai_'+s.id] = pick.thumbnail;
           s.imgSrc = 'none';
-        } else if (firstNews.link) {
-          fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`)
+        } else if (pick.link) {
+          fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(pick.link)}`)
             .then(r => r.ok ? r.json() : null)
             .then(d => { if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } })
             .catch(() => {});
           s.imgSrc = 'web';
         }
-        const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
+
+        const targetText = `[메인 타겟 기사]\n제목: ${pick.title}\n내용: ${pick.description}`;
+        const otherItems = data.items.slice(1, 5);
+        const othersText = otherItems.map((item, idx) => `[관련 참고 ${idx+1}] 제목: ${item.title}`).join('\n');
+        
+        const newsContext = `${targetText}\n\n(참고용 다른 최신 소식들)\n${othersText}`;
         s.newsContext = newsContext;
         return newsContext;
       }
@@ -2489,7 +2496,7 @@ async function genSec(id) {
     const newsContext = await crawlNewsForSection(s);
     let promptTopic = s.topic || s.name;
     if (newsContext) {
-      promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${newsContext})\n\n원래주제: ${promptTopic}`;
+      promptTopic = `(규칙: 아래 '메인 타겟 기사'의 제목과 내용을 바탕으로 핵심을 요약하여 카피를 작성할 것. 다른 참고 기사는 분위기 파악용으로만 쓸 것)\n\n${newsContext}\n\n원래주제: ${promptTopic}`;
     }
 
     const prompts = buildPrompts(s.keys, s.name, promptTopic, imgSt);
@@ -2657,7 +2664,7 @@ async function generateAll(mode = 'copy') {
       active.forEach(s => {
         let promptTopic = s.topic || s.name;
         if (s.newsContext) {
-          promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${s.newsContext})\n\n원래주제: ${s.originalTopic || promptTopic}`;
+          promptTopic = `(규칙: 아래 '메인 타겟 기사'를 기반으로 헤드라인과 요약을 작성할 것)\n\n${s.newsContext}\n\n원래주제: ${s.originalTopic || promptTopic}`;
         }
         Object.assign(allP, buildPrompts(s.keys, s.name, promptTopic, imgSt));
       });
