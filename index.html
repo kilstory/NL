@@ -2766,7 +2766,7 @@ JSON만 출력, 마크다운 없이:
   const r=await fetch('/api/gemini-copy', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ model: 'gemini-2.5-flash', p: p, supportsJson: true })
+    body:JSON.stringify({ model: 'gemini-2.0-flash', p: p, supportsJson: true })
   });
   if(!r.ok) throw new Error(r.statusText);
   const d=await r.json();
