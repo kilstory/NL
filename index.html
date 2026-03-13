@@ -256,7 +256,13 @@ select.r-inp { cursor:pointer; }
 .ly-sol-lbl  { font-size:7px; font-weight:700; color:#1a56db; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
 .ly-sol-tit  { font-size:14px; font-weight:800; color:#1a1816; margin-bottom:7px; font-family:'Noto Serif KR',serif; line-height:1.4; }
 .ly-sol-desc { font-size:11px; line-height:1.7; color:#555; margin-bottom:12px; }
-.ly-sol-btn  { display:inline-block; background:#1a1816; color:#fff; font-size:9px; font-weight:700; padding:8px 16px; border-radius:4px; text-decoration:none; }
+.ly-sol-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; }
+.ly-sol-src  { font-size:9px; color:#999; display:flex; align-items:center; gap:3px; }
+.ly-sol-src a { color:#1a56db; text-decoration:none; font-weight:600; }
+.ly-sol-src a:hover { text-decoration:underline; }
+.ly-sol-btn  { display:inline-block; background:#1a1816; color:#fff; font-size:9px; font-weight:700; padding:8px 16px; border-radius:4px; text-decoration:none; flex-shrink:0; }
+.ly-sol-img-lnk { display:block; }
+.ly-sol-img-lnk:hover img { opacity:.88; transition:opacity .15s; }
 
 /* ─ Layout: news (아이템 리스트) ─ */
 .ly-news { padding:18px 26px; border-bottom:1px solid #f0ede8; }
@@ -2406,10 +2412,25 @@ async function crawlNewsForSection(s) {
         if (firstNews.link) {
           s.link = firstNews.link;
           s.crawledLink = firstNews.link;
-          s.imgSrc = 'web'; // 기사 이미지를 사용하도록 유도
+          s.crawledTitle = firstNews.title || '';
+          try {
+            const u = new URL(firstNews.link);
+            s.crawledSource = u.hostname.replace(/^www\./, '');
+          } catch(e) { s.crawledSource = ''; }
+        }
+        // 썸네일이 RSS에 포함된 경우 → imageData에 바로 저장
+        if (firstNews.thumbnail) {
+          imageData['ai_'+s.id] = firstNews.thumbnail;
+          s.imgSrc = 'none'; // 별도 이미지 재생성 방지
+        } else if (firstNews.link) {
+          // og:image 추출 시도 (비동기, 실패해도 무시)
+          fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } })
+            .catch(() => {});
+          s.imgSrc = 'web';
         }
         const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
-        // Gemini 프롬프트에 실시간 뉴스 컨텍스트 주입
         s.newsContext = newsContext;
         return newsContext;
       }
@@ -3443,13 +3464,21 @@ function renderSecLayout(s, img, lines, text, skin) {
     </div>`;
   }
   if(lay === 'solution') {
+    const artLink = (link && link !== '#') ? link : '';
+    const src = s.crawledSource || '';
+    const imgEl = img
+      ? `<img class="ly-sol-img" src="${img}" alt="">`
+      : `<div class="ly-sol-ph">${s.icon}</div>`;
     return `<div class="ly-sol"><div class="ly-sol-in">
-      ${img ? `<img class="ly-sol-img" src="${img}" alt="">` : `<div class="ly-sol-ph">${s.icon}</div>`}
+      ${artLink ? `<a class="ly-sol-img-lnk" href="${artLink}" onclick="event.preventDefault();window.open('${artLink}','_blank')">${imgEl}</a>` : imgEl}
       <div class="ly-sol-body">
         <div class="ly-sol-lbl">${s.name.toUpperCase()}</div>
         <div class="ly-sol-tit">${title}</div>
         <div class="ly-sol-desc">${desc || lines.slice(1).join(' ')}</div>
-        <a class="ly-sol-btn" href="${link}" onclick="event.preventDefault();window.open(this.getAttribute('href'),'_blank');">알아보기 →</a>
+        <div class="ly-sol-foot">
+          ${src ? `<span class="ly-sol-src">📰 <a href="${artLink||'#'}" onclick="event.preventDefault();${artLink?`window.open('${artLink}','_blank')`:''};">${src}</a></span>` : '<span></span>'}
+          ${artLink ? `<a class="ly-sol-btn" href="${artLink}" onclick="event.preventDefault();window.open(this.getAttribute('href'),'_blank');">기사 보기 →</a>` : ''}
+        </div>
       </div>
     </div></div>`;
   }
