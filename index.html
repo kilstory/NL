@@ -2479,13 +2479,29 @@ async function crawlNewsForSection(s, skipImage = false) {
   try {
     // ── 솔루션: KT DS 공식 블로그에서 최신 5개 중 랜덤 1개 ──
     if (s.keys.includes('solution')) {
+      // 캐시 재사용: copy→image 간 동일 기사 보장
+      if (s._cachedArticle) {
+        const pick = s._cachedArticle;
+        const allItems = s._cachedItems || [pick];
+        s.link = pick.link; s.crawledLink = pick.link;
+        s.crawledTitle = pick.title || ''; s.crawledSource = 'blog.naver.com/ktds_official';
+        if (!skipImage) {
+          if (pick.thumbnail) { imageData['ai_'+s.id] = pick.thumbnail; s.imgSrc = 'none'; }
+          else { try { const imgR = await fetch(`/api/image?url=${encodeURIComponent(pick.link)}`); if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } } } catch {} if (!imageData['ai_'+s.id]) s.imgSrc = 'web'; }
+        }
+        const targetText = `[MAIN TARGET ARTICLE]\n제목: ${pick.title}\n내용: ${pick.description}`;
+        const othersText = allItems.filter(it => it.link !== pick.link).slice(0, 3).map((it, i) => `[Related ${i+1}] ${it.title}`).join('\n');
+        s.newsContext = `${targetText}\n\n(참고용 다른 최신 소식들)\n${othersText}`;
+        return s.newsContext;
+      }
       setStatus('🌐 KT DS 블로그 크롤링 중...');
       const r = await fetch('/api/news?source=ktds_blog');
       if (r.ok) {
         const data = await r.json();
         if (data.items && data.items.length > 0) {
-          // 최신 5개 중 랜덤 선택
+          // 최신 5개 중 랜덤 선택 후 캐시에 저장
           const pick = data.items[Math.floor(Math.random() * data.items.length)];
+          s._cachedArticle = pick; s._cachedItems = data.items;
           s.link = pick.link;
           s.crawledLink = pick.link;
           s.crawledTitle = pick.title || '';
@@ -2506,10 +2522,12 @@ async function crawlNewsForSection(s, skipImage = false) {
             }
           }
 
-          // 전체 5개를 Gemini 컨텍스트로 사용
-          const newsContext = data.items.map((item, idx) =>
-            `[${idx+1}] 제목: ${item.title}\n내용: ${item.description}`
-          ).join('\n\n');
+          // [타겟 기사]를 명시하여 Gemini가 섞이지 않게 함
+          const targetText = `[MAIN TARGET ARTICLE]\n제목: ${pick.title}\n내용: ${pick.description}`;
+          const otherItems = data.items.filter(it => it.link !== pick.link).slice(0, 3);
+          const othersText = otherItems.map((item, idx) => `[Related ${idx+1}] ${item.title}`).join('\n');
+          
+          const newsContext = `${targetText}\n\n(참고용 다른 최신 소식들)\n${othersText}`;
           s.newsContext = newsContext;
           return newsContext;
         }
@@ -2523,6 +2541,29 @@ async function crawlNewsForSection(s, skipImage = false) {
       else if(s.keys.includes('itnow')) topic = 'it now';
     }
     s.originalTopic = topic;
+
+    // 캐시 재사용: copy→image 간 동일 기사 보장
+    if (s._cachedArticle) {
+      const firstNews = s._cachedArticle;
+      const allItems = s._cachedItems || [firstNews];
+      if (firstNews.link) {
+        s.link = firstNews.link; s.crawledLink = firstNews.link; s.crawledTitle = firstNews.title || '';
+        try { const u = new URL(firstNews.link); s.crawledSource = u.hostname.replace(/^www\./, ''); } catch(e) {}
+      }
+      if (!skipImage) {
+        if (firstNews.thumbnail) { imageData['ai_'+s.id] = firstNews.thumbnail; s.imgSrc = 'none'; }
+        else if (firstNews.link) {
+          try { const imgR = await fetch(`/api/image?keyword=${encodeURIComponent(s.originalTopic||s.name)}&url=${encodeURIComponent(firstNews.link)}`); if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; s.imgSrc = 'none'; } } } catch {}
+          if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
+        }
+      }
+      const targetText = `[MAIN TARGET ARTICLE]\n제목: ${firstNews.title}\n내용: ${firstNews.description}`;
+      const othersText = allItems.slice(1, 4).map((it, i) => `[Related ${i+1}] ${it.title}`).join('\n');
+      s.newsContext = `${targetText}\n\n(참고용 다른 최신 소식들)\n${othersText}`;
+      s.crawledLinks = allItems.map(it => it.link);
+      return s.newsContext;
+    }
+
     setStatus(`🌐 뉴스 크롤링 중 (${topic})...`);
     const url = `/api/news${topic ? '?keyword=' + encodeURIComponent(topic) : ''}`;
     const r = await fetch(url);
@@ -2530,6 +2571,7 @@ async function crawlNewsForSection(s, skipImage = false) {
       const data = await r.json();
       if (data.items && data.items.length > 0) {
         const firstNews = data.items[0];
+        s._cachedArticle = firstNews; s._cachedItems = data.items;
         if (firstNews.link) {
           s.link = firstNews.link;
           s.crawledLink = firstNews.link;
@@ -2552,7 +2594,11 @@ async function crawlNewsForSection(s, skipImage = false) {
             if (!imageData['ai_'+s.id]) s.imgSrc = 'web';
           }
         }
-        const newsContext = data.items.map((item, idx) => `[${idx+1}] 제목: ${item.title}\n내용 요약: ${item.description}`).join('\n\n');
+        const targetText = `[MAIN TARGET ARTICLE]\n제목: ${firstNews.title}\n내용: ${firstNews.description}`;
+        const otherItems = data.items.slice(1, 4);
+        const othersText = otherItems.map((item, idx) => `[Related ${idx+1}] ${item.title}`).join('\n');
+        
+        const newsContext = `${targetText}\n\n(참고용 다른 최신 소식들)\n${othersText}`;
         s.newsContext = newsContext;
         s.crawledLinks = data.items.map(item => item.link);
         return newsContext;
@@ -2572,11 +2618,12 @@ async function genSec(id) {
   const imgSt=(document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const vars=+document.getElementById('rVar').value;
   try {
-    // 1. 뉴스 크롤링 (해당하는 경우 - 카피용이므로 이미지 업데이트 스킵)
+    // 1. 뉴스 크롤링 (캐시 초기화 후 새 기사 선택, 이미지는 이 캐시로 재사용됨)
+    s._cachedArticle = null; s._cachedItems = null;
     const newsContext = await crawlNewsForSection(s, true);
     let promptTopic = s.topic || s.name;
     if (newsContext) {
-      promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${newsContext})\n\n원래주제: ${promptTopic}`;
+      promptTopic = `(규칙: 아래 [MAIN TARGET ARTICLE]의 제목과 내용을 바탕으로 핵심을 요약하여 카피를 작성할 것. 다른 참고 기사는 분위기 파악용으로만 활용할 것)\n\n${newsContext}\n\n원래주제: ${promptTopic}`;
     }
 
     const prompts = buildPrompts(s.keys, s.name, promptTopic, imgSt);
@@ -2744,8 +2791,9 @@ async function generateAll(mode = 'copy') {
       // 1. Copy
       setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
       
-      // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST (skipImage = true)
+      // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST (캐시 초기화 후 새 기사 선택)
       for (const s of active) {
+        s._cachedArticle = null; s._cachedItems = null;
         await crawlNewsForSection(s, true);
       }
       setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
@@ -2754,7 +2802,7 @@ async function generateAll(mode = 'copy') {
       active.forEach(s => {
         let promptTopic = s.topic || s.name;
         if (s.newsContext) {
-          promptTopic = `(다음 실제 뉴스 기사들을 반드시 참고하여 각색해서 작성할 것:\n${s.newsContext})\n\n원래주제: ${s.originalTopic || promptTopic}`;
+          promptTopic = `(규칙: 아래 [MAIN TARGET ARTICLE]을 기반으로 헤드라인과 요약을 작성할 것)\n\n${s.newsContext}\n\n원래주제: ${s.originalTopic || promptTopic}`;
         }
         Object.assign(allP, buildPrompts(s.keys, s.name, promptTopic, imgSt));
       });
