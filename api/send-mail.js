@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import juice from 'juice';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -34,11 +35,19 @@ export default async function handler(req, res) {
       auth: { user, pass },
     });
 
+    // CSS를 각 요소의 inline style로 변환 (이메일 클라이언트 호환)
+    const inlinedHtml = juice(html, {
+      removeStyleTags: false,   // <style> 태그 유지 (일부 클라이언트용)
+      preserveMediaQueries: true,
+      applyWidthAttributes: true,
+      applyAttributesTableElements: true,
+    });
+
     await transporter.sendMail({
       from: `"뉴스레터 빌더" <${user}>`,
       to: toStr,
       subject,
-      html,
+      html: inlinedHtml,
     });
 
     res.status(200).json({ ok: true });

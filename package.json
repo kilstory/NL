@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "juice": "^11.1.1",
     "nodemailer": "^6.9.14"
   }
 }
