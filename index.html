@@ -4591,14 +4591,46 @@ function doReset() {
   document.getElementById('nlFrame').classList.remove('show');
   setStatus('초기화 완료');
 }
+/* 뉴스레터 CSS + 내용 포함한 완전한 HTML 생성 */
+function buildExportHTML() {
+  const brand   = document.getElementById('rBrand')?.value || 'Newsletter';
+  const frame   = document.getElementById('nlFrame');
+  const content = frame?.innerHTML || '';
+  if (!content.trim()) return '';
+
+  // 페이지에 정의된 모든 CSS를 수집 (뉴스레터 클래스 포함)
+  let css = '';
+  document.querySelectorAll('style').forEach(el => { css += el.textContent + '\n'; });
+
+  // 선택된 폰트 패키지 추가 링크
+  const pkg = FONT_PKGS[currentFontPkg];
+  const extraFont = (pkg?.gFont && currentFontPkg !== 'basic')
+    ? `<link rel="stylesheet" href="${pkg.gFont}">` : '';
+
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${brand} Newsletter</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&family=DM+Mono:wght@400&display=swap">
+${extraFont}
+<style>${css}</style>
+</head>
+<body style="margin:0;padding:0;">${content}</body>
+</html>`;
+}
+
 function doCopy() {
-  if(!finalHTML){alert('먼저 생성해주세요.');return;}
-  navigator.clipboard.writeText(finalHTML).then(()=>setStatus('✓ HTML 복사 완료'));
+  const html = buildExportHTML();
+  if(!html){alert('먼저 생성해주세요.');return;}
+  navigator.clipboard.writeText(html).then(()=>setStatus('✓ HTML 복사 완료'));
 }
 function doDownload() {
-  if(!finalHTML){alert('먼저 생성해주세요.');return;}
+  const html = buildExportHTML();
+  if(!html){alert('먼저 생성해주세요.');return;}
   const brand=document.getElementById('rBrand').value||'newsletter';
-  const blob=new Blob([finalHTML],{type:'text/html'});
+  const blob=new Blob([html],{type:'text/html'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=brand.replace(/\s+/g,'-').toLowerCase()+'-newsletter.html';
@@ -4661,7 +4693,8 @@ function mailTagInput(e) {
 }
 
 function openMailModal() {
-  if (!finalHTML) { alert('먼저 뉴스레터를 생성해주세요.'); return; }
+  const frame = document.getElementById('nlFrame');
+  if (!frame?.innerHTML?.trim()) { alert('먼저 뉴스레터를 생성해주세요.'); return; }
   mailRecipients = [];
   mailTagRender();
   const statusEl = document.getElementById('mailStatus');
@@ -4688,10 +4721,11 @@ async function sendMail() {
   statusEl.style.display = 'none';
 
   try {
+    const exportHtml = buildExportHTML();
     const r = await fetch('/api/send-mail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: mailRecipients, subject, html: finalHTML }),
+      body: JSON.stringify({ to: mailRecipients, subject, html: exportHtml }),
     });
     const data = await r.json();
     statusEl.style.display = 'block';
