@@ -49,22 +49,20 @@ export default async function handler(req, res) {
       });
       if (response.ok) {
         const xmlText = await response.text();
-        const items = [];
+        const all = [];
         const itemRegex = /<item>([\s\S]*?)<\/item>/g;
         let match;
         while ((match = itemRegex.exec(xmlText)) !== null) {
-          if (items.length >= 5) break;
+          if (all.length >= 60) break;
           const itemXml = match[1];
-
           const titleMatch = itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || itemXml.match(/<title>(.*?)<\/title>/);
           const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
           const descMatch = itemXml.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || itemXml.match(/<description>(.*?)<\/description>/);
           const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
-
           if (titleMatch && linkMatch) {
             const rawDesc = descMatch ? descMatch[1] : '';
             const thumbnail = extractRssThumbnail(itemXml) || extractDescThumbnail(rawDesc);
-            items.push({
+            all.push({
               title: titleMatch[1].trim(),
               link: linkMatch[1].trim(),
               description: rawDesc.replace(/<[^>]+>/g, '').replace(/\\'/g, "'").trim(),
@@ -72,6 +70,25 @@ export default async function handler(req, res) {
               thumbnail
             });
           }
+        }
+        // 키워드 관련성 점수 필터링
+        let items = all;
+        if (keyword && keyword.trim() && !keyword.includes('it now') && !keyword.includes('itnow')) {
+          const words = keyword.trim().toLowerCase().split(/\s+/).filter(w => w.length > 1);
+          if (words.length > 0) {
+            const scored = all.map(item => {
+              const text = (item.title + ' ' + item.description).toLowerCase();
+              const score = words.reduce((acc, w) => acc + (item.title.toLowerCase().includes(w) ? 3 : 0) + (text.includes(w) ? 2 : 0), 0);
+              return { item, score };
+            });
+            scored.sort((a, b) => b.score - a.score);
+            const matched = scored.filter(x => x.score > 0).map(x => x.item);
+            items = (matched.length > 0 ? matched : all).slice(0, 5);
+          } else {
+            items = all.slice(0, 5);
+          }
+        } else {
+          items = all.slice(0, 5);
         }
         if (items.length > 0) return res.status(200).json({ items, source: 'aitimes' });
       }
