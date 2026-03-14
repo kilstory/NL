@@ -1497,6 +1497,16 @@ select.r-inp { cursor:pointer; }
 }
 .sc-name-txt { font-size:11px; font-weight:700; color:var(--tx); }
 
+/* ── 히어로 슬로건 슬라이드 ── */
+.hss-block { border-top:1px solid var(--bd); margin-top:8px; padding-top:8px; display:flex; flex-direction:column; gap:5px; }
+.hss-lbl { font-size:8px; font-weight:700; color:var(--dim); letter-spacing:.8px; text-transform:uppercase; }
+.hss-nav { display:flex; gap:3px; flex-wrap:wrap; }
+.hss-dot { width:22px; height:22px; border-radius:5px; border:1px solid var(--bd); background:var(--inp); font-size:9px; font-weight:700; color:var(--mu); cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; transition:all .13s; flex-shrink:0; }
+.hss-dot:hover { border-color:var(--bd2); color:var(--tx); }
+.hss-dot.on { border-color:var(--blue); background:var(--bla); color:var(--blue); }
+.hss-ta { width:100%; background:var(--inp); border:1px solid var(--bd); border-radius:6px; padding:6px 8px; font-family:'Noto Sans KR',sans-serif; font-size:10px; color:var(--tx); outline:none; resize:none; line-height:1.6; transition:border-color .14s; min-height:38px; }
+.hss-ta:focus { border-color:rgba(74,124,248,.6); }
+
 
 /* ── card 레이아웃 2열 ── */
 .rsl-card-duo  { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -1893,8 +1903,10 @@ function renderHeroCard() {
       <input class="hero-topic-inp" id="heroTopicInp" placeholder="AI AX 디지털전환"
         value="${mainVisual.topic}" oninput="mainVisual.topic=this.value">
       <button class="hero-gen-btn" id="heroGenBtn" onclick="genHero()">
-        <span>✦</span> 슬로건 생성
+        <span>✦</span> ${copyData['mvMain'] ? '슬로건 재생성' : '슬로건 생성'}
       </button>
+      ${buildHssBLock('mvMain', '메인 슬로건')}
+      ${buildHssBLock('mvSub', '서브 카피')}
       <div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:10px">
         <div style="font-size:10px;color:var(--mu);margin-bottom:6px;font-weight:600">배경 이미지</div>
         <div class="sis-row3">
@@ -1921,6 +1933,40 @@ function renderHeroCard() {
       </div>
     </div>
   </div>`;
+}
+
+function buildHssBLock(key, label) {
+  const d = copyData[key];
+  if (!d) return '';
+  const cur = d.edited[d.selected] ?? d.variants[d.selected] ?? '';
+  const dots = d.variants.map((_, i) =>
+    `<button class="hss-dot ${i === d.selected ? 'on' : ''}" onclick="selHeroVar('${key}',${i})">${i+1}</button>`
+  ).join('');
+  return `<div class="hss-block" id="hss-${key}">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span class="hss-lbl">${label}</span>
+      <div class="hss-nav">${dots}</div>
+    </div>
+    <textarea class="hss-ta" id="hss-ta-${key}" rows="2"
+      oninput="editHeroVar('${key}',this.value)">${cur}</textarea>
+  </div>`;
+}
+
+function selHeroVar(key, idx) {
+  if (!copyData[key]) return;
+  copyData[key].selected = idx;
+  // 점 UI 갱신
+  document.querySelectorAll(`#hss-${key} .hss-dot`).forEach((b, i) => b.classList.toggle('on', i === idx));
+  // textarea 갱신
+  const ta = document.getElementById('hss-ta-'+key);
+  if (ta) ta.value = copyData[key].edited[idx] ?? copyData[key].variants[idx] ?? '';
+  rebuildPreview();
+}
+
+function editHeroVar(key, val) {
+  if (!copyData[key]) return;
+  copyData[key].edited[copyData[key].selected] = val;
+  rebuildPreview();
 }
 
 async function genHero() {
@@ -1973,6 +2019,7 @@ ${vars}가지 버전을 JSON으로만 출력 (마크다운 없이):
     copyData['mvSub']  = { variants: subs,  selected: 0, edited: [...subs]  };
 
     renderCopyPanel();
+    renderSecList(); // 히어로 카드 슬라이드 UI 갱신
     rebuildPreview();
 
   } catch (e) {
