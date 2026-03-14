@@ -480,7 +480,7 @@ select.r-inp { cursor:pointer; }
 .cv.sel .cv-ta { color:var(--tx); }
 
 /* ════════════ BOTTOM ════════════ */
-.bot { height:54px; background:var(--panel); border-top:1px solid var(--bd); display:flex; align-items:center; padding:0 18px; gap:10px; flex-shrink:0; }
+.bot { height:54px; background:var(--panel); border-top:1px solid var(--bd); display:flex; align-items:center; padding:0 18px; gap:10px; flex-shrink:0; overflow-x:auto; overflow-y:visible; }
 .bot-info { font-size:10px; color:var(--mu); }
 .bot-info b { color:var(--blue); font-weight:700; }
 .bot-acts { margin-left:auto; display:flex; gap:7px; }
@@ -1507,6 +1507,27 @@ select.r-inp { cursor:pointer; }
 .hss-ta { width:100%; background:var(--inp); border:1px solid var(--bd); border-radius:6px; padding:6px 8px; font-family:'Noto Sans KR',sans-serif; font-size:10px; color:var(--tx); outline:none; resize:none; line-height:1.6; transition:border-color .14s; min-height:38px; }
 .hss-ta:focus { border-color:rgba(74,124,248,.6); }
 
+/* ── 메일 발송 모달 ── */
+.mail-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9000; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.mail-overlay.show { display:flex; }
+.mail-modal { background:var(--panel); border:1px solid var(--bd2); border-radius:14px; padding:24px 26px; width:420px; max-width:90vw; box-shadow:0 24px 64px rgba(0,0,0,.5); }
+.mail-modal-hd { font-size:13px; font-weight:700; color:var(--tx); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+.mail-modal-lbl { font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--mu); margin-bottom:5px; margin-top:12px; }
+.mail-modal-inp { width:100%; background:var(--inp); border:1px solid var(--bd); border-radius:7px; padding:8px 11px; font-family:'Noto Sans KR',sans-serif; font-size:11px; color:var(--tx); outline:none; transition:border-color .14s; }
+.mail-modal-inp:focus { border-color:rgba(74,124,248,.6); }
+.mail-modal-footer { display:flex; gap:8px; margin-top:20px; justify-content:flex-end; }
+.mail-cancel { padding:7px 16px; border-radius:7px; border:1px solid var(--bd); background:transparent; font-size:11px; font-weight:600; color:var(--mu); cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all .13s; }
+.mail-cancel:hover { border-color:var(--bd2); color:var(--tx); }
+.mail-send { padding:7px 20px; border-radius:7px; border:none; background:linear-gradient(135deg,#3a6df0,#7c3aed); color:#fff; font-size:11px; font-weight:700; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:opacity .14s; display:flex; align-items:center; gap:6px; }
+.mail-send:hover { opacity:.88; }
+.mail-send:disabled { opacity:.35; cursor:not-allowed; }
+.mail-tag-wrap { display:flex; flex-wrap:wrap; gap:5px; align-items:center; background:var(--inp); border:1px solid var(--bd); border-radius:7px; padding:5px 8px; min-height:36px; cursor:text; transition:border-color .14s; }
+.mail-tag-wrap:focus-within { border-color:rgba(74,124,248,.6); }
+.mail-tag { display:inline-flex; align-items:center; gap:4px; background:var(--bla); border:1px solid rgba(74,124,248,.35); color:var(--blue); border-radius:5px; padding:2px 7px; font-size:10px; font-weight:600; white-space:nowrap; }
+.mail-tag-x { cursor:pointer; font-size:11px; line-height:1; opacity:.7; }
+.mail-tag-x:hover { opacity:1; }
+.mail-tag-inp { border:none; outline:none; background:transparent; font-size:11px; color:var(--tx); font-family:'Noto Sans KR',sans-serif; min-width:160px; flex:1; padding:2px 0; }
+.mail-tag-hint { font-size:9px; color:var(--dim); margin-top:3px; }
 
 /* ── card 레이아웃 2열 ── */
 .rsl-card-duo  { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -1729,6 +1750,7 @@ select.r-inp { cursor:pointer; }
     <button class="bot-btn reset" onclick="doReset()">전체 초기화</button>
     <button class="bot-btn" onclick="doCopy()">📋 HTML 복사</button>
     <button class="bot-btn" onclick="doDownload()">⬇ 다운로드</button>
+    <button class="bot-btn" onclick="openMailModal()" style="border-color:rgba(74,124,248,.4);color:var(--blue);">✉ 메일 발송</button>
     
     <button class="bot-main" id="genAllCopyBtn" onclick="generateAll('copy')" style="margin-right:8px;">
       <span style="font-size:13px;">✦</span>
@@ -1769,11 +1791,11 @@ const TYPE_LABELS = { ktds:'kt ds형', general:'일반형', product:'제품형' 
 
 /* ── 폰트 패키지 ── */
 const FONT_PKGS = {
-  basic:   { name:'기본',    title:"'Pretendard',sans-serif",     body:"'Pretendard',sans-serif",   gFont:'' },
-  modern:  { name:'모던',    title:"'Gmarket Sans',sans-serif",  body:"'Pretendard',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&display=swap' },
-  classic: { name:'클래식',  title:"'Nanum Myeongjo',serif",     body:"'Nanum Gothic',sans-serif",    gFont:'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700;800&display=swap' },
-  bold:    { name:'볼드',    title:"'Black Han Sans',sans-serif", body:"'Pretendard',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap' },
-  elegant: { name:'엘레강트', title:"'Sunflower',serif",          body:"'Pretendard',sans-serif",   gFont:'https://fonts.googleapis.com/css2?family=Sunflower:wght@300;500;700&display=swap' },
+  basic:   { name:'기본',     title:"'Noto Serif KR',serif",         body:"'Noto Sans KR',sans-serif",    gFont:'' },
+  modern:  { name:'모던',     title:"'Gmarket Sans',sans-serif",     body:"'Pretendard',sans-serif",      gFont:'https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&display=swap' },
+  classic: { name:'클래식',   title:"'Nanum Myeongjo',serif",        body:"'Nanum Gothic',sans-serif",    gFont:'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700;800&display=swap' },
+  bold:    { name:'볼드',     title:"'Black Han Sans',sans-serif",   body:"'Pretendard',sans-serif",      gFont:'https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap' },
+  elegant: { name:'엘레강트',  title:"'Sunflower',serif",             body:"'Pretendard',sans-serif",      gFont:'https://fonts.googleapis.com/css2?family=Sunflower:wght@300;500;700&display=swap' },
 };
 let currentFontPkg = 'basic';
 
@@ -2467,27 +2489,42 @@ function setFontPkg(key) {
     link.href = pkg.gFont;
     document.head.appendChild(link);
   }
-  // Update override style
   let el = document.getElementById('fontPkgOverride');
   if (!el) { el = document.createElement('style'); el.id = 'fontPkgOverride'; document.head.appendChild(el); }
   if (key === 'basic') {
     el.textContent = '';
   } else {
+    const n = '#nlFrame ';
     el.textContent = `
-      #nlFrame .hero-main,
-      #nlFrame .ly-sol-tit, #nlFrame .ly-news-hd, #nlFrame .ly-news-tit,
-      #nlFrame .ly-list-hd, #nlFrame .ly-card-hd, #nlFrame .ly-card-tit,
-      #nlFrame .ly-banner-tit, #nlFrame .g-brand, #nlFrame .g-lead,
-      #nlFrame .g-hero-tit, #nlFrame .g-card-tit, #nlFrame .g-cta-tit,
-      #nlFrame .g-foot-brand, #nlFrame .dg-feat-tit, #nlFrame .dg-sec-tit,
-      #nlFrame .k-logo-b { font-family: ${pkg.title} !important; }
-      ${pkg.body !== "'Noto Sans KR',sans-serif" ? `
-      #nlFrame .ly-sol-desc, #nlFrame .ly-news-desc, #nlFrame .k-intro,
-      #nlFrame .g-text, #nlFrame .g-hero-sub, #nlFrame .ly-card-txt,
-      #nlFrame .hero-copy { font-family: ${pkg.body} !important; }` : ''}
+      ${n}.hero-main,
+      ${n}.ly-sol-tit, ${n}.ly-news-hd, ${n}.ly-news-tit,
+      ${n}.ly-list-hd, ${n}.ly-card-hd, ${n}.ly-card-tit, ${n}.ly-banner-tit,
+      ${n}.k-logo-b, ${n}.k-art-tit, ${n}.k-sol-tit, ${n}.k-ni-tit, ${n}.k-custom-tit,
+      ${n}.g-brand, ${n}.g-lead, ${n}.g-hero-tit, ${n}.g-card-tit, ${n}.g-cta-tit, ${n}.g-foot-brand,
+      ${n}.dg-feat-tit, ${n}.dg-card-tit, ${n}.dg-list-tit, ${n}.dg-foot-brand,
+      ${n}.mg-cover-title, ${n}.mg-brandbar-name, ${n}.mg-full-tit, ${n}.mg-side-lay-tit,
+      ${n}.mg-banner-lay-tit, ${n}.mg-card-tit, ${n}.mg-list-tit,
+      ${n}.mg-2col-main-tit, ${n}.mg-2col-side-tit, ${n}.mg-column-pq, ${n}.mg-foot-brand, ${n}.mg-induo-tit,
+      ${n}.lt-header-brand, ${n}.lt-full-tit, ${n}.lt-side-tit, ${n}.lt-list-tit, ${n}.lt-signoff-name,
+      ${n}.v-cover-title, ${n}.v-sec-tit, ${n}.v-grid-tit, ${n}.v-foot-brand,
+      ${n}.e-mast-name, ${n}.e-lead-tit, ${n}.e-col-tit, ${n}.e-full-tit, ${n}.e-quote-txt, ${n}.e-foot-brand,
+      ${n}.rsl-dg-banner-tit, ${n}.rsl-dg-full-tit, ${n}.rsl-dg-side-tit, ${n}.rsl-dg-card-tit, ${n}.rsl-dg-list-tit
+      { font-family: ${pkg.title} !important; }
+
+      ${n}.hero-copy, ${n}.k-intro,
+      ${n}.ly-sol-desc, ${n}.ly-news-desc, ${n}.ly-card-txt,
+      ${n}.g-text, ${n}.g-hero-sub, ${n}.g-cta-sub,
+      ${n}.dg-intro, ${n}.dg-card-txt,
+      ${n}.mg-full-deck, ${n}.mg-full-txt, ${n}.mg-side-lay-desc, ${n}.mg-banner-lay-desc,
+      ${n}.mg-card-desc, ${n}.mg-list-desc, ${n}.mg-2col-main-body, ${n}.mg-column-txt,
+      ${n}.lt-greeting-text, ${n}.lt-full-body, ${n}.lt-side-desc, ${n}.lt-list-desc, ${n}.lt-signoff-txt,
+      ${n}.v-cover-sub, ${n}.v-sec-desc, ${n}.v-grid-txt, ${n}.v-intro-txt,
+      ${n}.e-intro, ${n}.e-lead-deck, ${n}.e-col-body, ${n}.e-full-body,
+      ${n}.rsl-dg-banner-desc, ${n}.rsl-dg-full-desc, ${n}.rsl-dg-side-desc, ${n}.rsl-dg-card-desc, ${n}.rsl-dg-list-desc,
+      ${n}.dg-wrap, ${n}.lt-wrap, ${n}.v-wrap, ${n}.e-wrap
+      { font-family: ${pkg.body} !important; }
     `;
   }
-  // Update UI
   document.querySelectorAll('.font-pkg-card').forEach(c => c.classList.toggle('active', c.dataset.key === key));
   livePreview();
 }
@@ -4580,6 +4617,127 @@ document.getElementById('themeTxt').textContent='다크';
 // 앱 시작 즉시 기본 미리보기
 setTimeout(livePreview, 100);
 
+/* ═══════════════════════════════════════
+   MAIL SEND
+═══════════════════════════════════════ */
+/* ── 메일 태그 관리 ── */
+let mailRecipients = [];
+
+function mailTagRender() {
+  const wrap = document.getElementById('mailTagWrap');
+  const inp  = document.getElementById('mailTagInp');
+  wrap.querySelectorAll('.mail-tag').forEach(t => t.remove());
+  mailRecipients.forEach((email, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'mail-tag';
+    tag.innerHTML = `${email} <span class="mail-tag-x" onclick="mailTagRemove(${i})">✕</span>`;
+    wrap.insertBefore(tag, inp);
+  });
+  const cnt = document.getElementById('mailToCnt');
+  if (cnt) cnt.textContent = mailRecipients.length > 0 ? `(${mailRecipients.length}명)` : '';
+}
+function mailTagAdd(raw) {
+  const emails = raw.split(/[,;\s]+/).map(s => s.trim()).filter(s => s && s.includes('@'));
+  emails.forEach(e => { if (!mailRecipients.includes(e)) mailRecipients.push(e); });
+  mailTagRender();
+  document.getElementById('mailTagInp').value = '';
+}
+function mailTagRemove(i) {
+  mailRecipients.splice(i, 1);
+  mailTagRender();
+}
+function mailTagKey(e) {
+  const v = e.target.value.trim();
+  if ((e.key === 'Enter' || e.key === ',') && v) {
+    e.preventDefault();
+    mailTagAdd(v);
+  } else if (e.key === 'Backspace' && !v && mailRecipients.length > 0) {
+    mailRecipients.pop();
+    mailTagRender();
+  }
+}
+function mailTagInput(e) {
+  if (e.target.value.endsWith(',')) mailTagAdd(e.target.value.replace(',', ''));
+}
+
+function openMailModal() {
+  if (!finalHTML) { alert('먼저 뉴스레터를 생성해주세요.'); return; }
+  mailRecipients = [];
+  mailTagRender();
+  const statusEl = document.getElementById('mailStatus');
+  statusEl.style.display = 'none';
+  statusEl.textContent = '';
+  statusEl.className = 'mail-status';
+  document.getElementById('mailOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('mailTagInp').focus(), 80);
+}
+function closeMailModal() {
+  document.getElementById('mailOverlay').classList.remove('show');
+}
+async function sendMail() {
+  const inp     = document.getElementById('mailTagInp');
+  if (inp.value.trim()) mailTagAdd(inp.value.trim());
+  if (mailRecipients.length === 0) { alert('수신자를 1명 이상 입력해주세요.'); return; }
+  const subject = document.getElementById('mailSubject').value.trim();
+  if (!subject) { alert('제목을 입력해주세요.'); return; }
+
+  const btn = document.getElementById('mailSendBtn');
+  const statusEl = document.getElementById('mailStatus');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="opacity:.7">발송 중...</span>';
+  statusEl.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/send-mail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: mailRecipients, subject, html: finalHTML }),
+    });
+    const data = await r.json();
+    statusEl.style.display = 'block';
+    if (r.ok && data.ok) {
+      statusEl.textContent = `✓ ${mailRecipients.length}명에게 발송 완료!`;
+      statusEl.className = 'mail-status show ok';
+      setTimeout(closeMailModal, 1800);
+    } else {
+      statusEl.textContent = '오류: ' + (data.error || '알 수 없는 오류');
+      statusEl.className = 'mail-status show err';
+    }
+  } catch (e) {
+    statusEl.style.display = 'block';
+    statusEl.textContent = '네트워크 오류: ' + e.message;
+    statusEl.className = 'mail-status show err';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✉ 발송';
+  }
+}
+
 </script>
+
+<!-- 메일 발송 모달 -->
+<div class="mail-overlay" id="mailOverlay" onclick="if(event.target===this)closeMailModal()">
+  <div class="mail-modal">
+    <div class="mail-modal-hd">✉ 뉴스레터 메일 발송</div>
+
+    <div class="mail-modal-lbl">수신자 이메일 <span id="mailToCnt" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--blue);"></span></div>
+    <div class="mail-tag-wrap" id="mailTagWrap" onclick="document.getElementById('mailTagInp').focus()">
+      <input class="mail-tag-inp" id="mailTagInp" type="email" placeholder="이메일 입력 후 Enter 또는 쉼표"
+        onkeydown="mailTagKey(event)" oninput="mailTagInput(event)">
+    </div>
+    <div class="mail-tag-hint">Enter 또는 , 로 추가 · 여러 명 동시 발송 가능</div>
+
+    <div class="mail-modal-lbl">제목</div>
+    <input class="mail-modal-inp" id="mailSubject" type="text" placeholder="뉴스레터 제목을 입력하세요" value="뉴스레터">
+
+    <div class="mail-status" id="mailStatus" style="display:none;"></div>
+
+    <div class="mail-modal-footer">
+      <button class="mail-cancel" onclick="closeMailModal()">취소</button>
+      <button class="mail-send" id="mailSendBtn" onclick="sendMail()">✉ 발송</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
