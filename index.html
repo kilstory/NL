@@ -1528,6 +1528,26 @@ select.r-inp { cursor:pointer; }
 .mail-tag-x:hover { opacity:1; }
 .mail-tag-inp { border:none; outline:none; background:transparent; font-size:11px; color:var(--tx); font-family:'Noto Sans KR',sans-serif; min-width:160px; flex:1; padding:2px 0; }
 .mail-tag-hint { font-size:9px; color:var(--dim); margin-top:3px; }
+.mail-ab-wrap { border:1px solid var(--bd); border-radius:8px; overflow:hidden; margin-top:0; }
+.mail-ab-group { border-bottom:1px solid var(--bd); }
+.mail-ab-group:last-child { border-bottom:none; }
+.mail-ab-group-hd { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; cursor:pointer; transition:background .13s; }
+.mail-ab-group-hd:hover { background:var(--inp); }
+.mail-ab-group-name { font-size:10px; font-weight:700; color:var(--tx); display:flex; align-items:center; gap:6px; }
+.mail-ab-cnt { font-size:9px; color:var(--mu); font-weight:400; }
+.mail-ab-add-all { font-size:9px; padding:2px 8px; border-radius:4px; border:1px solid rgba(74,124,248,.35); background:rgba(74,124,248,.07); color:var(--blue); cursor:pointer; font-weight:600; font-family:'Noto Sans KR',sans-serif; white-space:nowrap; }
+.mail-ab-add-all:hover { background:rgba(74,124,248,.15); }
+.mail-ab-chevron { font-size:9px; color:var(--dim); transition:transform .2s; }
+.mail-ab-chevron.open { transform:rotate(180deg); }
+.mail-ab-members { display:none; background:var(--inp); }
+.mail-ab-members.show { display:block; }
+.mail-ab-member { display:flex; align-items:center; gap:8px; padding:5px 12px; cursor:pointer; transition:background .12s; border-top:1px solid var(--bd); }
+.mail-ab-member:hover { background:rgba(74,124,248,.07); }
+.mail-ab-member-name { font-size:10px; font-weight:600; color:var(--tx); min-width:54px; }
+.mail-ab-member-email { font-size:9px; color:var(--mu); flex:1; font-family:'DM Mono',monospace; }
+.mail-ab-member-btn { font-size:9px; padding:1px 7px; border-radius:4px; border:1px solid var(--bd); background:var(--card); color:var(--mu); cursor:pointer; font-family:'Noto Sans KR',sans-serif; flex-shrink:0; transition:all .12s; }
+.mail-ab-member.added .mail-ab-member-btn { border-color:rgba(74,124,248,.35); color:var(--blue); background:rgba(74,124,248,.07); }
+.mail-ab-member.added .mail-ab-member-name { color:var(--blue); }
 
 /* ── card 레이아웃 2열 ── */
 .rsl-card-duo  { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -4686,10 +4706,89 @@ function mailTagKey(e) {
   } else if (e.key === 'Backspace' && !v && mailRecipients.length > 0) {
     mailRecipients.pop();
     mailTagRender();
+    syncAbHighlight();
   }
 }
 function mailTagInput(e) {
   if (e.target.value.endsWith(',')) mailTagAdd(e.target.value.replace(',', ''));
+}
+
+/* ── 주소록 ── */
+let abContacts = [];
+
+async function loadContacts() {
+  try {
+    const r = await fetch('/api/contacts');
+    const data = await r.json();
+    abContacts = data.groups || [];
+    renderAbGroups();
+  } catch {
+    document.getElementById('mailAbWrap').innerHTML =
+      '<div style="padding:10px 12px;font-size:10px;color:var(--dim);">주소록을 불러올 수 없습니다.</div>';
+  }
+}
+
+function renderAbGroups() {
+  const wrap = document.getElementById('mailAbWrap');
+  if (!abContacts.length) { wrap.innerHTML = '<div style="padding:10px 12px;font-size:10px;color:var(--dim);">그룹 없음</div>'; return; }
+  wrap.innerHTML = abContacts.map((g, gi) => `
+    <div class="mail-ab-group">
+      <div class="mail-ab-group-hd" onclick="toggleAbGroup(${gi})">
+        <span class="mail-ab-group-name">
+          👥 ${g.name} <span class="mail-ab-cnt">${g.members.length}명</span>
+        </span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="mail-ab-add-all" onclick="event.stopPropagation();addAbGroup(${gi})">전체 추가</button>
+          <span class="mail-ab-chevron" id="ab-chev-${gi}">▼</span>
+        </div>
+      </div>
+      <div class="mail-ab-members" id="ab-members-${gi}">
+        ${g.members.map((m, mi) => `
+          <div class="mail-ab-member" id="ab-m-${gi}-${mi}">
+            <span class="mail-ab-member-name">${m.name}</span>
+            <span class="mail-ab-member-email">${m.email}</span>
+            <button class="mail-ab-member-btn" onclick="addAbMember(${gi},${mi})">추가</button>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleAbGroup(gi) {
+  const members = document.getElementById(`ab-members-${gi}`);
+  const chev    = document.getElementById(`ab-chev-${gi}`);
+  members.classList.toggle('show');
+  chev.classList.toggle('open');
+}
+
+function addAbMember(gi, mi) {
+  const m = abContacts[gi]?.members[mi];
+  if (!m) return;
+  if (!mailRecipients.includes(m.email)) {
+    mailRecipients.push(m.email);
+    mailTagRender();
+  }
+  const el = document.getElementById(`ab-m-${gi}-${mi}`);
+  if (el) el.classList.add('added');
+  const btn = el?.querySelector('.mail-ab-member-btn');
+  if (btn) btn.textContent = '✓';
+}
+
+function addAbGroup(gi) {
+  const group = abContacts[gi];
+  if (!group) return;
+  group.members.forEach((m, mi) => addAbMember(gi, mi));
+}
+
+function syncAbHighlight() {
+  // 수신자 태그 제거 시 주소록 하이라이트도 해제
+  document.querySelectorAll('.mail-ab-member').forEach(el => {
+    const emailEl = el.querySelector('.mail-ab-member-email');
+    if (!emailEl) return;
+    const isAdded = mailRecipients.includes(emailEl.textContent.trim());
+    el.classList.toggle('added', isAdded);
+    const btn = el.querySelector('.mail-ab-member-btn');
+    if (btn) btn.textContent = isAdded ? '✓' : '추가';
+  });
 }
 
 function openMailModal() {
@@ -4703,6 +4802,7 @@ function openMailModal() {
   statusEl.className = 'mail-status';
   document.getElementById('mailOverlay').classList.add('show');
   setTimeout(() => document.getElementById('mailTagInp').focus(), 80);
+  loadContacts();
 }
 function closeMailModal() {
   document.getElementById('mailOverlay').classList.remove('show');
@@ -4760,6 +4860,11 @@ async function sendMail() {
         onkeydown="mailTagKey(event)" oninput="mailTagInput(event)">
     </div>
     <div class="mail-tag-hint">Enter 또는 , 로 추가 · 여러 명 동시 발송 가능</div>
+
+    <div class="mail-modal-lbl" style="margin-top:14px;">주소록</div>
+    <div class="mail-ab-wrap" id="mailAbWrap">
+      <div style="padding:10px 12px;font-size:10px;color:var(--dim);">불러오는 중...</div>
+    </div>
 
     <div class="mail-modal-lbl">제목</div>
     <input class="mail-modal-inp" id="mailSubject" type="text" placeholder="뉴스레터 제목을 입력하세요" value="뉴스레터">
