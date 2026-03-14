@@ -1743,6 +1743,7 @@ let sections    = [];
 let copyData    = {};
 let imageData   = {};
 let finalHTML   = '';
+let usedArticleLinks = new Set(); // 섹션 간 기사 중복 방지
 let imgSrc      = 'ai'; // 'ai' | 'web' | 'none'
 let isDark      = false;
 let mainVisual  = { 
@@ -2111,9 +2112,9 @@ function renderCard(s) {
 
   const headPart = `
     <div class="sc-head">
-      <div class="sc-tog on" id="tog-${s.id}" onclick="togSec('${s.id}')"></div>
       <span class="sc-num">${s.id.split('-')[1]}</span>
       <input class="sc-name-inp" value="${esc(s.name)}" oninput="updName('${s.id}',this.value)">
+      <div class="sc-tog on" id="tog-${s.id}" onclick="togSec('${s.id}')"></div>
     </div>`;
 
   if (isCard) {
@@ -2555,7 +2556,10 @@ async function crawlNewsForSection(s, skipImage = false) {
     if (r.ok) {
       const data = await r.json();
       if (data.items?.length > 0) {
-        const pick = data.items[0];
+        // 다른 섹션이 이미 사용한 기사 제외
+        const available = data.items.filter(it => !usedArticleLinks.has(it.link));
+        const pick = (available.length > 0 ? available : data.items)[0];
+        usedArticleLinks.add(pick.link);
         s._cachedArticle = pick; s._cachedItems = data.items;
         s.link = pick.link; s.crawledLink = pick.link;
         s.crawledSource = pick.source || ''; s.crawledTitle = pick.title || '';
@@ -2589,7 +2593,8 @@ async function genSec(id) {
   const imgSt=(document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const vars=+document.getElementById('rVar').value;
   try {
-    // 1. 뉴스 크롤링 (캐시 초기화 후 새 기사 선택, 이미지는 이 캐시로 재사용됨)
+    // 1. 뉴스 크롤링 (캐시 초기화, 이전 링크를 중복 세트에서 제거)
+    if (s._cachedArticle?.link) usedArticleLinks.delete(s._cachedArticle.link);
     s._cachedArticle = null; s._cachedItems = null;
     const newsContext = await crawlNewsForSection(s, true);
     let promptTopic = s.topic || s.name;
@@ -2771,6 +2776,7 @@ async function generateAll(mode = 'copy') {
       setLoading(true,'🍌 Gemini 2.5 Pro — 카피 작성 중',`${active.length}개 섹션 × ${vars}가지 버전`);
       
       // FETCH REAL NEWS FOR RELEVANT SECTIONS FIRST (캐시 초기화 후 새 기사 선택)
+      usedArticleLinks = new Set(); // 중복 방지 세트 초기화
       for (const s of active) {
         s._cachedArticle = null; s._cachedItems = null;
         await crawlNewsForSection(s, true);
