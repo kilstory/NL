@@ -2112,7 +2112,7 @@ function renderCard(s) {
 
   const headPart = `
     <div class="sc-head">
-      <span class="sc-num">${s.id.split('-')[1]}</span>
+      <span class="sc-num">${s.num}</span>
       <input class="sc-name-inp" value="${esc(s.name)}" oninput="updName('${s.id}',this.value)">
       <div class="sc-tog on" id="tog-${s.id}" onclick="togSec('${s.id}')"></div>
     </div>`;
