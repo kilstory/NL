@@ -4622,6 +4622,22 @@ function buildEmailHTML() {
   const vol    = document.getElementById('rVol')?.value   || '';
   const active = sections.filter(s => s.on);
 
+  // livePreview와 동일: 카피 없는 섹션에 placeholder 임시 주입
+  const injected = [];
+  active.forEach(s => {
+    const allKeys = [...s.keys];
+    if((s.layout||'full')==='card') allKeys.push(s.keys[0]+'_b');
+    allKeys.forEach(k => {
+      if(!copyData[k]) {
+        const isB = k.endsWith('_b');
+        const t = (isB ? (s.topic2||s.topic) : s.topic) || s.ph?.replace(/^예: /,'') || s.name;
+        const body = `${t}\n${s.name} 내용이 여기에 표시됩니다.`;
+        copyData[k] = { variants:[body], selected:0, edited:[body] };
+        injected.push(k);
+      }
+    });
+  });
+
   const TF   = "'Noto Serif KR',Georgia,serif";
   const BF   = "'Noto Sans KR',Arial,sans-serif";
   const MF   = "'DM Mono','Courier New',monospace";
@@ -4809,7 +4825,7 @@ function buildEmailHTML() {
     </table>
   </td></tr>`;
 
-  return `<!DOCTYPE html>
+  const result = `<!DOCTYPE html>
 <html lang="ko" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -4835,6 +4851,11 @@ body{margin:0!important;padding:0!important;}p{margin:0;}
   </td></tr>
 </table>
 </body></html>`;
+
+  // placeholder 제거 (실제 생성된 카피는 유지)
+  injected.forEach(k => delete copyData[k]);
+
+  return result;
 }
 
 function buildExportHTML() {
