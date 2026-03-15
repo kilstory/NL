@@ -1,0 +1,225 @@
+/* ════════════ LOGIN PAGE STYLES ════════════ */
+
+:root {
+    --login-bg: var(--bg);
+    --login-panel: var(--panel);
+    --login-tx: var(--tx);
+    --login-blue: var(--blue);
+    --login-mu: var(--mu);
+}
+
+body.login-body {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    font-family: 'Pretendard', sans-serif;
+    background: var(--login-bg);
+    color: var(--login-tx);
+    overflow: hidden;
+}
+
+.login-container {
+    display: flex;
+    width: 1000px;
+    height: 640px;
+    background: var(--login-panel);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--bd);
+}
+
+/* Banner Section */
+.login-banner {
+    flex: 1.2;
+    position: relative;
+    background: linear-gradient(135deg, #3a6df0, #8b5cf6);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 48px;
+    color: white;
+    overflow: hidden;
+}
+
+.login-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover;
+    opacity: 0.4;
+    mix-blend-mode: overlay;
+}
+
+.login-banner-content {
+    position: relative;
+    z-index: 2;
+}
+
+.login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+
+.login-logo-mark {
+    width: 36px;
+    height: 36px;
+    background: white;
+    color: #3a6df0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 18px;
+    font-family: 'DM Mono', monospace;
+}
+
+.login-logo-name {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.login-banner-title {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    font-family: 'Pretendard', sans-serif;
+    letter-spacing: -1px;
+}
+
+.login-banner-desc {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+}
+
+/* Form Section */
+.login-form-area {
+    flex: 1;
+    padding: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-header {
+    margin-bottom: 32px;
+}
+
+.login-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.login-header p {
+    font-size: 14px;
+    color: var(--login-mu);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--login-mu);
+}
+
+.form-input {
+    width: 100%;
+    height: 48px;
+    background: var(--inp);
+    border: 1px solid var(--bd);
+    border-radius: 10px;
+    padding: 0 16px;
+    font-size: 14px;
+    color: var(--tx);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    border-color: var(--login-blue);
+    box-shadow: 0 0 0 4px rgba(58, 109, 240, 0.1);
+}
+
+.btn-login {
+    width: 100%;
+    height: 48px;
+    background: linear-gradient(135deg, #3a6df0, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+    box-shadow: 0 10px 20px -5px rgba(58, 109, 240, 0.3);
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -5px rgba(58, 109, 240, 0.4);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.login-footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--login-mu);
+}
+
+.login-footer a {
+    color: var(--login-blue);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+.error-msg {
+    color: var(--red);
+    font-size: 12px;
+    margin-top: 6px;
+    display: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-container {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .login-container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+    .login-banner {
+        display: none;
+    }
+}
