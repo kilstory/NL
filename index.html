@@ -4662,7 +4662,25 @@ function buildEmailHTML() {
   </td></tr>`;
 
   /* ── 헤더 바 ── */
-  rows += `
+  if (currentType === 'ktds') {
+    // KTDS k-top: 왼쪽 진한 빨강(로고) + 오른쪽 빨강(메타)
+    rows += `
+  <tr><td bgcolor="${AC}" style="background-color:${AC};padding:0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td width="150" bgcolor="#c12b23" class="mob-pad" style="background-color:#c12b23;padding:14px 22px;vertical-align:middle;">
+          <p style="margin:0;font-family:${TF};font-size:16px;font-weight:900;color:#ffffff;">${esc(brand)}</p>
+          <p style="margin:3px 0 0;font-family:${BF};font-size:7px;color:rgba(255,255,255,0.5);letter-spacing:2px;">NEWSLETTER</p>
+        </td>
+        <td class="mob-pad" style="padding:14px 18px;vertical-align:middle;">
+          <p style="margin:0;font-family:${MF};font-size:9px;color:rgba(255,255,255,0.75);font-weight:500;">${esc(vol)}</p>
+          <p style="margin:3px 0 0;font-family:${BF};font-size:8px;color:rgba(255,255,255,0.4);">${esc(sub)}가 드리는 소식지</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>`;
+  } else {
+    rows += `
   <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:14px 36px 14px;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr>
@@ -4677,6 +4695,7 @@ function buildEmailHTML() {
     </table>
   </td></tr>
   <tr><td bgcolor="${AC}" height="3" style="background-color:${AC};height:3px;font-size:0;line-height:0;">&nbsp;</td></tr>`;
+  }
 
   /* ── 섹션들 ── */
   for (const s of active) {
@@ -4693,6 +4712,14 @@ function buildEmailHTML() {
 
     // 히어로 섹션은 mainVisual로 이미 렌더링됨 → 스킵
     if (isHero) continue;
+
+    // KTDS: 섹션 타이틀 바 (k-bar) - intro 제외
+    if (currentType === 'ktds' && !isIntro) {
+      rows += `
+  <tr><td bgcolor="#18171a" style="background-color:#18171a;padding:8px 24px;">
+    <p style="margin:0;font-family:${BF};font-size:11px;font-weight:800;color:#ffffff;letter-spacing:-0.1px;">${s.icon || ''} ${esc(s.name)}</p>
+  </td></tr>`;
+    }
 
     const ctaBtn = link
       ? `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;border-collapse:collapse;"><tr><td align="center" style="border-radius:4px;background-color:${AC};"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${link}" style="height:36px;v-text-anchor:middle;width:130px;" arcsize="10%" stroke="f" fillcolor="${AC}"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;">자세히 보기</center></v:roundrect><![endif]--><!--[if !mso]><!--><a href="${link}" target="_blank" style="background-color:${AC};border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:10px 22px;text-decoration:none;">자세히 보기 →</a><!--<![endif]--></td></tr></table>`
@@ -4808,7 +4835,34 @@ function buildEmailHTML() {
   }
 
   /* ── 푸터 ── */
-  rows += `
+  if (currentType === 'ktds') {
+    rows += `
+  <tr><td bgcolor="#18171a" class="mob-pad" style="background-color:#18171a;padding:16px 26px 20px;">
+    <!-- SNS 아이콘 -->
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-bottom:10px;">
+      <tr>
+        <td style="padding-right:8px;">
+          <a href="https://blog.naver.com/kt_ds" target="_blank" style="display:inline-block;width:30px;height:30px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;text-align:center;line-height:30px;text-decoration:none;">
+            <img src="https://img.icons8.com/ios-filled/20/ffffff/blog.png" width="14" height="14" alt="블로그" style="display:inline-block;vertical-align:middle;border:0;">
+          </a>
+        </td>
+        <td style="padding-right:8px;">
+          <a href="https://www.youtube.com/@ktds" target="_blank" style="display:inline-block;width:30px;height:30px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;text-align:center;line-height:30px;text-decoration:none;">
+            <img src="https://img.icons8.com/ios-filled/20/ffffff/youtube-play.png" width="14" height="14" alt="유튜브" style="display:inline-block;vertical-align:middle;border:0;">
+          </a>
+        </td>
+        <td>
+          <a href="https://www.ktds.com" target="_blank" style="display:inline-block;width:30px;height:30px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;text-align:center;line-height:30px;text-decoration:none;">
+            <img src="https://img.icons8.com/ios-filled/20/ffffff/globe.png" width="14" height="14" alt="홈페이지" style="display:inline-block;vertical-align:middle;border:0;">
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-family:${BF};font-size:9px;color:rgba(255,255,255,0.28);line-height:1.8;">(주)케이티디에스 | 서울 서초구 효령로 176 &middot; &copy; ${esc(brand)} All rights reserved.</p>
+    <p style="margin:5px 0 0;font-family:${BF};font-size:8px;color:rgba(255,255,255,0.15);">수신거부: <a href="#" style="color:rgba(255,255,255,0.28);text-decoration:underline;">클릭</a></p>
+  </td></tr>`;
+  } else {
+    rows += `
   <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:22px 36px 28px;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
@@ -4822,6 +4876,7 @@ function buildEmailHTML() {
       </tr>
     </table>
   </td></tr>`;
+  }
 
   const result = `<!DOCTYPE html>
 <html lang="ko" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
