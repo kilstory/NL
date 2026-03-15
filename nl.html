@@ -2697,7 +2697,8 @@ async function crawlNewsForSection(s, skipImage = false) {
       if (r.ok) {
         const data = await r.json();
         if (data.items?.length > 0) {
-          const pick = data.items[Math.floor(Math.random() * data.items.length)];
+          const pool = data.items.filter(it => it.link !== s._lastArticleLink);
+          const pick = (pool.length > 0 ? pool : data.items)[Math.floor(Math.random() * (pool.length > 0 ? pool : data.items).length)];
           s._cachedArticle = pick; s._cachedItems = data.items;
           s.link = pick.link; s.crawledLink = pick.link;
           s.crawledTitle = pick.title || ''; s.crawledSource = 'blog.naver.com/ktds_official';
@@ -2757,9 +2758,9 @@ async function crawlNewsForSection(s, skipImage = false) {
     if (r.ok) {
       const data = await r.json();
       if (data.items?.length > 0) {
-        // 다른 섹션이 이미 사용한 기사 제외 + top 5 중 랜덤 선택
-        const available = data.items.filter(it => !usedArticleLinks.has(it.link));
-        const pool = (available.length > 0 ? available : data.items).slice(0, 5);
+        // 다른 섹션이 이미 사용한 기사 + 이전에 선택했던 기사 제외, top 5 중 랜덤 선택
+        const available = data.items.filter(it => !usedArticleLinks.has(it.link) && it.link !== s._lastArticleLink);
+        const pool = (available.length > 0 ? available : data.items.filter(it => it.link !== s._lastArticleLink).length > 0 ? data.items.filter(it => it.link !== s._lastArticleLink) : data.items).slice(0, 5);
         const pick = pool[Math.floor(Math.random() * pool.length)];
         usedArticleLinks.add(pick.link);
         s._cachedArticle = pick; s._cachedItems = data.items;
@@ -2795,7 +2796,8 @@ async function genSec(id) {
   const imgSt=(document.getElementById('rImgStyle')?.value)||'professional business editorial photography';
   const vars=+document.getElementById('rVar').value;
   try {
-    // 1. 뉴스 크롤링 (캐시 초기화, 이전 링크를 중복 세트에서 제거)
+    // 1. 뉴스 크롤링 (캐시 초기화, 이전 링크 저장 후 제외)
+    s._lastArticleLink = s._cachedArticle?.link || null;
     if (s._cachedArticle?.link) usedArticleLinks.delete(s._cachedArticle.link);
     s._cachedArticle = null; s._cachedItems = null;
     const newsContext = await crawlNewsForSection(s, true);
