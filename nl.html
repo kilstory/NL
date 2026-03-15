@@ -2686,9 +2686,16 @@ async function crawlNewsForSection(s, skipImage = false) {
         const pick = s._cachedArticle;
         s.link = pick.link; s.crawledLink = pick.link;
         s.crawledTitle = pick.title || ''; s.crawledSource = 'blog.naver.com/ktds_official';
-        if (!skipImage && pick.thumbnail) {
-          imageData['ai_'+s.id] = pick.thumbnail;
-          if (!s.image) s.image = pick.thumbnail;
+        if (!skipImage) {
+          if (pick.thumbnail) {
+            imageData['ai_'+s.id] = pick.thumbnail;
+            if (!s.image) s.image = pick.thumbnail;
+          } else if (pick.link) {
+            try {
+              const imgR = await fetch(`/api/image?url=${encodeURIComponent(pick.link)}`);
+              if (imgR.ok) { const d = await imgR.json(); if (d?.url) { imageData['ai_'+s.id] = d.url; if (!s.image) s.image = d.url; } }
+            } catch {}
+          }
         }
         return s.newsContext;
       }
@@ -2813,6 +2820,11 @@ async function genSec(id) {
     s.genDone=true;
     btn.textContent='✓'; btn.classList.add('done');
     document.getElementById('ok-'+id)?.classList.add('show');
+    // 솔루션/뉴스 섹션: 기사 이미지 크롤링 (genAll과 동일하게)
+    const newsKeys = ['news','dsnews','itnow','axfield','solution'];
+    if (s.keys.some(k => newsKeys.includes(k) || k.includes('news'))) {
+      await crawlNewsForSection(s, false);
+    }
     // card 레이아웃: 두 번째 카드 카피 추가 생성
     if((s.layout||'full') === 'card') {
       try {
