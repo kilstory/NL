@@ -2699,8 +2699,9 @@ async function crawlNewsForSection(s, skipImage = false) {
         }
         return s.newsContext;
       }
-      setStatus('🌐 KT DS 솔루션 뉴스 검색 중...');
-      const r = await fetch(`/api/news?keyword=${encodeURIComponent('kt ds')}`);
+      setStatus('🌐 AI Times 솔루션 기사 검색 중...');
+      const solKeyword = s.topic || 'AI 솔루션';
+      const r = await fetch(`/api/news?source=aitimes&keyword=${encodeURIComponent(solKeyword)}`);
       if (r.ok) {
         const data = await r.json();
         if (data.items?.length > 0) {
@@ -2709,7 +2710,7 @@ async function crawlNewsForSection(s, skipImage = false) {
           const pick = pool[Math.floor(Math.random() * pool.length)];
           s._cachedArticle = pick; s._cachedItems = data.items;
           s.link = pick.link; s.crawledLink = pick.link;
-          s.crawledTitle = pick.title || ''; s.crawledSource = pick.source || 'naver';
+          s.crawledTitle = pick.title || ''; s.crawledSource = pick.source || 'aitimes';
           if (!skipImage) {
             if (pick.thumbnail) {
               imageData['ai_'+s.id] = pick.thumbnail;
@@ -2824,11 +2825,6 @@ async function genSec(id) {
     s.genDone=true;
     btn.textContent='✓'; btn.classList.add('done');
     document.getElementById('ok-'+id)?.classList.add('show');
-    // 솔루션/뉴스 섹션: 기사 이미지 크롤링 (genAll과 동일하게)
-    const newsKeys = ['news','dsnews','itnow','axfield','solution'];
-    if (s.keys.some(k => newsKeys.includes(k) || k.includes('news'))) {
-      await crawlNewsForSection(s, false);
-    }
     // card 레이아웃: 두 번째 카드 카피 추가 생성
     if((s.layout||'full') === 'card') {
       try {
