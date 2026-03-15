@@ -33,6 +33,21 @@ export default async function handler(req, res) {
     return m ? m[1].trim() : '';
   }
 
+  function isWithin3Days(pubDateStr) {
+    if (!pubDateStr) return true;
+    const now = new Date();
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+    // 상대 한국어 날짜 (네이버)
+    if (/\d+[분초]\s*전/.test(pubDateStr)) return true;
+    if (/\d+시간\s*전/.test(pubDateStr)) return true;
+    const daysMatch = pubDateStr.match(/(\d+)\s*일\s*전/);
+    if (daysMatch) return parseInt(daysMatch[1]) <= 3;
+    // 표준 날짜 파싱 (RSS)
+    const d = new Date(pubDateStr);
+    if (!isNaN(d.getTime())) return (now - d) <= threeDaysMs;
+    return true; // 파싱 불가 → 유지
+  }
+
   try {
     const { keyword, source } = req.query;
     let q = (keyword || '최신뉴스').trim().toLowerCase();
@@ -71,8 +86,10 @@ export default async function handler(req, res) {
             });
           }
         }
+        // 3일 이내 기사만 필터
+        const recentAll = all.filter(it => isWithin3Days(it.pubDate));
         // 키워드 관련성 점수 필터링
-        let items = all;
+        let items = recentAll.length > 0 ? recentAll : all;
         if (keyword && keyword.trim() && !keyword.includes('it now') && !keyword.includes('itnow')) {
           const words = keyword.trim().toLowerCase().split(/\s+/).filter(w => w.length > 1);
           if (words.length > 0) {
@@ -130,7 +147,8 @@ export default async function handler(req, res) {
           }
         }
 
-        if (items.length > 0) return res.status(200).json({ items, source: 'naver' });
+        const recentNaver = items.filter(it => isWithin3Days(it.pubDate));
+        if (recentNaver.length > 0) return res.status(200).json({ items: recentNaver, source: 'naver' });
       }
     }
 
@@ -180,7 +198,8 @@ export default async function handler(req, res) {
       items.push({ title, link, pubDate, description, thumbnail });
     }
 
-    res.status(200).json({ items, source: 'bing' });
+    const recentBing = items.filter(it => isWithin3Days(it.pubDate));
+    res.status(200).json({ items: recentBing.length > 0 ? recentBing : items, source: 'bing' });
   } catch (error) {
     console.error('API /news error:', error);
     res.status(500).json({ error: error.message });
