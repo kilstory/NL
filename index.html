@@ -2071,6 +2071,25 @@ ${vars}가지 버전을 JSON으로만 출력 (마크다운 없이):
   }
 }
 
+// 한글 텍스트를 Gemini로 영어 검색 키워드로 번역
+async function translateToEnKeywords(text) {
+  try {
+    const r = await fetch('/api/gemini-copy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gemini-2.0-flash',
+        p: `Translate the following Korean text to 3-5 concise English keywords for image search (no articles, no particles, comma-separated):\n"${text}"\nOutput ONLY the keywords on one line, nothing else.`,
+        supportsJson: false,
+      }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const raw = (d.rawText || d.text || '').trim().split('\n')[0];
+    return raw.replace(/^["'`]+|["'`]+$/g, '').trim() || null;
+  } catch { return null; }
+}
+
 async function regenHeroImg() {
   const btn = document.getElementById('heroImgBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ 처리 중...'; }
@@ -2078,14 +2097,34 @@ async function regenHeroImg() {
   const topic = mainVisual.topic || 'AI AX 디지털전환';
   const style = mainVisual.imgStyle || 'technology concept digital futuristic dark';
 
-  // 웹크롤링: 생성된 슬로건 카피가 있으면 키워드로 활용
+  // 웹크롤링(Pixabay): 생성된 슬로건 카피 → 영어 번역 → Pixabay 검색
   const generatedCopy = getSel('mvMain') || getSel('mvSub') || '';
-  const keyword = generatedCopy
+  const koKeyword = generatedCopy
     ? generatedCopy.replace(/['"「」『』【】]/g, '').trim().slice(0, 60)
     : topic;
 
   try {
-    const imgData = await fetchImage(apiKey, mainVisual.imgSrc, keyword + ' 뉴스레터 히어로 배너', style, keyword);
+    if (mainVisual.imgSrc === 'web') {
+      if (btn) btn.textContent = '🌐 번역 중...';
+      const enKeyword = await translateToEnKeywords(koKeyword) || 'technology business innovation';
+      if (btn) btn.textContent = '🌐 Pixabay 검색 중...';
+      const r = await fetch(`/api/pixabay?q=${encodeURIComponent(enKeyword)}`);
+      if (r.ok) {
+        const d = await r.json();
+        if (d.url) {
+          mainVisual.image = d.url;
+          livePreview();
+        } else {
+          alert('Pixabay에서 이미지를 찾지 못했습니다.');
+        }
+      } else {
+        const err = await r.json().catch(() => ({}));
+        alert('Pixabay 오류: ' + (err.error || r.status));
+      }
+      return;
+    }
+
+    const imgData = await fetchImage(apiKey, mainVisual.imgSrc, koKeyword + ' 뉴스레터 히어로 배너', style, koKeyword);
     if (imgData) {
       mainVisual.image = imgData;
       livePreview();
@@ -2666,9 +2705,10 @@ async function crawlNewsForSection(s, skipImage = false) {
     if (r.ok) {
       const data = await r.json();
       if (data.items?.length > 0) {
-        // 다른 섹션이 이미 사용한 기사 제외
+        // 다른 섹션이 이미 사용한 기사 제외 + top 5 중 랜덤 선택
         const available = data.items.filter(it => !usedArticleLinks.has(it.link));
-        const pick = (available.length > 0 ? available : data.items)[0];
+        const pool = (available.length > 0 ? available : data.items).slice(0, 5);
+        const pick = pool[Math.floor(Math.random() * pool.length)];
         usedArticleLinks.add(pick.link);
         s._cachedArticle = pick; s._cachedItems = data.items;
         s.link = pick.link; s.crawledLink = pick.link;
