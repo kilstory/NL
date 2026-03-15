@@ -4646,23 +4646,36 @@ function buildEmailHTML() {
 
   let rows = '';
 
-  /* ── 헤더 ── */
+  /* ── 히어로 배너 (mainVisual) ── */
+  const heroMain = copyData['mvMain'] ? getSel('mvMain') : mainVisual.slogan;
+  const heroSub  = copyData['mvSub']  ? getSel('mvSub')  : mainVisual.sub;
+  const heroImg  = mainVisual.image || '';
   rows += `
-  <tr>
-    <td bgcolor="${DARK}" style="background-color:${DARK};padding:22px 32px 20px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-        <tr>
-          <td style="vertical-align:middle;">
-            <p style="margin:0;font-family:${TF};font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1.1;">${esc(brand)}</p>
-            ${sub ? `<p style="margin:4px 0 0;font-family:${BF};font-size:8px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;text-transform:uppercase;">${esc(sub)}</p>` : ''}
-          </td>
-          <td align="right" style="vertical-align:middle;">
-            <p style="margin:0;font-family:${MF};font-size:9px;color:rgba(255,255,255,0.35);">${esc(vol)}</p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
+  <tr><td bgcolor="${DARK}" class="mob-pad-0" style="background-color:${DARK};padding:0;">
+    ${heroImg ? `<img src="${heroImg}" width="600" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:240px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:28px 36px 34px;">
+        ${heroMain ? `<p class="mob-h1" style="margin:0 0 12px;font-family:${TF};font-size:28px;font-weight:900;color:#ffffff;line-height:1.2;">${esc(heroMain)}</p>` : ''}
+        ${heroSub  ? `<p style="margin:0;font-family:${BF};font-size:13px;color:rgba(255,255,255,0.65);line-height:1.75;">${esc(heroSub)}</p>` : ''}
+      </td></tr>
+    </table>
+  </td></tr>`;
+
+  /* ── 헤더 바 ── */
+  rows += `
+  <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:14px 36px 14px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:middle;">
+          <p style="margin:0;font-family:${TF};font-size:18px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">${esc(brand)}</p>
+          ${sub ? `<p style="margin:3px 0 0;font-family:${BF};font-size:8px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;text-transform:uppercase;">${esc(sub)}</p>` : ''}
+        </td>
+        <td align="right" style="vertical-align:middle;">
+          <p style="margin:0;font-family:${MF};font-size:9px;color:rgba(255,255,255,0.35);">${esc(vol)}</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
   <tr><td bgcolor="${AC}" height="3" style="background-color:${AC};height:3px;font-size:0;line-height:0;">&nbsp;</td></tr>`;
 
   /* ── 섹션들 ── */
@@ -4671,62 +4684,49 @@ function buildEmailHTML() {
     const text  = getSel(key);
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     const title = lines[0] || s.name;
-    const desc  = lines.slice(1).join(' ') || '';
+    const desc  = lines.slice(1).join('\n') || '';
     const img   = getImg(s) || '';
     const link  = s.link || '';
     const lay   = s.layout || 'full';
     const isIntro = s.keys.includes('intro');
     const isHero  = s.keys.some(k => k === 'heroTitle' || k === 'heroSub');
 
+    // 히어로 섹션은 mainVisual로 이미 렌더링됨 → 스킵
+    if (isHero) continue;
+
     const ctaBtn = link
-      ? `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;border-collapse:collapse;"><tr><td style="border-radius:4px;background-color:${AC};"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${link}" style="height:32px;v-text-anchor:middle;width:120px;" arcsize="12%" stroke="f" fillcolor="${AC}"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;">자세히 보기</center></v:roundrect><![endif]--><!--[if !mso]><!--><a href="${link}" target="_blank" style="background-color:${AC};border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:11px;font-weight:700;line-height:1;padding:8px 18px;text-decoration:none;">자세히 보기 →</a><!--<![endif]--></td></tr></table>`
+      ? `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;border-collapse:collapse;"><tr><td align="center" style="border-radius:4px;background-color:${AC};"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${link}" style="height:36px;v-text-anchor:middle;width:130px;" arcsize="10%" stroke="f" fillcolor="${AC}"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;">자세히 보기</center></v:roundrect><![endif]--><!--[if !mso]><!--><a href="${link}" target="_blank" style="background-color:${AC};border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:10px 22px;text-decoration:none;">자세히 보기 →</a><!--<![endif]--></td></tr></table>`
       : '';
 
-    if (isHero) {
-      const ht = getSel('mvMain') || getSel('heroTitle') || title;
-      const hs = getSel('mvSub')  || getSel('heroSub')   || desc;
+    if (isIntro) {
       rows += `
-  <tr><td bgcolor="${DARK}" style="background-color:${DARK};padding:0;">
-    ${img ? `<img src="${img}" width="600" alt="${esc(ht)}" style="display:block;width:100%;max-width:600px;height:220px;border:0;outline:none;">` : `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${DARK}" height="16" style="height:16px;font-size:0;">&nbsp;</td></tr></table>`}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td bgcolor="${DARK}" style="background-color:${DARK};padding:22px 32px 28px;">
-        <p style="margin:0 0 8px;font-family:${TF};font-size:24px;font-weight:900;color:#ffffff;line-height:1.25;">${esc(ht)}</p>
-        ${hs ? `<p style="margin:0;font-family:${BF};font-size:12px;color:rgba(255,255,255,0.6);line-height:1.7;">${esc(hs)}</p>` : ''}
-      </td></tr>
-    </table>
-  </td></tr>`;
-
-    } else if (isIntro) {
-      rows += `
-  <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:22px 32px;">
-    <p style="margin:0;font-family:${BF};font-size:12px;color:#444444;line-height:1.9;">${esc(text).replace(/\n/g,'<br>')}</p>
+  <tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:22px 36px;">
+    <p style="margin:0;font-family:${BF};font-size:13px;color:#444444;line-height:1.9;">${esc(text).replace(/\n/g,'<br>')}</p>
   </td></tr>`;
 
     } else if (lay === 'full' || lay === 'solution') {
       const isSol = lay === 'solution';
-      const LC = isSol ? '#1a56db' : AC;
+      const LC  = isSol ? '#1a56db' : AC;
       const BG2 = isSol ? '#f7f5f1' : '#ffffff';
       rows += `
   <tr><td bgcolor="${BG2}" style="background-color:${BG2};border-bottom:1px solid #e8e4dc;padding:0;">
-    ${img ? `<img src="${img}" width="600" alt="${esc(title)}" style="display:block;width:100%;max-width:600px;height:200px;border:0;outline:none;">` : ''}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${BG2}" style="background-color:${BG2};padding:20px 32px 24px;">
-      <p style="margin:0 0 8px;font-family:${BF};font-size:8px;font-weight:700;color:${LC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
-      <p style="margin:0 0 10px;font-family:${TF};font-size:18px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
-      ${desc ? `<p style="margin:0;font-family:${BF};font-size:11.5px;color:#555555;line-height:1.8;">${esc(desc)}</p>` : ''}
+    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${BG2}" class="mob-pad" style="background-color:${BG2};padding:20px 36px 26px;">
+      <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${LC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+      <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
+      ${desc ? `<p style="margin:0;font-family:${BF};font-size:13px;color:#555555;line-height:1.8;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
       ${ctaBtn}
     </td></tr></table>
   </td></tr>`;
 
     } else if (lay === 'side' || lay === 'side-r') {
       const rev = lay === 'side-r';
-      const IW  = 190;
-      const imgTd = img
-        ? `<td width="${IW}" valign="top" style="width:${IW}px;vertical-align:top;padding:0;"><img src="${img}" width="${IW}" height="160" alt="${esc(title)}" style="display:block;width:${IW}px;height:160px;border:0;outline:none;"></td>`
-        : '';
-      const txtTd = `<td valign="top" style="vertical-align:top;padding:18px 24px;">
-        <p style="margin:0 0 6px;font-family:${BF};font-size:8px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
-        <p style="margin:0 0 8px;font-family:${TF};font-size:15px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
-        ${desc ? `<p style="margin:0;font-family:${BF};font-size:11px;color:#555555;line-height:1.75;">${esc(desc)}</p>` : ''}
+      const IW  = 200;
+      const imgTd = `<td width="${IW}" valign="top" class="mob-col" style="width:${IW}px;vertical-align:top;padding:0;">${img ? `<img src="${img}" width="${IW}" class="mob-w-full" alt="${esc(title)}" style="display:block;width:${IW}px;height:170px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}</td>`;
+      const txtTd = `<td valign="top" class="mob-col mob-pad" style="vertical-align:top;padding:20px 24px;">
+        <p style="margin:0 0 6px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+        <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:17px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
+        ${desc ? `<p style="margin:0;font-family:${BF};font-size:12px;color:#555555;line-height:1.75;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
         ${ctaBtn}
       </td>`;
       rows += `
@@ -4737,32 +4737,30 @@ function buildEmailHTML() {
   </td></tr>`;
 
     } else if (lay === 'card') {
-      const key2   = s.keys[1] || (key + '_b');
-      const l2     = getSel(key2).split('\n').map(x => x.trim()).filter(Boolean);
-      const title2 = l2[0] || s.name;
-      const desc2  = l2.slice(1).join(' ') || '';
-      const img2   = getImg2(s) || '';
-      const CW     = 268;
+      // 모든 카드 키 처리 (card1/card2/card3 또는 key_b)
+      const cardKeys = s.keys.length >= 2 ? s.keys : [key, key + '_b'];
+      const n  = cardKeys.length;
+      const CW = Math.floor((560 - (n - 1) * 8) / n);
+      const cardTDs = cardKeys.map((k, ci) => {
+        const ct    = getSel(k);
+        const cl    = ct.split('\n').map(x => x.trim()).filter(Boolean);
+        const ctit  = cl[0] || s.name;
+        const cdesc = cl.slice(1).join(' ') || '';
+        const cimg  = ci === 0 ? getImg(s) : getImg2(s);
+        return `<td width="${CW}" valign="top" class="mob-col" style="width:${CW}px;vertical-align:top;background-color:#ffffff;border-radius:6px;">
+          ${cimg ? `<img src="${cimg}" width="${CW}" class="mob-w-full" alt="${esc(ctit)}" style="display:block;width:${CW}px;height:150px;object-fit:cover;border:0;border-radius:6px 6px 0 0;outline:none;">` : ''}
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 16px 18px;">
+            <p style="margin:0 0 6px;font-family:${TF};font-size:13px;font-weight:800;color:#1a1816;line-height:1.35;">${esc(ctit)}</p>
+            ${cdesc ? `<p style="margin:0;font-family:${BF};font-size:11px;color:#777777;line-height:1.65;">${esc(cdesc)}</p>` : ''}
+          </td></tr></table>
+        </td>`;
+      });
+      const spacers = cardKeys.slice(0,-1).map(() => `<td width="8" style="width:8px;font-size:0;line-height:0;">&nbsp;</td>`);
+      const allTDs  = cardTDs.reduce((a,td,i) => a + td + (spacers[i]||''), '');
       rows += `
-  <tr><td bgcolor="#f8f7f5" style="background-color:#f8f7f5;border-bottom:1px solid #e8e4dc;padding:16px 20px;">
+  <tr><td bgcolor="#f8f7f5" style="background-color:#f8f7f5;border-bottom:1px solid #e8e4dc;padding:18px 20px;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td width="${CW}" valign="top" style="width:${CW}px;vertical-align:top;background-color:#ffffff;border-radius:6px;">
-          ${img ? `<img src="${img}" width="${CW}" height="140" alt="${esc(title)}" style="display:block;width:${CW}px;height:140px;border:0;border-radius:6px 6px 0 0;">` : ''}
-          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:12px 14px 16px;">
-            <p style="margin:0 0 5px;font-family:${TF};font-size:12px;font-weight:800;color:#1a1816;line-height:1.35;">${esc(title)}</p>
-            ${desc ? `<p style="margin:0;font-family:${BF};font-size:10px;color:#777777;line-height:1.65;">${esc(desc)}</p>` : ''}
-          </td></tr></table>
-        </td>
-        <td width="4" style="width:4px;font-size:0;">&nbsp;</td>
-        <td width="${CW}" valign="top" style="width:${CW}px;vertical-align:top;background-color:#ffffff;border-radius:6px;">
-          ${img2 ? `<img src="${img2}" width="${CW}" height="140" alt="${esc(title2)}" style="display:block;width:${CW}px;height:140px;border:0;border-radius:6px 6px 0 0;">` : ''}
-          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:12px 14px 16px;">
-            <p style="margin:0 0 5px;font-family:${TF};font-size:12px;font-weight:800;color:#1a1816;line-height:1.35;">${esc(title2)}</p>
-            ${desc2 ? `<p style="margin:0;font-family:${BF};font-size:10px;color:#777777;line-height:1.65;">${esc(desc2)}</p>` : ''}
-          </td></tr></table>
-        </td>
-      </tr>
+      <tr class="mob-stack">${allTDs}</tr>
     </table>
   </td></tr>`;
 
@@ -4770,14 +4768,14 @@ function buildEmailHTML() {
       rows += `
   <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td style="padding:20px 32px 10px;border-bottom:2px solid ${AC};">
-        <p style="margin:0;font-family:${TF};font-size:15px;font-weight:900;color:#1a1816;">${esc(s.name)}</p>
+      <tr><td class="mob-pad" style="padding:20px 36px 12px;border-bottom:2px solid ${AC};">
+        <p style="margin:0;font-family:${TF};font-size:16px;font-weight:900;color:#1a1816;">${esc(s.name)}</p>
       </td></tr>
       ${lines.map((line, i) => `
-      <tr><td style="padding:${i===0?'12':'3'}px 32px ${i===lines.length-1?'20':'3'}px;">
+      <tr><td class="mob-pad" style="padding:${i===0?'14':'5'}px 36px ${i===lines.length-1?'22':'5'}px;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
-          <td width="28" valign="top" style="width:28px;font-family:${MF};font-size:9px;font-weight:800;color:${AC};padding-top:2px;vertical-align:top;">${String(i+1).padStart(2,'0')}</td>
-          <td style="font-family:${BF};font-size:11.5px;color:#333333;line-height:1.7;">${esc(line)}</td>
+          <td width="28" valign="top" style="width:28px;font-family:${MF};font-size:9px;font-weight:800;color:${AC};padding-top:3px;vertical-align:top;">${String(i+1).padStart(2,'0')}</td>
+          <td style="font-family:${BF};font-size:13px;color:#333333;line-height:1.7;">${esc(line)}</td>
         </tr></table>
       </td></tr>`).join('')}
     </table>
@@ -4786,23 +4784,23 @@ function buildEmailHTML() {
     } else if (lay === 'banner') {
       rows += `
   <tr><td bgcolor="${DARK}" style="background-color:${DARK};border-bottom:2px solid ${AC};padding:0;">
-    ${img ? `<img src="${img}" width="600" alt="${esc(title)}" style="display:block;width:100%;max-width:600px;height:200px;border:0;outline:none;">` : ''}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${DARK}" style="background-color:${DARK};padding:22px 32px 26px;">
-      <p style="margin:0 0 8px;font-family:${BF};font-size:8px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
-      <p style="margin:0 0 8px;font-family:${TF};font-size:20px;font-weight:900;color:#ffffff;line-height:1.25;">${esc(title)}</p>
-      ${desc ? `<p style="margin:0;font-family:${BF};font-size:11px;color:rgba(255,255,255,0.7);line-height:1.7;">${esc(desc)}</p>` : ''}
-      ${link ? `<p style="margin:12px 0 0;"><a href="${link}" target="_blank" style="font-family:${BF};font-size:11px;font-weight:700;color:${AC};text-decoration:none;">자세히 보기 →</a></p>` : ''}
+    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:24px 36px 28px;">
+      <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+      <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:22px;font-weight:900;color:#ffffff;line-height:1.25;">${esc(title)}</p>
+      ${desc ? `<p style="margin:0;font-family:${BF};font-size:12px;color:rgba(255,255,255,0.7);line-height:1.7;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
+      ${link ? `<p style="margin:12px 0 0;"><a href="${link}" target="_blank" style="font-family:${BF};font-size:12px;font-weight:700;color:${AC};text-decoration:none;">자세히 보기 →</a></p>` : ''}
     </td></tr></table>
   </td></tr>`;
 
     } else {
       rows += `
   <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:0;">
-    ${img ? `<img src="${img}" width="600" alt="${esc(title)}" style="display:block;width:100%;max-width:600px;height:200px;border:0;outline:none;">` : ''}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:20px 32px 24px;">
-      <p style="margin:0 0 8px;font-family:${BF};font-size:8px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
-      <p style="margin:0 0 10px;font-family:${TF};font-size:18px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
-      ${desc ? `<p style="margin:0;font-family:${BF};font-size:11.5px;color:#555555;line-height:1.8;">${esc(desc)}</p>` : ''}
+    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;padding:20px 36px 26px;">
+      <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+      <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
+      ${desc ? `<p style="margin:0;font-family:${BF};font-size:13px;color:#555555;line-height:1.8;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
       ${ctaBtn}
     </td></tr></table>
   </td></tr>`;
@@ -4811,11 +4809,11 @@ function buildEmailHTML() {
 
   /* ── 푸터 ── */
   rows += `
-  <tr><td bgcolor="${DARK}" style="background-color:${DARK};padding:20px 32px 24px;">
+  <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:22px 36px 28px;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td>
-          <p style="margin:0;font-family:${TF};font-size:17px;font-weight:900;color:#ffffff;">${esc(brand)}</p>
+          <p style="margin:0;font-family:${TF};font-size:18px;font-weight:900;color:#ffffff;">${esc(brand)}</p>
           ${sub ? `<p style="margin:4px 0 0;font-family:${BF};font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;">${esc(sub)}</p>` : ''}
         </td>
         <td align="right" style="vertical-align:bottom;">
@@ -4828,7 +4826,8 @@ function buildEmailHTML() {
   const result = `<!DOCTYPE html>
 <html lang="ko" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 <title>${esc(brand)} Newsletter</title>
@@ -4836,15 +4835,26 @@ function buildEmailHTML() {
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@700;900&display=swap');
 body,table,td,p,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
 table,td{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}
-img{border:0;height:auto;line-height:100%;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;}
-body{margin:0!important;padding:0!important;}p{margin:0;}
+img{border:0;line-height:100%;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;}
+body{margin:0!important;padding:0!important;}p{margin:0;}a{color:inherit;}
+/* 모바일 반응형 */
+@media screen and (max-width:620px){
+  .email-wrap{width:100%!important;max-width:100%!important;}
+  .mob-pad{padding:18px 20px!important;}
+  .mob-pad-0{padding:0!important;}
+  .mob-h1{font-size:22px!important;line-height:1.25!important;}
+  .mob-h2{font-size:17px!important;line-height:1.3!important;}
+  .mob-w-full{width:100%!important;height:auto!important;max-width:100%!important;}
+  .mob-col{display:block!important;width:100%!important;max-width:100%!important;}
+  .mob-stack td{display:block!important;width:100%!important;max-width:100%!important;margin-bottom:10px;}
+}
 </style>
 </head>
 <body style="margin:0;padding:0;background-color:#f0ede8;">
 <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f0ede8" style="background-color:#f0ede8;border-collapse:collapse;">
-  <tr><td align="center" style="padding:20px 10px;">
+  <tr><td align="center" style="padding:20px 10px 30px;">
     <!--[if mso]><table width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
-    <table cellpadding="0" cellspacing="0" border="0" width="600" align="center" style="width:600px;max-width:600px;border-collapse:collapse;">
+    <table cellpadding="0" cellspacing="0" border="0" width="600" align="center" class="email-wrap" style="width:600px;max-width:600px;border-collapse:collapse;">
       ${rows}
     </table>
     <!--[if mso]></td></tr></table><![endif]-->
