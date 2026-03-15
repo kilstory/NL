@@ -2077,9 +2077,15 @@ async function regenHeroImg() {
   const apiKey = document.getElementById('apiInp').value.trim() || 'server';
   const topic = mainVisual.topic || 'AI AX 디지털전환';
   const style = mainVisual.imgStyle || 'technology concept digital futuristic dark';
-  
+
+  // 웹크롤링: 생성된 슬로건 카피가 있으면 키워드로 활용
+  const generatedCopy = getSel('mvMain') || getSel('mvSub') || '';
+  const keyword = generatedCopy
+    ? generatedCopy.replace(/['"「」『』【】]/g, '').trim().slice(0, 60)
+    : topic;
+
   try {
-    const imgData = await fetchImage(apiKey, mainVisual.imgSrc, topic + ' 뉴스레터 히어로 배너', style, topic);
+    const imgData = await fetchImage(apiKey, mainVisual.imgSrc, keyword + ' 뉴스레터 히어로 배너', style, keyword);
     if (imgData) {
       mainVisual.image = imgData;
       livePreview();
@@ -4617,9 +4623,9 @@ function doReset() {
    flexbox/grid 없음, 모두 인라인 스타일
 ───────────────────────────────────────── */
 function buildEmailHTML() {
-  const brand  = document.getElementById('rBrand')?.value || 'Newsletter';
-  const sub    = document.getElementById('rSub')?.value   || '';
-  const vol    = document.getElementById('rVol')?.value   || '';
+  const brand  = document.getElementById('rBrand')?.value || 'kt ds';
+  const sub    = document.getElementById('rSub')?.value   || 'AX 전문 파트너';
+  const vol    = document.getElementById('rVol')?.value   || 'Vol.1 / 2026';
   const active = sections.filter(s => s.on);
 
   // livePreview와 동일: 카피 없는 섹션에 placeholder 임시 주입
