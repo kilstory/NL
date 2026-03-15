@@ -1,4 +1,5 @@
 /* ════════════ LOGIN PAGE STYLES ════════════ */
+*, *::before, *::after { box-sizing: border-box; }
 
 :root {
     --login-bg: var(--bg);
