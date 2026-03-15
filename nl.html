@@ -2699,9 +2699,9 @@ async function crawlNewsForSection(s, skipImage = false) {
         }
         return s.newsContext;
       }
-      setStatus('🌐 인공지능신문(aitimes.kr) 기사 검색 중...');
+      setStatus('🌐 디지털투데이 AI 기사 검색 중...');
       const solKeyword = s.topic || 'AI 솔루션';
-      const r = await fetch(`/api/news?source=aitimes_kr&keyword=${encodeURIComponent(solKeyword)}`);
+      const r = await fetch(`/api/news?source=digitaltoday&keyword=${encodeURIComponent(solKeyword)}`);
       if (r.ok) {
         const data = await r.json();
         if (data.items?.length > 0) {

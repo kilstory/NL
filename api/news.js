@@ -52,13 +52,11 @@ export default async function handler(req, res) {
     const { keyword, source } = req.query;
     let q = (keyword || '최신뉴스').trim().toLowerCase();
 
-    // 0. aitimes.kr (인공지능신문) — Google News RSS 경유
-    if (source === 'aitimes_kr') {
-      const kw = keyword ? `${keyword} ` : 'AI ';
-      const gnUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(`site:aitimes.kr ${kw}`)}&hl=ko&gl=KR&ceid=KR:ko`;
-      const gnRes = await fetch(gnUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (gnRes.ok) {
-        const xml = await gnRes.text();
+    // 0. 디지털투데이 AI섹션 — RSS 직접 시도 → Google News 폴백
+    if (source === 'digitaltoday') {
+      const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+      function parseRssItems(xml, srcLabel) {
         const all = [];
         const itemRegex = /<item>([\s\S]*?)<\/item>/g;
         let m;
@@ -68,26 +66,59 @@ export default async function handler(req, res) {
           const titleM = ix.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || ix.match(/<title>(.*?)<\/title>/);
           const linkM  = ix.match(/<link>(.*?)<\/link>/);
           const dateM  = ix.match(/<pubDate>(.*?)<\/pubDate>/);
-          const descM  = ix.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || ix.match(/<description>(.*?)<\/description>/);
+          const descM  = ix.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) || ix.match(/<description>([\s\S]*?)<\/description>/);
           if (!titleM || !linkM) continue;
-          // Google News 링크에서 실제 URL 추출
           let link = linkM[1].trim();
+          // Google News redirect 처리
           const urlParam = link.match(/url=([^&]+)/);
           if (urlParam) link = decodeURIComponent(urlParam[1]);
           const rawDesc = descM ? descM[1] : '';
-          const thumbnail = extractRssThumbnail(m[1]) || extractDescThumbnail(rawDesc);
+          const thumbnail = extractRssThumbnail(ix) || extractDescThumbnail(rawDesc);
           all.push({
             title: titleM[1].replace(/<[^>]+>/g, '').trim(),
             link,
             pubDate: dateM ? dateM[1].trim() : '',
-            description: rawDesc.replace(/<[^>]+>/g, '').trim(),
-            thumbnail
+            description: rawDesc.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim(),
+            thumbnail,
+            source: srcLabel
           });
         }
-        const recent = all.filter(it => isWithin3Days(it.pubDate));
-        const items = (recent.length > 0 ? recent : all).slice(0, 10);
-        if (items.length > 0) return res.status(200).json({ items, source: 'aitimes_kr' });
+        return all;
       }
+
+      // 1) 직접 RSS 시도 (S1N10 = AI/솔루션 섹션)
+      const rssUrls = [
+        'https://www.digitaltoday.co.kr/rss/S1N10.xml',
+        'https://www.digitaltoday.co.kr/rss/allArticle.xml',
+      ];
+      for (const rssUrl of rssUrls) {
+        try {
+          const rssRes = await fetch(rssUrl, { headers: { 'User-Agent': UA } });
+          if (rssRes.ok) {
+            const xml = await rssRes.text();
+            const all = parseRssItems(xml, 'digitaltoday');
+            if (all.length > 0) {
+              const recent = all.filter(it => isWithin3Days(it.pubDate));
+              const items = (recent.length > 0 ? recent : all).slice(0, 10);
+              return res.status(200).json({ items, source: 'digitaltoday' });
+            }
+          }
+        } catch {}
+      }
+
+      // 2) Google News RSS 폴백
+      const kw = keyword ? keyword : 'AI 솔루션';
+      const gnUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(`site:digitaltoday.co.kr ${kw}`)}&hl=ko&gl=KR&ceid=KR:ko`;
+      try {
+        const gnRes = await fetch(gnUrl, { headers: { 'User-Agent': UA } });
+        if (gnRes.ok) {
+          const xml = await gnRes.text();
+          const all = parseRssItems(xml, 'digitaltoday');
+          const recent = all.filter(it => isWithin3Days(it.pubDate));
+          const items = (recent.length > 0 ? recent : all).slice(0, 10);
+          if (items.length > 0) return res.status(200).json({ items, source: 'digitaltoday' });
+        }
+      } catch {}
     }
 
     // 1. Explicit AI Times check or keyword-based detection
