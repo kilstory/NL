@@ -14,26 +14,32 @@ export default async function handler(req, res) {
   try {
     const { keyword, url } = req.query;
     
-    // 1. Try to extract image directly from the article URL
+    // 1. Try to extract og:image directly from the article URL
     if (url) {
-      try {
-        const urlFetchRes = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
-          }
-        });
-        if (urlFetchRes.ok) {
+      const uaList = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+        'Googlebot/2.1 (+http://www.google.com/bot.html)',
+      ];
+      for (const ua of uaList) {
+        try {
+          const urlFetchRes = await fetch(url, { headers: { 'User-Agent': ua } });
+          if (!urlFetchRes.ok) continue;
           const html = await urlFetchRes.text();
-          // Look for og:image meta tag
           const ogMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||
                           html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["'][^>]*>/i);
           if (ogMatch && ogMatch[1]) {
             let imgUrl = ogMatch[1].replace(/&amp;/g, '&');
+            // 상대경로 처리
+            if (imgUrl.startsWith('/')) {
+              const base = new URL(url);
+              imgUrl = `${base.protocol}//${base.host}${imgUrl}`;
+            }
             return res.status(200).json({ url: imgUrl });
           }
+          break; // 응답은 ok였으나 og:image 없음 → 다음 단계로
+        } catch (err) {
+          console.warn('og:image fetch failed:', err.message);
         }
-      } catch (err) {
-        console.warn('Failed to extract image from URL:', err.message);
       }
     }
 

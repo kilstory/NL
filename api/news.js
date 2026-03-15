@@ -75,12 +75,13 @@ export default async function handler(req, res) {
           const urlParam = link.match(/url=([^&]+)/);
           if (urlParam) link = decodeURIComponent(urlParam[1]);
           const rawDesc = descM ? descM[1] : '';
+          const thumbnail = extractRssThumbnail(m[1]) || extractDescThumbnail(rawDesc);
           all.push({
             title: titleM[1].replace(/<[^>]+>/g, '').trim(),
             link,
             pubDate: dateM ? dateM[1].trim() : '',
             description: rawDesc.replace(/<[^>]+>/g, '').trim(),
-            thumbnail: extractDescThumbnail(rawDesc)
+            thumbnail
           });
         }
         const recent = all.filter(it => isWithin3Days(it.pubDate));
