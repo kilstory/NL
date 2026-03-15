@@ -1861,11 +1861,13 @@ const TYPE_LABELS = { ktds:'kt ds형', general:'일반형', product:'제품형' 
 
 /* ── 폰트 패키지 ── */
 const FONT_PKGS = {
-  basic:   { name:'기본',     title:"'Noto Serif KR',serif",         body:"'Noto Sans KR',sans-serif",    gFont:'' },
-  modern:  { name:'모던',     title:"'Gmarket Sans',sans-serif",     body:"'Pretendard',sans-serif",      gFont:'https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&display=swap' },
-  classic: { name:'클래식',   title:"'Nanum Myeongjo',serif",        body:"'Nanum Gothic',sans-serif",    gFont:'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700;800&display=swap' },
-  bold:    { name:'볼드',     title:"'Black Han Sans',sans-serif",   body:"'Pretendard',sans-serif",      gFont:'https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap' },
-  elegant: { name:'엘레강트',  title:"'Sunflower',serif",             body:"'Pretendard',sans-serif",      gFont:'https://fonts.googleapis.com/css2?family=Sunflower:wght@300;500;700&display=swap' },
+  basic:     { name:'기본',      title:"'Noto Serif KR',serif",                    body:"'Noto Sans KR',sans-serif",       gFont:'' },
+  modern:    { name:'모던',      title:"'Gmarket Sans',sans-serif",                body:"'Pretendard',sans-serif",          gFont:'https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&display=swap' },
+  minimal:   { name:'미니멀',    title:"'Do Hyeon',sans-serif",                    body:"'IBM Plex Sans KR',sans-serif",    gFont:'https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap' },
+  bold:      { name:'볼드',      title:"'Black Han Sans',sans-serif",              body:"'Pretendard',sans-serif",          gFont:'https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap' },
+  editorial: { name:'에디토리얼', title:"'Playfair Display','Noto Serif KR',serif", body:"'Noto Sans KR',sans-serif",       gFont:'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap' },
+  tech:      { name:'테크',      title:"'Space Grotesk',sans-serif",               body:"'IBM Plex Sans KR',sans-serif",    gFont:'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap' },
+  warm:      { name:'포근',      title:"'Jua',sans-serif",                         body:"'Noto Sans KR',sans-serif",        gFont:'https://fonts.googleapis.com/css2?family=Jua&display=swap' },
 };
 let currentFontPkg = 'basic';
 
@@ -4827,15 +4829,31 @@ function buildEmailHTML() {
     <p style="margin:0;font-family:${BF};font-size:13px;color:#444444;line-height:1.9;">${esc(text).replace(/\n/g,'<br>')}</p>
   </td></tr>`;
 
-    } else if (lay === 'full' || lay === 'solution') {
-      const isSol = lay === 'solution';
-      const LC  = isSol ? '#1a56db' : AC;
-      const BG2 = isSol ? '#f7f5f1' : '#ffffff';
+    } else if (lay === 'solution') {
+      const LC  = '#1a56db';
+      const BG2 = '#f0f4ff';
+      const IW  = 200;
+      const imgContent = img ? `<img src="${img}" width="${IW}" class="mob-w-full" alt="${esc(title)}" style="display:block;width:${IW}px;height:170px;object-fit:cover;border:0;outline:none;line-height:100%;">` : '';
+      const solImgTd = `<td width="${IW}" valign="top" class="mob-col" style="width:${IW}px;vertical-align:top;padding:0;${img ? '' : `background-color:${LC};`}">${imgContent}</td>`;
+      const solTxtTd = `<td valign="top" class="mob-col mob-pad" style="vertical-align:top;padding:20px 24px;">
+        <p style="margin:0 0 6px;font-family:${BF};font-size:9px;font-weight:700;color:${LC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+        <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:17px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
+        ${desc ? `<p style="margin:0 0 14px;font-family:${BF};font-size:12px;color:#555555;line-height:1.75;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
+        ${link ? `<a href="${link}" target="_blank" style="font-family:${BF};font-size:12px;font-weight:700;color:${LC};text-decoration:none;">기사 보기 →</a>` : ''}
+      </td>`;
       rows += `
-  <tr><td bgcolor="${BG2}" style="background-color:${BG2};border-bottom:1px solid #e8e4dc;padding:0;">
+  <tr><td bgcolor="${BG2}" style="background-color:${BG2};border-bottom:1px solid #d0d9f5;padding:0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>${solImgTd}${solTxtTd}</tr>
+    </table>
+  </td></tr>`;
+
+    } else if (lay === 'full') {
+      rows += `
+  <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:0;">
     ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${BG2}" class="mob-pad" style="background-color:${BG2};padding:20px 36px 26px;">
-      <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${LC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;padding:20px 36px 26px;">
+      <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
       <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
       ${desc ? `<p style="margin:0;font-family:${BF};font-size:13px;color:#555555;line-height:1.8;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
       ${ctaBtn}
@@ -4888,19 +4906,27 @@ function buildEmailHTML() {
   </td></tr>`;
 
     } else if (lay === 'list' || lay === 'news') {
+      const newsItems = lay === 'news'
+        ? text.split('\n\n').filter(Boolean).slice(0, 5)
+        : lines.map(l => l);
       rows += `
   <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td class="mob-pad" style="padding:20px 36px 12px;border-bottom:2px solid ${AC};">
         <p style="margin:0;font-family:${TF};font-size:16px;font-weight:900;color:#1a1816;">${esc(s.name)}</p>
       </td></tr>
-      ${lines.map((line, i) => `
-      <tr><td class="mob-pad" style="padding:${i===0?'14':'5'}px 36px ${i===lines.length-1?'22':'5'}px;">
+      ${newsItems.map((item, i) => {
+        const itemLines = lay === 'news' ? item.split('\n').map(l => l.trim()).filter(Boolean) : [item];
+        const itit  = itemLines[0] || '';
+        const idesc = lay === 'news' ? (itemLines.slice(1).join(' ') || '') : '';
+        return `
+      <tr><td class="mob-pad" style="padding:${i===0?'14':'5'}px 36px ${i===newsItems.length-1?'22':'5'}px;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
           <td width="28" valign="top" style="width:28px;font-family:${MF};font-size:9px;font-weight:800;color:${AC};padding-top:3px;vertical-align:top;">${String(i+1).padStart(2,'0')}</td>
-          <td style="font-family:${BF};font-size:13px;color:#333333;line-height:1.7;">${esc(line)}</td>
+          <td style="font-family:${BF};font-size:13px;color:#333333;line-height:1.7;"><strong>${esc(itit)}</strong>${idesc ? `<br><span style="font-size:12px;color:#777777;">${esc(idesc)}</span>` : ''}</td>
         </tr></table>
-      </td></tr>`).join('')}
+      </td></tr>`;
+      }).join('')}
     </table>
   </td></tr>`;
 
