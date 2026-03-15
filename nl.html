@@ -4849,10 +4849,10 @@ function buildEmailHTML() {
       const IW  = 200;
       const imgContent = img ? `<img src="${img}" width="${IW}" class="mob-w-full" alt="${esc(title)}" style="display:block;width:${IW}px;height:170px;object-fit:cover;border:0;outline:none;line-height:100%;">` : '';
       const solImgTd = `<td width="${IW}" valign="top" class="mob-col" style="width:${IW}px;vertical-align:top;padding:0;${img ? '' : `background-color:${LC};`}">${imgContent}</td>`;
-      const solTxtTd = `<td valign="top" class="mob-col mob-pad" style="vertical-align:top;padding:20px 24px;">
+      const solTxtTd = `<td width="400" valign="top" class="mob-col mob-pad" style="width:400px;max-width:400px;vertical-align:top;padding:16px 20px;overflow:hidden;">
         <p style="margin:0 0 6px;font-family:${BF};font-size:9px;font-weight:700;color:${LC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
-        <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:17px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
-        ${desc ? `<p style="margin:0 0 14px;font-family:${BF};font-size:12px;color:#555555;line-height:1.75;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
+        <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:16px;font-weight:900;color:#1a1816;line-height:1.35;word-break:break-word;">${esc(title)}</p>
+        ${desc ? `<p style="margin:0 0 14px;font-family:${BF};font-size:12px;color:#555555;line-height:1.75;word-break:break-word;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
         ${link ? `<a href="${link}" target="_blank" style="font-family:${BF};font-size:12px;font-weight:700;color:${LC};text-decoration:none;">기사 보기 →</a>` : ''}
       </td>`;
       rows += `
