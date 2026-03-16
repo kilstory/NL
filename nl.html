@@ -5253,6 +5253,10 @@ function closeMailModal() {
   document.getElementById('mailOverlay').classList.remove('show');
 }
 async function sendMail() {
+  const pw = prompt('발송 비밀번호를 입력하세요.');
+  if (pw === null) return;
+  if (pw !== '1231') { alert('비밀번호가 올바르지 않습니다.'); return; }
+
   const inp     = document.getElementById('mailTagInp');
   if (inp.value.trim()) mailTagAdd(inp.value.trim());
   if (mailRecipients.length === 0) { alert('수신자를 1명 이상 입력해주세요.'); return; }
