@@ -2791,8 +2791,9 @@ async function crawlNewsForSection(s, skipImage = false) {
         s._cachedArticle = pick; s._cachedItems = data.items;
         s.link = pick.link; s.crawledLink = pick.link;
         s.crawledSource = pick.source || ''; s.crawledTitle = pick.title || '';
-        // 다중 뉴스 섹션(dsnews)용 항목별 링크 배열
-        s.crawledLinks = data.items.slice(0, 5).map(it => it.link);
+        // pick을 맨 앞으로 → Gemini 생성 아이템 순서와 crawledLinks 인덱스 일치
+        const otherItems = data.items.filter(it => it.link !== pick.link);
+        s.crawledLinks = [pick, ...otherItems].slice(0, 5).map(it => it.link);
         if (!skipImage) {
           if (pick.thumbnail) {
             imageData['ai_'+s.id] = pick.thumbnail;
@@ -2805,7 +2806,7 @@ async function crawlNewsForSection(s, skipImage = false) {
           }
         }
         const targetText = `[MAIN TARGET ARTICLE]\n제목: ${pick.title}\n내용: ${pick.description}`;
-        const othersText = data.items.slice(1, 4).map((it, i) => `[Related ${i+1}] ${it.title}`).join('\n');
+        const othersText = otherItems.slice(0, 3).map((it, i) => `[Related ${i+1}] ${it.title}`).join('\n');
         s.newsContext = `${targetText}\n\n(참고용 다른 최신 소식들)\n${othersText}`;
         return s.newsContext;
       }
