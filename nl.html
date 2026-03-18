@@ -2429,7 +2429,11 @@ function setSrcForSec(id, v) {
       else if(ds==='none') btn.className = 'sis-btn' + (isNone?' sis-none':'');
     });
     const regenBtn = document.getElementById('ri-'+id);
-    if(regenBtn) regenBtn.disabled = (v==='none' || v==='url');
+    if(regenBtn) {
+      regenBtn.disabled = (v==='none' || v==='url');
+      const isAi = v === 'ai';
+      regenBtn.textContent = `🔄 ${isAi ? (s.image ? '이미지 재생성' : '이미지 생성') : '이미지 크롤링'}`;
+    }
     const urlWrap = document.getElementById('iuw-'+id);
     if(urlWrap) urlWrap.classList.toggle('show', v==='url');
     const lbl = document.getElementById('il-'+id);
@@ -2453,7 +2457,11 @@ function setSrcForSec2(id, v) {
       else if(ds==='none') btn.className = 'sis-btn' + (isNone?' sis-none':'');
     });
     const regenBtn = document.getElementById('ri-'+idSfx);
-    if(regenBtn) regenBtn.disabled = (v==='none' || v==='url');
+    if(regenBtn) {
+      regenBtn.disabled = (v==='none' || v==='url');
+      const isAi = v === 'ai';
+      regenBtn.textContent = `🔄 ${isAi ? (s.image2 ? '이미지 재생성' : '이미지 생성') : '이미지 크롤링'}`;
+    }
     const urlWrap = document.getElementById('iuw-'+idSfx);
     if(urlWrap) urlWrap.classList.toggle('show', v==='url');
     const lbl = document.getElementById('il-'+idSfx);
