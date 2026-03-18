@@ -4863,10 +4863,23 @@ function buildEmailHTML() {
   const heroMain = copyData['mvMain'] ? getSel('mvMain') : mainVisual.slogan;
   const heroSub  = copyData['mvSub']  ? getSel('mvSub')  : mainVisual.sub;
   const heroImg  = mainVisual.image || '';
-  // 히어로 배경: 이미지가 없으면 그라데이션 대신 짙은 배경색 사용
-  rows += `
+  // 히어로 배경: 이미지가 있으면 배경+그라데이션 오버레이, 없으면 짙은 배경색
+  if (heroImg) {
+    rows += `
   <tr><td bgcolor="${DARK}" class="mob-pad-0" style="background-color:${DARK};padding:0;">
-    ${heroImg ? `<img src="${heroImg}" width="600" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:auto;min-height:240px;max-height:320px;object-fit:cover;border:0;outline:none;">` : ''}
+    <div style="background:url('${heroImg}') center/cover no-repeat;min-height:300px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tr><td style="height:140px;padding:0;">&nbsp;</td></tr>
+        <tr><td class="mob-pad" style="background:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,0.78) 40%,rgba(0,0,0,0.95) 100%);padding:24px 36px 32px;">
+          ${heroMain ? `<p class="mob-h1" style="margin:0 0 12px;font-family:${TF};font-size:28px;font-weight:900;color:#ffffff;line-height:1.25;">${esc(heroMain).replace(/\n/g,'<br>')}</p>` : ''}
+          ${heroSub  ? `<p style="margin:0;font-family:${BF};font-size:13px;color:rgba(255,255,255,0.65);line-height:1.75;">${esc(heroSub).replace(/\n/g,'<br>')}</p>` : ''}
+        </td></tr>
+      </table>
+    </div>
+  </td></tr>`;
+  } else {
+    rows += `
+  <tr><td bgcolor="${DARK}" class="mob-pad-0" style="background-color:${DARK};padding:0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:28px 36px 34px;">
         ${heroMain ? `<p class="mob-h1" style="margin:0 0 12px;font-family:${TF};font-size:28px;font-weight:900;color:#ffffff;line-height:1.25;">${esc(heroMain).replace(/\n/g,'<br>')}</p>` : ''}
@@ -4874,6 +4887,7 @@ function buildEmailHTML() {
       </td></tr>
     </table>
   </td></tr>`;
+  }
 
   /* ── 헤더 바 ── */
   if (currentType === 'ktds') {
