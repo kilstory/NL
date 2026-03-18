@@ -1559,6 +1559,17 @@ select.r-inp { cursor:pointer; }
 
 .card2-row { border-top:1px dashed var(--bd); padding-top:5px; margin-top:2px; }
 
+/* ── 예약 발송 ── */
+.sched-type-grid { display:flex; gap:5px; flex-wrap:wrap; }
+.sched-type-btn, .sched-dow-btn {
+  flex:1; min-width:50px; padding:6px 4px; border:1px solid var(--bd); border-radius:6px;
+  background:var(--bg2); color:var(--dim); font-size:10px; font-weight:600; cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif; transition:all .15s;
+}
+.sched-type-btn.active, .sched-dow-btn.active {
+  background:#7c4af8; border-color:#7c4af8; color:#fff;
+}
+
 /* ── 발송 방식 선택 ── */
 .send-mode-wrap { display:grid; grid-template-columns:1fr 1fr 1fr; gap:3px; margin-bottom:6px; }
 .send-mode-btn  {
@@ -1821,6 +1832,7 @@ select.r-inp { cursor:pointer; }
     <button class="bot-btn" onclick="doCopy()">📋 HTML 복사</button>
     <button class="bot-btn" onclick="doDownload()">⬇ 다운로드</button>
     <button class="bot-btn" onclick="openMailModal()" style="border-color:rgba(74,124,248,.4);color:var(--blue);">✉ 메일 발송</button>
+    <button class="bot-btn" id="schedBtn" onclick="openScheduleModal()" style="border-color:rgba(124,74,248,.4);color:#7c4af8;position:relative;">📅 예약 발송<span id="schedBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:#f04;"></span></button>
     
     <button class="bot-main" id="genAllCopyBtn" onclick="generateAll('copy')" style="margin-right:8px;">
       <span style="font-size:13px;">✦</span>
@@ -5252,6 +5264,184 @@ function openMailModal() {
 function closeMailModal() {
   document.getElementById('mailOverlay').classList.remove('show');
 }
+
+/* ═══════════════════════════════════════
+   예약 발송
+═══════════════════════════════════════ */
+let _schedType = 'once';
+let _schedDow  = 1;
+let _schedTimer = null;
+
+function openScheduleModal() {
+  const saved = JSON.parse(localStorage.getItem('nlSchedule') || 'null');
+  // 기본 날짜: 내일
+  const tom = new Date(); tom.setDate(tom.getDate()+1);
+  document.getElementById('schedDate').value = tom.toISOString().slice(0,10);
+
+  if (saved) {
+    setSchedType(saved.type, true);
+    document.getElementById('schedTime').value = saved.time || '09:00';
+    if (saved.date)  document.getElementById('schedDate').value = saved.date;
+    if (saved.dow)   setSchedDow(saved.dow, true);
+    if (saved.dom)   document.getElementById('schedDom').value = saved.dom;
+    if (saved.autoGen !== undefined) document.getElementById('schedAutoGen').checked = saved.autoGen;
+    // 현재 예약 상태 표시
+    const info = document.getElementById('schedCurrentInfo');
+    const cancelBtn = document.getElementById('schedCancelBtn');
+    if (saved.active) {
+      info.style.display = '';
+      info.innerHTML = `✅ 예약 활성 중<br>유형: ${schedTypeLabel(saved.type)} · 시각: ${saved.time}${saved.type==='weekly'?` · ${schedDowLabel(saved.dow)}`:''}${saved.type==='monthly'?` · 매월 ${saved.dom}일`:''}${saved.type==='once'?` · ${saved.date}`:''}`;
+      cancelBtn.style.display = '';
+    } else {
+      info.style.display = 'none';
+      cancelBtn.style.display = 'none';
+    }
+  } else {
+    setSchedType('once', true);
+    document.getElementById('schedCancelBtn').style.display = 'none';
+    document.getElementById('schedCurrentInfo').style.display = 'none';
+  }
+  document.getElementById('schedStatus').style.display = 'none';
+  document.getElementById('schedOverlay').classList.add('show');
+}
+function closeScheduleModal() {
+  document.getElementById('schedOverlay').classList.remove('show');
+}
+function setSchedType(t, silent) {
+  _schedType = t;
+  document.querySelectorAll('.sched-type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t));
+  document.getElementById('schedDateRow').style.display = t === 'once' ? '' : 'none';
+  document.getElementById('schedDowRow').style.display  = t === 'weekly' ? '' : 'none';
+  document.getElementById('schedDomRow').style.display  = t === 'monthly' ? '' : 'none';
+}
+function setSchedDow(d, silent) {
+  _schedDow = +d;
+  document.querySelectorAll('.sched-dow-btn').forEach(b => b.classList.toggle('active', +b.dataset.dow === +d));
+}
+function schedTypeLabel(t) { return {once:'1회',daily:'매일',weekly:'매주',monthly:'매월'}[t]||t; }
+function schedDowLabel(d)  { return ['','월','화','수','목','금','토','일'][+d]||d; }
+
+function saveSchedule() {
+  const pw = prompt('발송 비밀번호를 입력하세요.');
+  if (pw === null) return;
+  if (pw !== '1231') { alert('비밀번호가 올바르지 않습니다.'); return; }
+
+  const time = document.getElementById('schedTime').value;
+  if (!time) { alert('발송 시각을 입력하세요.'); return; }
+  if (_schedType === 'once' && !document.getElementById('schedDate').value) {
+    alert('날짜를 선택하세요.'); return;
+  }
+
+  const cfg = {
+    active:  true,
+    type:    _schedType,
+    time,
+    date:    document.getElementById('schedDate').value,
+    dow:     _schedDow,
+    dom:     +document.getElementById('schedDom').value || 1,
+    autoGen: document.getElementById('schedAutoGen').checked,
+    savedAt: Date.now()
+  };
+  localStorage.setItem('nlSchedule', JSON.stringify(cfg));
+  startScheduleChecker();
+  updateSchedBadge();
+  const st = document.getElementById('schedStatus');
+  st.style.display = ''; st.className = 'mail-status ok';
+  st.textContent = `✅ 예약 설정 완료 — ${schedTypeLabel(cfg.type)} ${cfg.time}${cfg.type==='once'?' ('+cfg.date+')':''}`;
+  document.getElementById('schedCancelBtn').style.display = '';
+  document.getElementById('schedCurrentInfo').style.display = '';
+  document.getElementById('schedCurrentInfo').innerHTML = `✅ 예약 활성 중<br>유형: ${schedTypeLabel(cfg.type)} · 시각: ${cfg.time}${cfg.type==='weekly'?` · ${schedDowLabel(cfg.dow)}`:''}${cfg.type==='monthly'?` · 매월 ${cfg.dom}일`:''}${cfg.type==='once'?` · ${cfg.date}`:''}`;
+}
+
+function cancelSchedule() {
+  if (!confirm('예약을 취소하시겠습니까?')) return;
+  const cfg = JSON.parse(localStorage.getItem('nlSchedule') || '{}');
+  cfg.active = false;
+  localStorage.setItem('nlSchedule', JSON.stringify(cfg));
+  if (_schedTimer) { clearInterval(_schedTimer); _schedTimer = null; }
+  updateSchedBadge();
+  document.getElementById('schedCancelBtn').style.display = 'none';
+  document.getElementById('schedCurrentInfo').style.display = 'none';
+  const st = document.getElementById('schedStatus');
+  st.style.display = ''; st.className = 'mail-status';
+  st.textContent = '예약이 취소되었습니다.';
+}
+
+function updateSchedBadge() {
+  const cfg = JSON.parse(localStorage.getItem('nlSchedule') || 'null');
+  const badge = document.getElementById('schedBadge');
+  if (badge) badge.style.display = cfg?.active ? '' : 'none';
+}
+
+function startScheduleChecker() {
+  if (_schedTimer) clearInterval(_schedTimer);
+  _schedTimer = setInterval(checkSchedule, 30000);
+}
+
+async function checkSchedule() {
+  const cfg = JSON.parse(localStorage.getItem('nlSchedule') || 'null');
+  if (!cfg?.active) return;
+
+  const now  = new Date();
+  const [h, m] = (cfg.time || '09:00').split(':').map(Number);
+  const matchTime = now.getHours() === h && now.getMinutes() === m;
+  let shouldSend = false;
+
+  if (cfg.type === 'once') {
+    const target = new Date(cfg.date + 'T' + cfg.time);
+    shouldSend = Math.abs(now - target) < 60000;
+  } else if (cfg.type === 'daily') {
+    shouldSend = matchTime;
+  } else if (cfg.type === 'weekly') {
+    shouldSend = now.getDay() === +cfg.dow && matchTime;
+  } else if (cfg.type === 'monthly') {
+    shouldSend = now.getDate() === +cfg.dom && matchTime;
+  }
+
+  if (!shouldSend) return;
+
+  // 같은 분에 중복 발송 방지
+  const sentKey = `${now.toDateString()}_${cfg.time}`;
+  if (localStorage.getItem('nlLastSent') === sentKey) return;
+  localStorage.setItem('nlLastSent', sentKey);
+
+  setStatus('📅 예약 발송 실행 중...');
+  try {
+    if (cfg.autoGen) {
+      setStatus('✦ 예약 발송: 카피 자동 생성 중...');
+      await generateAll('copy');
+    }
+    const html = buildEmailHTML();
+    const subject = document.getElementById('mailSubject')?.value || '뉴스레터';
+    const recipients = mailRecipients.length ? mailRecipients : [];
+    if (!recipients.length) { setStatus('⚠ 예약 발송: 수신자 없음'); return; }
+
+    const r = await fetch('/api/send-mail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: recipients, subject, html })
+    });
+    if (r.ok) {
+      setStatus(`✅ 예약 발송 완료 — ${now.toLocaleString('ko-KR')}`);
+      // 1회 예약이면 비활성화
+      if (cfg.type === 'once') {
+        cfg.active = false;
+        localStorage.setItem('nlSchedule', JSON.stringify(cfg));
+        updateSchedBadge();
+      }
+    } else {
+      setStatus('❌ 예약 발송 실패 — 서버 오류');
+    }
+  } catch(e) {
+    setStatus('❌ 예약 발송 오류: ' + e.message);
+  }
+}
+
+// 페이지 로드 시 예약 있으면 체커 시작
+(function initSchedule() {
+  const cfg = JSON.parse(localStorage.getItem('nlSchedule') || 'null');
+  if (cfg?.active) { startScheduleChecker(); updateSchedBadge(); }
+})();
 async function sendMail() {
   const pw = prompt('발송 비밀번호를 입력하세요.');
   if (pw === null) return;
@@ -5297,6 +5487,60 @@ async function sendMail() {
 }
 
 </script>
+
+<!-- 예약 발송 모달 -->
+<div class="mail-overlay" id="schedOverlay" onclick="if(event.target===this)closeScheduleModal()">
+  <div class="mail-modal" style="max-width:420px;">
+    <div class="mail-modal-hd">📅 예약 발송 설정</div>
+
+    <div class="mail-modal-lbl">발송 유형</div>
+    <div class="sched-type-grid">
+      <button class="sched-type-btn active" data-type="once"    onclick="setSchedType('once')">1회 예약</button>
+      <button class="sched-type-btn"        data-type="daily"   onclick="setSchedType('daily')">매일</button>
+      <button class="sched-type-btn"        data-type="weekly"  onclick="setSchedType('weekly')">매주</button>
+      <button class="sched-type-btn"        data-type="monthly" onclick="setSchedType('monthly')">매월</button>
+    </div>
+
+    <div id="schedDateRow">
+      <div class="mail-modal-lbl" style="margin-top:12px;">날짜</div>
+      <input class="mail-modal-inp" id="schedDate" type="date">
+    </div>
+
+    <div id="schedDowRow" style="display:none;">
+      <div class="mail-modal-lbl" style="margin-top:12px;">요일</div>
+      <div class="sched-type-grid">
+        <button class="sched-dow-btn active" data-dow="1" onclick="setSchedDow(1)">월</button>
+        <button class="sched-dow-btn" data-dow="2" onclick="setSchedDow(2)">화</button>
+        <button class="sched-dow-btn" data-dow="3" onclick="setSchedDow(3)">수</button>
+        <button class="sched-dow-btn" data-dow="4" onclick="setSchedDow(4)">목</button>
+        <button class="sched-dow-btn" data-dow="5" onclick="setSchedDow(5)">금</button>
+      </div>
+    </div>
+
+    <div id="schedDomRow" style="display:none;">
+      <div class="mail-modal-lbl" style="margin-top:12px;">매월 몇 일</div>
+      <input class="mail-modal-inp" id="schedDom" type="number" min="1" max="28" value="1" style="width:80px;">
+    </div>
+
+    <div class="mail-modal-lbl" style="margin-top:12px;">발송 시각</div>
+    <input class="mail-modal-inp" id="schedTime" type="time" value="09:00" style="width:120px;">
+
+    <div class="mail-modal-lbl" style="margin-top:12px;">자동 생성 후 발송</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);cursor:pointer;">
+      <input type="checkbox" id="schedAutoGen" checked style="accent-color:#7c4af8;">
+      발송 전 카피 자동 생성 (탭이 열려 있어야 작동)
+    </label>
+
+    <div id="schedCurrentInfo" style="display:none;margin-top:14px;padding:10px 12px;background:rgba(124,74,248,.08);border:1px solid rgba(124,74,248,.2);border-radius:6px;font-size:11px;color:#7c4af8;line-height:1.7;"></div>
+    <div id="schedStatus" class="mail-status" style="display:none;margin-top:10px;"></div>
+
+    <div class="mail-modal-footer" style="gap:8px;">
+      <button class="mail-cancel" id="schedCancelBtn" onclick="cancelSchedule()" style="display:none;color:#f04;border-color:rgba(255,0,68,.3);">🗑 예약 취소</button>
+      <button class="mail-cancel" onclick="closeScheduleModal()">닫기</button>
+      <button class="mail-send" onclick="saveSchedule()" style="background:#7c4af8;">📅 예약 설정</button>
+    </div>
+  </div>
+</div>
 
 <!-- 메일 발송 모달 -->
 <div class="mail-overlay" id="mailOverlay" onclick="if(event.target===this)closeMailModal()">
