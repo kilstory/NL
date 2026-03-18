@@ -4911,7 +4911,9 @@ function buildEmailHTML() {
   }
 
   /* ── 섹션들 ── */
+  rows += `<!-- BUILD: ${active.length} sections -->`;
   for (const s of active) {
+    rows += `<!-- SEC: ${s.name} key=${s.keys[0]} lay=${s.layout||'full'} on=${s.on} -->`;
     try {
     const key   = s.keys[0];
     let text  = getSel(key);
@@ -5079,7 +5081,9 @@ function buildEmailHTML() {
     </td></tr></table>
   </td></tr>`;
     }
+    rows += `<!-- SEC OK: ${s?.name} -->`;
     } catch(e) {
+      rows += `<!-- SEC ERROR: ${s?.name} - ${e?.message} -->`;
       console.error('buildEmailHTML 섹션 렌더 오류:', s?.name, e);
     }
   }
