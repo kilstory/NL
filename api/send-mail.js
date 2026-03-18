@@ -29,29 +29,14 @@ export default async function handler(req, res) {
     return;
   }
 
-  // 외부 이미지 URL → 프록시 URL로 치환 (이메일 핫링크 차단 우회)
-  function rewriteImgSrcs(rawHtml) {
-    const BASE = 'https://nlll.vercel.app';
-    return rawHtml.replace(/(<img[^>]+src=["'])([^"']+)(["'])/gi, (match, pre, src, post) => {
-      // data: URL이나 이미 프록시된 URL은 그대로 유지
-      if (src.startsWith('data:') || src.includes('/api/proxy-image')) return match;
-      // 상대 경로도 스킵
-      if (!src.startsWith('http')) return match;
-      return `${pre}${BASE}/api/proxy-image?url=${encodeURIComponent(src)}${post}`;
-    });
-  }
-
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user, pass },
     });
 
-    // 외부 이미지 프록시 치환
-    const proxiedHtml = rewriteImgSrcs(html);
-
     // CSS를 각 요소의 inline style로 변환 (이메일 클라이언트 호환)
-    const inlinedHtml = juice(proxiedHtml, {
+    const inlinedHtml = juice(html, {
       removeStyleTags: false,   // <style> 태그 유지 (일부 클라이언트용)
       preserveMediaQueries: true,
       applyWidthAttributes: true,
