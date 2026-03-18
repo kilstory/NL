@@ -4949,29 +4949,29 @@ function buildEmailHTML() {
       const LC  = '#1a56db';
       const BG2 = '#f0f4ff';
       const shortDesc = desc ? (desc.length > 160 ? desc.slice(0, 160) + '…' : desc) : '';
-      const phBox = `<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr><td bgcolor="#e8ecf0" align="center" style="background-color:#e8ecf0;height:200px;vertical-align:middle;"><p style="margin:0;font-family:${BF};font-size:24px;color:#cbd5e1;">${s.icon || '📰'}</p></td></tr></table>`;
+      const phBox = `<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr><td bgcolor="#e8ecf0" align="center" style="background-color:#e8ecf0;height:220px;vertical-align:middle;"><p style="margin:0;font-family:${BF};font-size:24px;color:#cbd5e1;">${s.icon || '📰'}</p></td></tr></table>`;
       rows += `
   <tr><td bgcolor="${BG2}" style="background-color:${BG2};border-bottom:1px solid #d0d9f5;padding:0;">
-    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : phBox}
+    ${img ? `<img src="${img}" width="600" height="220" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : phBox}
     <table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;table-layout:fixed;">
-      <tr><td bgcolor="${BG2}" class="mob-pad" style="background-color:${BG2};padding:20px 32px 26px;">
+      <tr><td bgcolor="${BG2}" class="mob-pad" style="background-color:${BG2};padding:18px 24px 26px;">
         <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${LC};letter-spacing:1.5px;text-transform:uppercase;mso-line-height-rule:exactly;">${esc(s.name)}</p>
-        <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.3;mso-line-height-rule:exactly;">${esc(title)}</p>
-        ${shortDesc ? `<p style="margin:0 0 18px;font-family:${BF};font-size:13px;color:#444444;line-height:1.8;mso-line-height-rule:exactly;">${esc(shortDesc)}</p>` : ''}
-        ${link ? `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td align="center" bgcolor="#1a1816" style="border-radius:4px;background-color:#1a1816;"><!--[if !mso]><!--><a href="${esc(link)}" target="_blank" style="background-color:#1a1816;border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:11px 24px;text-decoration:none;">기사 보기 →</a><!--<![endif]--></td></tr></table>` : ''}
+        <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:18px;font-weight:900;color:#1a1816;line-height:1.3;mso-line-height-rule:exactly;">${esc(title)}</p>
+        ${shortDesc ? `<p style="margin:0 0 18px;font-family:${BF};font-size:12px;color:#444444;line-height:1.8;mso-line-height-rule:exactly;">${esc(shortDesc)}</p>` : ''}
+        ${link ? `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td align="center" bgcolor="#1a1816" style="border-radius:4px;background-color:#1a1816;"><!--[if !mso]><!--><a href="${esc(link)}" target="_blank" style="background-color:#1a1816;border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:11px;font-weight:700;line-height:1;padding:10px 22px;text-decoration:none;">기사 보기 →</a><!--<![endif]--></td></tr></table>` : ''}
       </td></tr>
     </table>
   </td></tr>`;
 
     } else if (lay === 'full') {
-      const phBox = `<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr><td bgcolor="#f1f5f9" align="center" style="background-color:#f1f5f9;height:200px;vertical-align:middle;"><p style="margin:0;font-family:${BF};font-size:24px;color:#cbd5e1;">${s.icon || '📰'}</p></td></tr></table>`;
+      const phBox = `<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr><td bgcolor="#f1f5f9" align="center" style="background-color:#f1f5f9;height:260px;vertical-align:middle;"><p style="margin:0;font-family:${BF};font-size:24px;color:#cbd5e1;">${s.icon || '📰'}</p></td></tr></table>`;
       rows += `
   <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:0;">
-    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : phBox}
-    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;padding:20px 36px 26px;">
-      <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
-      <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
-      ${desc ? `<p style="margin:0;font-family:${BF};font-size:13px;color:#555555;line-height:1.8;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
+    ${img ? `<img src="${img}" width="600" height="260" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:260px;object-fit:cover;border:0;outline:none;line-height:100%;">` : phBox}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;padding:18px 26px 22px;">
+      <p style="margin:0 0 6px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+      <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:19px;font-weight:900;color:#1a1816;line-height:1.4;">${esc(title)}</p>
+      ${desc ? `<p style="margin:0;font-family:${BF};font-size:12.5px;color:#555555;line-height:1.8;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
       ${ctaBtn}
     </td></tr></table>
   </td></tr>`;
