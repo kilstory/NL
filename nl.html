@@ -351,19 +351,6 @@ select.r-inp { cursor:pointer; }
 .sec-link-inp::placeholder { color:var(--dim); font-family:'Noto Sans KR',sans-serif; font-size:9px; }
 .sec-link-inp:focus { border-color:var(--blue); }
 
-/* ─ 직접 기사 입력 ─ */
-.direct-toggle { font-size:9.5px; font-weight:700; color:var(--dim); cursor:pointer; padding:4px 0 2px; display:flex; align-items:center; gap:3px; transition:color .13s; user-select:none; }
-.direct-toggle:hover { color:var(--blue); }
-.direct-toggle.active { color:var(--blue); }
-.direct-area { display:none; margin-top:4px; }
-.direct-area.show { display:block; }
-.direct-ta { width:100%; height:76px; background:var(--inp); border:1px solid var(--bd); border-radius:6px; padding:6px 8px; font-size:10px; color:var(--tx); font-family:'Noto Sans KR',sans-serif; outline:none; resize:none; line-height:1.6; transition:border-color .14s; box-sizing:border-box; }
-.direct-ta:focus { border-color:rgba(74,124,248,.6); }
-.direct-ta::placeholder { color:var(--dim); }
-.direct-analyze-btn { width:100%; padding:6px; margin-top:4px; border-radius:6px; border:none; background:linear-gradient(135deg,#3a6df0,#7c3aed); color:white; font-size:10px; font-weight:700; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:opacity .14s; }
-.direct-analyze-btn:hover { opacity:.85; }
-.direct-analyze-btn:disabled { opacity:.45; cursor:not-allowed; }
-
 /* ─ Footer social icons ─ */
 .k-foot-social { display:flex; gap:8px; margin-bottom:10px; }
 .k-foot-social a {
@@ -2357,16 +2344,6 @@ function renderCard(s) {
       <div class="sc-ok ${s.genDone?'show':''}" id="ok-${s.id}"><span>✓</span> 카피 생성 완료</div>
     </div>`;
   } else {
-    const hasDirectInput = s.keys.some(k => ['itnow','axfield','solution'].includes(k));
-    const directBlock = hasDirectInput ? `
-      <div class="direct-toggle ${s.directMode?'active':''}" onclick="toggleDirectInput('${s.id}')">
-        ✍ 직접 기사 입력${s.directMode?' ✓':''}
-      </div>
-      <div class="direct-area ${s.directMode?'show':''}" id="da-${s.id}">
-        <textarea class="direct-ta" id="dat-${s.id}" placeholder="기사 본문 또는 내용을 붙여넣으세요. AI가 분석해서 컨텐츠를 자동 생성합니다.">${esc(s.directArticle||'')}</textarea>
-        <button class="direct-analyze-btn" onclick="analyzeDirectArticle('${s.id}')">🔍 기사 분석 → 컨텐츠 생성</button>
-      </div>` : '';
-
     return `<div class="sc-card active" id="sc-${s.id}">
       ${headPart}
       <div class="sc-body">
@@ -2377,7 +2354,6 @@ function renderCard(s) {
           }
           <button class="t-gen ${s.genDone?'done':''}" id="tg-${s.id}" onclick="genSec('${s.id}')">${s.genDone?'✓':'✦'}</button>
         </div>
-        ${directBlock}
         ${s.img ? imgBlock('') : ''}
         ${renderLayoutPicker(s)}
         ${s.keys.includes('intro') ? '' : `<div class="sec-link-row">
@@ -2515,68 +2491,6 @@ function updName(id,v) { const s=find(id); if(s) { s.name=v; livePreview(); } }
 function updLink(id,v) { const s=find(id); if(s) { s.link=v; if(Object.keys(copyData).length) rebuildPreview(); else livePreview(); } }
 function updImgUrl(id,v) { const s=find(id); if(s) { s.imgUrl=v; if(Object.keys(copyData).length) rebuildPreview(); else livePreview(); } }
 function updImgUrl2(id,v) { const s=find(id); if(s) { s.imgUrl2=v; if(Object.keys(copyData).length) rebuildPreview(); else livePreview(); } }
-
-// ── 직접 기사 입력 ──
-function toggleDirectInput(sId) {
-  const area = document.getElementById('da-' + sId);
-  const toggle = area?.previousElementSibling;
-  if (!area) return;
-  const show = !area.classList.contains('show');
-  area.classList.toggle('show', show);
-  if (toggle) toggle.classList.toggle('active', show);
-}
-
-async function analyzeDirectArticle(sId) {
-  const s = sections.find(x => x.id === sId);
-  if (!s) return;
-  const ta = document.getElementById('dat-' + sId);
-  const articleText = ta?.value?.trim();
-  if (!articleText) { alert('기사 내용을 붙여넣어주세요.'); return; }
-
-  const btn = document.querySelector(`#da-${sId} .direct-analyze-btn`);
-  if (btn) { btn.disabled = true; btn.textContent = '분석 중...'; }
-  setStatus(`📰 [${s.name}] 기사 분석 중...`);
-
-  try {
-    s.directArticle = articleText;
-    s._cachedArticle = { title: '', description: articleText.slice(0, 300), link: s.link||'', thumbnail: null, source: 'direct' };
-    s.newsContext = `[직접 입력 기사]\n${articleText}`;
-
-    const brand = document.getElementById('rBrand')?.value || 'kt ds';
-    const key = s.keys[0];
-
-    const promptMap = {
-      itnow:    `아래 기사를 분석해서 IT Now 뉴스레터 섹션 콘텐츠를 작성해줘.\n- 첫 줄: 임팩트 있는 제목 (10-15자)\n- 다음 2-3문장: 핵심 요약 (독자에게 왜 중요한지)\n한국어로, 뉴스레터 스타일로. 브랜드: ${brand}`,
-      axfield:  `아래 기사를 분석해서 AX현장 뉴스레터 섹션 콘텐츠를 작성해줘.\n- 첫 줄: 임팩트 있는 제목 (10-15자)\n- 다음 2-3문장: AX(AI 전환) 관점 핵심 성과/사례 요약, 수치 있으면 포함\n한국어로, 뉴스레터 스타일로. 브랜드: ${brand}`,
-      solution: `아래 기사를 분석해서 솔루션 소개 뉴스레터 섹션 콘텐츠를 작성해줘.\n- 첫 줄: 솔루션명 또는 제목 (10-15자)\n- 다음 2문장: 핵심 가치와 활용 방법\n- 마지막 줄: CTA 문구 (예: "지금 도입 문의 →")\n한국어로, 뉴스레터 스타일로. 브랜드: ${brand}`,
-    };
-
-    const prompt = `${promptMap[key] || promptMap['itnow']}\n\n[기사 내용]\n${articleText}`;
-
-    const r = await fetch('/api/gemini-copy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gemini-2.0-flash', p: prompt, supportsJson: false })
-    });
-    if (!r.ok) throw new Error('API 오류 ' + r.status);
-    const data = await r.json();
-    const rawText = (data.rawText || data.text || '').trim();
-    if (!rawText) throw new Error('응답이 비어있습니다.');
-
-    copyData[key] = { variants: [rawText], selected: 0, edited: [rawText] };
-    s.genDone = true;
-    s.directMode = true;
-
-    setStatus(`✓ [${s.name}] 기사 분석 완료`);
-    livePreview();
-    renderSecList();
-  } catch(e) {
-    setStatus('❌ 기사 분석 실패: ' + e.message);
-    console.error(e);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔍 기사 분석 → 컨텐츠 생성'; }
-  }
-}
 
 // 섹션별 레이아웃 전환
 function setLayout(id, v) {
