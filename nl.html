@@ -2756,6 +2756,8 @@ async function crawlNewsForSection(s, skipImage = false) {
       const pick = s._cachedArticle;
       s.link = pick.link; s.crawledLink = pick.link;
       s.crawledSource = pick.source || ''; s.crawledTitle = pick.title || '';
+      // 다중 뉴스 섹션(dsnews)용 항목별 링크 배열
+      if (s._cachedItems) s.crawledLinks = s._cachedItems.slice(0, 5).map(it => it.link);
       if (!skipImage) {
         if (pick.thumbnail) {
           imageData['ai_'+s.id] = pick.thumbnail;
@@ -2789,6 +2791,8 @@ async function crawlNewsForSection(s, skipImage = false) {
         s._cachedArticle = pick; s._cachedItems = data.items;
         s.link = pick.link; s.crawledLink = pick.link;
         s.crawledSource = pick.source || ''; s.crawledTitle = pick.title || '';
+        // 다중 뉴스 섹션(dsnews)용 항목별 링크 배열
+        s.crawledLinks = data.items.slice(0, 5).map(it => it.link);
         if (!skipImage) {
           if (pick.thumbnail) {
             imageData['ai_'+s.id] = pick.thumbnail;
@@ -3931,7 +3935,6 @@ function renderSecLayout(s, img, lines, text, skin) {
     const items = text.split('\n\n').filter(Boolean).slice(0, 5);
     const newsItems = items.length >= 2 ? items : lines.map(l => l);
     return `<div class="ly-news">
-      <div class="ly-news-hd">${title}</div>
       <div class="ly-news-items">
         ${(newsItems.length >= 2 ? newsItems : [title, desc]).filter(Boolean).slice(0,5).map((item, idx) => {
           const p = item.split('\n').map(l=>l.trim()).filter(Boolean);
