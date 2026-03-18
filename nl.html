@@ -2367,6 +2367,52 @@ function renderCard(s) {
 }
 
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function prepareNewsletterForExport() {
+  setStatus('📤 이미지 데이터 변환 중...');
+  try {
+    // 1. Hero Image
+    if (mainVisual.image && mainVisual.image.startsWith('blob:')) {
+      const resp = await fetch(mainVisual.image);
+      const blob = await resp.blob();
+      mainVisual.image = await blobToBase64(blob);
+    }
+    // 2. Section Images
+    for (const s of sections) {
+      if (s.image && s.image.startsWith('blob:')) {
+        const resp = await fetch(s.image);
+        const blob = await resp.blob();
+        s.image = await blobToBase64(blob);
+      }
+      if (s.image2 && s.image2.startsWith('blob:')) {
+        const resp = await fetch(s.image2);
+        const blob = await resp.blob();
+        s.image2 = await blobToBase64(blob);
+      }
+    }
+    // 3. Shared Image Data (ai/user thumbnails)
+    for (const key in imageData) {
+      if (imageData[key] && imageData[key].startsWith('blob:')) {
+        try {
+          const resp = await fetch(imageData[key]);
+          const blob = await resp.blob();
+          imageData[key] = await blobToBase64(blob);
+        } catch(e) { console.warn(`Failed to convert imageData.${key}`, e); }
+      }
+    }
+  } catch (e) {
+    console.warn('Image conversion error:', e);
+  }
+}
 const find = id => sections.find(s => s.id === id);
 
 function setSrcForSec(id, v) {
@@ -2692,12 +2738,12 @@ async function crawlNewsForSection(s, skipImage = false) {
   if (!s.keys.some(k => newsSections.includes(k) || k.includes('news'))) return;
 
   try {
-    // ── 솔루션: KT DS 공식 블로그 ──
+    // ── 솔루션: DigitalToday ──
     if (s.keys.includes('solution')) {
       if (s._cachedArticle) {
         const pick = s._cachedArticle;
         s.link = pick.link; s.crawledLink = pick.link;
-        s.crawledTitle = pick.title || ''; s.crawledSource = 'blog.naver.com/ktds_official';
+        s.crawledTitle = pick.title || ''; s.crawledSource = pick.source || 'digitaltoday';
         if (!skipImage) {
           if (pick.thumbnail) {
             imageData['ai_'+s.id] = pick.thumbnail;
@@ -2718,8 +2764,12 @@ async function crawlNewsForSection(s, skipImage = false) {
         const data = await r.json();
         if (data.items?.length > 0) {
           let pool = data.items.filter(it => !(s._usedLinks?.has(it.link)));
-          if (pool.length === 0) { s._usedLinks?.clear(); pool = data.items; } // 모두 소진 시 리셋
-          const pick = pool[Math.floor(Math.random() * pool.length)];
+          if (pool.length === 0) { s._usedLinks?.clear(); pool = data.items; }
+          
+          // 썸네일 있는 기사 우선순위
+          const withThumb = pool.filter(it => it.thumbnail);
+          const finalPool = withThumb.length > 0 ? withThumb : pool;
+          const pick = finalPool[Math.floor(Math.random() * finalPool.length)];
           s._cachedArticle = pick; s._cachedItems = data.items;
           s.link = pick.link; s.crawledLink = pick.link;
           s.crawledTitle = pick.title || ''; s.crawledSource = pick.source || 'aitimes';
@@ -2785,8 +2835,12 @@ async function crawlNewsForSection(s, skipImage = false) {
         let available = data.items.filter(it => !usedArticleLinks.has(it.link) && !(s._usedLinks?.has(it.link)));
         if (available.length === 0) { s._usedLinks?.clear(); available = data.items.filter(it => !usedArticleLinks.has(it.link)); }
         if (available.length === 0) available = data.items;
-        const pool = available.slice(0, 5);
-        const pick = pool[Math.floor(Math.random() * pool.length)];
+        
+        // 썸네일 있는 기사 우선순위
+        const pool5 = available.slice(0, 5);
+        const withThumb = pool5.filter(it => it.thumbnail);
+        const finalPool = withThumb.length > 0 ? withThumb : pool5;
+        const pick = finalPool[Math.floor(Math.random() * finalPool.length)];
         usedArticleLinks.add(pick.link);
         s._cachedArticle = pick; s._cachedItems = data.items;
         s.link = pick.link; s.crawledLink = pick.link;
@@ -3521,10 +3575,9 @@ function rebuildPreview() {
   frame.classList.add('show');
   document.getElementById('cEmpty').style.display='none';
   frame.innerHTML=html;
-  finalHTML=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${brand} Newsletter</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&family=DM+Mono:wght@400&display=swap" rel="stylesheet"><style>body{margin:0;background:#f0ede8;font-family:'Noto Sans KR',sans-serif;}*{box-sizing:border-box;}
-
-</head><body>${html}</body></html>`;
-  document.getElementById('codeContent').textContent=finalHTML;
+  const tableHtml = buildEmailHTML();
+  finalHTML = tableHtml;
+  document.getElementById('codeContent').textContent=tableHtml;
 }
 
 /* ═══════════════════════════════════════
@@ -3532,8 +3585,8 @@ function rebuildPreview() {
 ═══════════════════════════════════════ */
 function renderSecLayout(s, img, lines, text, skin) {
   const lay   = s.layout || 'full';
-  const title = lines[0] || text;
-  const desc  = lines.slice(1).join(' ') || '';
+  const title = esc(lines[0] || text);
+  const desc  = esc(lines.slice(1).join(' ') || '');
   const link  = s.link || '#';
   const lnkBtn= link !== '#'
     ? `<a class="rsl-lnk" href="${link}" onclick="event.preventDefault();window.open('${link}','_blank');">자세히 보기 →</a>`
@@ -4338,8 +4391,22 @@ function buildKtds(brand, sub, vol, secs) {
     <div class="k-logo"><div class="k-logo-b">${brand}</div><div class="k-logo-t">NEWSLETTER</div></div>
     <div class="k-meta"><div class="k-meta-v">${vol}</div><div class="k-meta-d">${sub}가 드리는 소식지</div></div>
   </div></div>`;
+
+  // Preview에서도 placeholder 주입 (buildEmailHTML 로직과 동기화)
   secs.forEach(s => {
-    const img=getImg(s); const text=getSel(s.keys[0]); const lines=safeLines(text);
+    const isHero = s.keys.some(k => k === 'heroTitle' || k === 'heroSub');
+    if (isHero) return; // Hero는 위에서 이미 렌더링됨
+
+    s.keys.forEach(k => {
+      if(!copyData[k]) {
+        const body = DEFAULTS.ktds.find(d => d.keys.includes(k))?.ph || (s.name + ' 내용을 입력해주세요.');
+        copyData[k] = { variants:[body], selected:0, edited:[body], _injected:true };
+      }
+    });
+
+    const img=getImg(s); 
+    const text=getSel(s.keys[0]); 
+    const lines=safeLines(text);
     if(s.keys.includes('intro')) {
       h += `<div class="k-intro">${text||'안녕하세요.'}</div>`;
     } else if(s.keys.includes('dsnews')) {
@@ -4596,96 +4663,106 @@ function gdriveAuth() {
 
 async function sendMail() {
   const mode = window._sendMode || 'emailjs';
+  const active = sections.filter(s => s.on);
+
+  if (mode === 'download' || mode === 'gdrive' || mode === 'lite' || mode === 'emailjs') {
+    await prepareNewsletterForExport();
+  }
+
+  // 1. 파일 저장 모드
+  if (mode === 'download') {
+    const exportHtml = buildEmailHTML();
+    if (!exportHtml) { setMailStatus('err', '기사 생성 후 다운로드 해주세요.'); return; }
+    const blob = new Blob([exportHtml], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const brand = document.getElementById('rBrand')?.value || 'newsletter';
+    a.href = url; a.download = brand.replace(/\s+/g, '_') + '_newsletter.html';
+    a.click(); URL.revokeObjectURL(url);
+    setMailStatus('ok', 'HTML 파일 저장 완료!');
+    return;
+  }
+
+  // 2. 이메일/드라이브 발송 모드 (비밀번호 확인)
+  const pw = prompt('발송 비밀번호를 입력하세요.');
+  if (pw === null) return;
+  if (pw !== '1231') { alert('비밀번호가 올바르지 않습니다.'); return; }
+
+  const inp = document.getElementById('mailTagInp');
+  if (inp && inp.value.trim()) mailTagAdd(inp.value.trim());
 
   // 구글 드라이브 + Gmail 모드
-  if(mode === 'gdrive') {
-    if(!finalHTML) { setMailStatus('err', '먼저 뉴스레터를 생성해주세요.'); return; }
-    const to      = document.getElementById('mailTo')?.value?.trim();
+  if (mode === 'gdrive') {
+    const exportHtml = buildEmailHTML();
+    if (!exportHtml) { setMailStatus('err', '먼저 뉴스레터를 생성해주세요.'); return; }
+    const recipients = window.mailRecipients || [];
+    const to = recipients.join(',');
     const subject = document.getElementById('mailSubject')?.value?.trim()
-                    || (document.getElementById('rBrand')?.value || 'kt ds') + ' 뉴스레터';
-    if(!to) { setMailStatus('err', '받는 사람 이메일을 입력해주세요.'); return; }
-    const sendBtn = document.getElementById('sendBtn');
-    if(sendBtn) sendBtn.disabled = true;
+      || (document.getElementById('rBrand')?.value || 'kt ds') + ' 뉴스레터';
+    if (!to) { setMailStatus('err', '받는 사람 이메일을 입력해주세요.'); return; }
+    const sendBtn = document.getElementById('sendBtn') || document.getElementById('mailSendBtn');
+    if (sendBtn) sendBtn.disabled = true;
     setMailStatus('ing', '📤 구글 드라이브에 업로드 중...');
-    if(!_gAccessToken) {
+    if (!_gAccessToken) {
       setMailStatus('err', 'Google 로그인이 필요합니다. 위의 [Google 로그인] 버튼을 클릭하세요.');
-      if(sendBtn) sendBtn.disabled = false;
+      if (sendBtn) sendBtn.disabled = false;
       return;
     }
     try {
       const brand = document.getElementById('rBrand')?.value || 'newsletter';
-      const fname = brand.replace(/\s+/g,'_') + '_' + new Date().toISOString().slice(0,10) + '_newsletter.html';
-      const result = await sendViaGDriveGmail(_gAccessToken, fname, finalHTML, to, subject);
+      const fname = brand.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '_newsletter.html';
+      const result = await sendViaGDriveGmail(_gAccessToken, fname, exportHtml, to, subject);
       setMailStatus('ok', result);
-    } catch(e) {
-      setMailStatus('err', '실패: ' + (e.message||e));
+    } catch (e) {
+      setMailStatus('err', '실패: ' + (e.message || e));
     } finally {
-      if(sendBtn) sendBtn.disabled = false;
+      if (sendBtn) sendBtn.disabled = false;
     }
     return;
   }
 
-  // 파일 저장 모드
-  if(mode === 'download') {
-    if(!finalHTML) { setMailStatus('err', '먼저 뉴스레터를 생성해주세요.'); return; }
-    const blob = new Blob([finalHTML], {type:'text/html;charset=utf-8'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    const brand = document.getElementById('rBrand')?.value || 'newsletter';
-    a.href = url; a.download = brand.replace(/\s+/g,'_')+'_newsletter.html';
-    a.click(); URL.revokeObjectURL(url);
-    setMailStatus('ok', 'HTML 파일 저장 완료! 이메일 클라이언트나 구글 드라이브에 업로드하세요.');
-    return;
+  // 기본 EmailJS/서버 발송 모드
+  if (mailRecipients.length === 0) { alert('수신자를 1명 이상 입력해주세요.'); return; }
+  const subject = document.getElementById('mailSubject').value.trim();
+  if (!subject) { alert('제목을 입력해주세요.'); return; }
+
+  const btn = document.getElementById('mailSendBtn');
+  const statusEl = document.getElementById('mailStatus');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span style="opacity:.7">발송 중...</span>';
   }
-
-  if(!finalHTML) { setMailStatus('err', '먼저 뉴스레터를 생성해주세요.'); return; }
-  const to      = document.getElementById('mailTo')?.value?.trim();
-  const subject = document.getElementById('mailSubject')?.value?.trim()
-                  || document.getElementById('rBrand')?.value + ' 뉴스레터';
-  const svcId   = document.getElementById('ejServiceId')?.value?.trim();
-  const tplId   = document.getElementById('ejTemplateId')?.value?.trim();
-  const pubKey  = document.getElementById('ejPublicKey')?.value?.trim();
-
-  if(!to)     { setMailStatus('err', '받는 사람 이메일을 입력해주세요.'); return; }
-  if(!svcId || !tplId || !pubKey) {
-    setMailStatus('err', 'EmailJS Service ID / Template ID / Public Key를 입력해주세요.');
-    return;
-  }
-  if(typeof emailjs === 'undefined') {
-    setMailStatus('err', 'EmailJS SDK 로딩 실패. 인터넷 연결을 확인해주세요.');
-    return;
-  }
-
-  // 경량 모드: 이미지 제거
-  const htmlToSend = mode === 'lite' ? makeLiteHTML(finalHTML) : finalHTML;
-
-  // 용량 경고
-  const sizeKB = Math.round(new Blob([htmlToSend]).size / 1024);
-  if(sizeKB > 80 && mode === 'emailjs') {
-    const ok = confirm(`HTML 용량이 ${sizeKB}KB입니다. EmailJS 제한(50KB)을 초과할 수 있어요.\n\n경량 모드로 전환하면 용량을 줄일 수 있습니다.\n\n그냥 발송하시겠습니까?`);
-    if(!ok) return;
-  }
-
-  const sendBtn = document.getElementById('sendBtn');
-  const botSend = document.getElementById('botSendBtn');
-  [sendBtn, botSend].forEach(b => { if(b) b.disabled = true; });
-  setMailStatus('ing', `발송 중... (${sizeKB}KB)`);
+  statusEl.style.display = 'none';
 
   try {
-    emailjs.init({ publicKey: pubKey });
-    await emailjs.send(svcId, tplId, {
-      to_email:     to,
-      subject:      subject,
-      html_content: htmlToSend,
+    const exportHtml = buildEmailHTML();
+    const r = await fetch('/api/send-mail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: mailRecipients, subject, html: exportHtml }),
     });
-    setMailStatus('ok', `${to} 으로 발송 완료!`);
-  } catch(e) {
-    const msg = e?.text || e?.message || JSON.stringify(e);
-    setMailStatus('err', '발송 실패: ' + msg);
+    const data = await r.json();
+    statusEl.style.display = 'block';
+    if (r.ok && data.ok) {
+      statusEl.textContent = `✓ ${mailRecipients.length}명에게 발송 완료!`;
+      statusEl.className = 'mail-status show ok';
+      setTimeout(closeMailModal, 1800);
+    } else {
+      statusEl.textContent = '오류: ' + (data.error || '알 수 없는 오류');
+      statusEl.className = 'mail-status show err';
+    }
+  } catch (e) {
+    statusEl.style.display = 'block';
+    statusEl.textContent = '네트워크 오류: ' + e.message;
+    statusEl.className = 'mail-status show err';
   } finally {
-    [sendBtn, botSend].forEach(b => { if(b) b.disabled = false; });
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '✉ 발송';
+    }
   }
 }
+
 /* ═══════════════════════════════════════
    SWITCH / RESET / EXPORT
 ═══════════════════════════════════════ */
@@ -4778,13 +4855,14 @@ function buildEmailHTML() {
   const heroMain = copyData['mvMain'] ? getSel('mvMain') : mainVisual.slogan;
   const heroSub  = copyData['mvSub']  ? getSel('mvSub')  : mainVisual.sub;
   const heroImg  = mainVisual.image || '';
+  // 히어로 배경: 이미지가 없으면 그라데이션 대신 짙은 배경색 사용
   rows += `
   <tr><td bgcolor="${DARK}" class="mob-pad-0" style="background-color:${DARK};padding:0;">
-    ${heroImg ? `<img src="${heroImg}" width="600" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:240px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    ${heroImg ? `<img src="${heroImg}" width="600" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:auto;min-height:240px;max-height:320px;object-fit:cover;border:0;outline:none;">` : ''}
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:28px 36px 34px;">
-        ${heroMain ? `<p class="mob-h1" style="margin:0 0 12px;font-family:${TF};font-size:28px;font-weight:900;color:#ffffff;line-height:1.2;">${esc(heroMain)}</p>` : ''}
-        ${heroSub  ? `<p style="margin:0;font-family:${BF};font-size:13px;color:rgba(255,255,255,0.65);line-height:1.75;">${esc(heroSub)}</p>` : ''}
+        ${heroMain ? `<p class="mob-h1" style="margin:0 0 12px;font-family:${TF};font-size:28px;font-weight:900;color:#ffffff;line-height:1.25;">${esc(heroMain).replace(/\n/g,'<br>')}</p>` : ''}
+        ${heroSub  ? `<p style="margin:0;font-family:${BF};font-size:13px;color:rgba(255,255,255,0.65);line-height:1.75;">${esc(heroSub).replace(/\n/g,'<br>')}</p>` : ''}
       </td></tr>
     </table>
   </td></tr>`;
@@ -4828,7 +4906,15 @@ function buildEmailHTML() {
   /* ── 섹션들 ── */
   for (const s of active) {
     const key   = s.keys[0];
-    const text  = getSel(key);
+    let text  = getSel(key);
+    
+    // 강제 플레이스홀더 주입 로직 (내보내기 전용)
+    if (!text.trim()) {
+      const def = DEFAULTS.ktds.find(d => d.keys.includes(key)) || DEFAULTS.general.find(d => d.keys.includes(key));
+      if (def) text = def.ph || s.name;
+      else text = s.name;
+    }
+
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     const title = lines[0] || s.name;
     const desc  = lines.slice(1).join('\n') || '';
@@ -4850,7 +4936,7 @@ function buildEmailHTML() {
     }
 
     const ctaBtn = link
-      ? `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;border-collapse:collapse;"><tr><td align="center" style="border-radius:4px;background-color:${AC};"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${link}" style="height:36px;v-text-anchor:middle;width:130px;" arcsize="10%" stroke="f" fillcolor="${AC}"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;">자세히 보기</center></v:roundrect><![endif]--><!--[if !mso]><!--><a href="${link}" target="_blank" style="background-color:${AC};border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:10px 22px;text-decoration:none;">자세히 보기 →</a><!--<![endif]--></td></tr></table>`
+      ? `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;border-collapse:collapse;"><tr><td align="center" style="border-radius:4px;background-color:${AC};"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${esc(link)}" style="height:36px;v-text-anchor:middle;width:130px;" arcsize="10%" stroke="f" fillcolor="${AC}"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;">자세히 보기</center></v:roundrect><![endif]--><!--[if !mso]><!--><a href="${esc(link)}" target="_blank" style="background-color:${AC};border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:10px 22px;text-decoration:none;">자세히 보기 →</a><!--<![endif]--></td></tr></table>`
       : '';
 
     if (isIntro) {
@@ -4863,23 +4949,25 @@ function buildEmailHTML() {
       const LC  = '#1a56db';
       const BG2 = '#f0f4ff';
       const shortDesc = desc ? (desc.length > 160 ? desc.slice(0, 160) + '…' : desc) : '';
+      const phBox = `<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr><td bgcolor="#e8ecf0" align="center" style="background-color:#e8ecf0;height:200px;vertical-align:middle;"><p style="margin:0;font-family:${BF};font-size:24px;color:#cbd5e1;">${s.icon || '📰'}</p></td></tr></table>`;
       rows += `
   <tr><td bgcolor="${BG2}" style="background-color:${BG2};border-bottom:1px solid #d0d9f5;padding:0;">
-    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : `<table width="600" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${LC}" height="8" style="background-color:${LC};height:8px;font-size:0;line-height:0;">&nbsp;</td></tr></table>`}
+    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : phBox}
     <table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;table-layout:fixed;">
       <tr><td bgcolor="${BG2}" class="mob-pad" style="background-color:${BG2};padding:20px 32px 26px;">
         <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${LC};letter-spacing:1.5px;text-transform:uppercase;mso-line-height-rule:exactly;">${esc(s.name)}</p>
         <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.3;mso-line-height-rule:exactly;">${esc(title)}</p>
         ${shortDesc ? `<p style="margin:0 0 18px;font-family:${BF};font-size:13px;color:#444444;line-height:1.8;mso-line-height-rule:exactly;">${esc(shortDesc)}</p>` : ''}
-        ${link ? `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td align="center" bgcolor="#1a1816" style="border-radius:4px;background-color:#1a1816;"><!--[if !mso]><!--><a href="${link}" target="_blank" style="background-color:#1a1816;border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:11px 24px;text-decoration:none;">기사 보기 →</a><!--<![endif]--></td></tr></table>` : ''}
+        ${link ? `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr><td align="center" bgcolor="#1a1816" style="border-radius:4px;background-color:#1a1816;"><!--[if !mso]><!--><a href="${esc(link)}" target="_blank" style="background-color:#1a1816;border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:11px 24px;text-decoration:none;">기사 보기 →</a><!--<![endif]--></td></tr></table>` : ''}
       </td></tr>
     </table>
   </td></tr>`;
 
     } else if (lay === 'full') {
+      const phBox = `<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr><td bgcolor="#f1f5f9" align="center" style="background-color:#f1f5f9;height:200px;vertical-align:middle;"><p style="margin:0;font-family:${BF};font-size:24px;color:#cbd5e1;">${s.icon || '📰'}</p></td></tr></table>`;
       rows += `
   <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:0;">
-    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : phBox}
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;padding:20px 36px 26px;">
       <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
       <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
@@ -4971,9 +5059,10 @@ function buildEmailHTML() {
   </td></tr>`;
 
     } else {
+      const phBox = `<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr><td bgcolor="#f1f5f9" align="center" style="background-color:#f1f5f9;height:200px;vertical-align:middle;"><p style="margin:0;font-family:${BF};font-size:24px;color:#cbd5e1;">${s.icon || '📰'}</p></td></tr></table>`;
       rows += `
   <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e8e4dc;padding:0;">
-    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:220px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:240px;object-fit:cover;border:0;outline:none;line-height:100%;">` : phBox}
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;padding:20px 36px 26px;">
       <p style="margin:0 0 8px;font-family:${BF};font-size:9px;font-weight:700;color:${AC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
       <p class="mob-h2" style="margin:0 0 12px;font-family:${TF};font-size:20px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
@@ -5103,19 +5192,23 @@ ${extraFont}
 }
 
 function doCopy() {
-  const html = buildExportHTML();
-  if(!html){alert('먼저 생성해주세요.');return;}
-  navigator.clipboard.writeText(html).then(()=>setStatus('✓ HTML 복사 완료'));
+  prepareNewsletterForExport().then(() => {
+    const html = buildEmailHTML();
+    if(!html){alert('먼저 생성해주세요.');return;}
+    navigator.clipboard.writeText(html).then(()=>setStatus('✓ HTML 복사 완료'));
+  });
 }
 function doDownload() {
-  const html = buildExportHTML();
-  if(!html){alert('먼저 생성해주세요.');return;}
-  const brand=document.getElementById('rBrand').value||'newsletter';
-  const blob=new Blob([html],{type:'text/html'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=brand.replace(/\s+/g,'-').toLowerCase()+'-newsletter.html';
-  a.click(); setStatus('✓ 다운로드 완료');
+  prepareNewsletterForExport().then(() => {
+    const html = buildEmailHTML(); // 테이블 기반 고품질 HTML 사용
+    if(!html){alert('먼저 생성해주세요.');return;}
+    const brand=document.getElementById('rBrand').value||'newsletter';
+    const blob=new Blob([html],{type:'text/html'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=brand.replace(/\s+/g,'-').toLowerCase()+'-newsletter.html';
+    a.click(); setStatus('✓ 다운로드 완료');
+  });
 }
 
 /* ═══════════════════════════════════════
@@ -5560,49 +5653,6 @@ async function checkSchedule() {
   } catch { /* 오프라인 또는 KV 미설정 시 로컬 사용 */ }
   if (cfg?.active) { startScheduleChecker(); updateSchedBadge(); }
 })();
-async function sendMail() {
-  const pw = prompt('발송 비밀번호를 입력하세요.');
-  if (pw === null) return;
-  if (pw !== '1231') { alert('비밀번호가 올바르지 않습니다.'); return; }
-
-  const inp     = document.getElementById('mailTagInp');
-  if (inp.value.trim()) mailTagAdd(inp.value.trim());
-  if (mailRecipients.length === 0) { alert('수신자를 1명 이상 입력해주세요.'); return; }
-  const subject = document.getElementById('mailSubject').value.trim();
-  if (!subject) { alert('제목을 입력해주세요.'); return; }
-
-  const btn = document.getElementById('mailSendBtn');
-  const statusEl = document.getElementById('mailStatus');
-  btn.disabled = true;
-  btn.innerHTML = '<span style="opacity:.7">발송 중...</span>';
-  statusEl.style.display = 'none';
-
-  try {
-    const exportHtml = buildEmailHTML();  // Outlook 호환 테이블 기반 HTML
-    const r = await fetch('/api/send-mail', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: mailRecipients, subject, html: exportHtml }),
-    });
-    const data = await r.json();
-    statusEl.style.display = 'block';
-    if (r.ok && data.ok) {
-      statusEl.textContent = `✓ ${mailRecipients.length}명에게 발송 완료!`;
-      statusEl.className = 'mail-status show ok';
-      setTimeout(closeMailModal, 1800);
-    } else {
-      statusEl.textContent = '오류: ' + (data.error || '알 수 없는 오류');
-      statusEl.className = 'mail-status show err';
-    }
-  } catch (e) {
-    statusEl.style.display = 'block';
-    statusEl.textContent = '네트워크 오류: ' + e.message;
-    statusEl.className = 'mail-status show err';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '✉ 발송';
-  }
-}
 
 </script>
 
