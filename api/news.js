@@ -183,42 +183,43 @@ export default async function handler(req, res) {
     const isNaverTarget = q.includes('kt ds') || q.includes('ktds');
 
     if (isNaverTarget) {
-      const naverUrl = `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(keyword)}`;
-      const response = await fetch(naverUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-        }
-      });
-      if (response.ok) {
-        const html = await response.text();
-        const items = [];
-        const splitItems = html.split('data-fender-root="true"').slice(1);
-
-        for (let itemHtml of splitItems) {
-          if (items.length >= 5) break;
-
-          const titleMatch = itemHtml.match(/sds-comps-text-ellipsis-1[^>]*>(.*?)<\/span><\/a>/);
-          const linkMatch = itemHtml.match(/href=\"(https?:\/\/[^\"]+)\"[^>]*class=\"[^\"]*fender-ui[^\"]*\"/);
-          const descMatch = itemHtml.match(/sds-comps-text-ellipsis-3[^>]*>(.*?)<\/span><\/a>/);
-          const pubMatch = itemHtml.match(/class=\"[^\"]*info[^\"]*\">([^<]+)<\/span>/);
-          // Naver thumbnail
-          const thumbMatch = itemHtml.match(/<img[^>]+src=["'](https?:\/\/[^"']+)["'][^>]*class="[^"]*thumb[^"]*"/i)
-                          || itemHtml.match(/data-lazy-src=["'](https?:\/\/[^"']+)["']/i);
-
-          if (titleMatch && linkMatch) {
-            items.push({
-              title: titleMatch[1].replace(/<[^>]+>/g, '').trim(),
-              link: linkMatch[1],
-              description: descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : '',
-              pubDate: pubMatch ? pubMatch[1].trim() : '',
-              thumbnail: thumbMatch ? thumbMatch[1].trim() : ''
+      const UA_GN = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+      // Google News RSS — Naver 스크래핑보다 안정적, 실제 기사 URL 반환
+      const gnUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keyword)}&hl=ko&gl=KR&ceid=KR:ko`;
+      try {
+        const gnRes = await fetch(gnUrl, { headers: { 'User-Agent': UA_GN } });
+        if (gnRes.ok) {
+          const xml = await gnRes.text();
+          const gnItems = [];
+          const itemRe = /<item>([\s\S]*?)<\/item>/g;
+          let m;
+          while ((m = itemRe.exec(xml)) !== null) {
+            if (gnItems.length >= 8) break;
+            const ix = m[1];
+            const titleM = ix.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || ix.match(/<title>(.*?)<\/title>/);
+            const linkM  = ix.match(/<link>(.*?)<\/link>/);
+            const dateM  = ix.match(/<pubDate>(.*?)<\/pubDate>/);
+            const descM  = ix.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) || ix.match(/<description>([\s\S]*?)<\/description>/);
+            if (!titleM || !linkM) continue;
+            let link = linkM[1].trim();
+            const urlParam = link.match(/url=([^&]+)/);
+            if (urlParam) link = decodeURIComponent(urlParam[1]);
+            const rawDesc = descM ? descM[1] : '';
+            const thumbnail = extractRssThumbnail(ix) || extractDescThumbnail(rawDesc);
+            gnItems.push({
+              title: titleM[1].replace(/<[^>]+>/g, '').trim(),
+              link,
+              pubDate: dateM ? dateM[1].trim() : '',
+              description: rawDesc.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim(),
+              thumbnail,
+              source: 'googlenews',
             });
           }
+          const recent = gnItems.filter(it => isWithin3Days(it.pubDate));
+          const result = (recent.length > 0 ? recent : gnItems).slice(0, 5);
+          if (result.length > 0) return res.status(200).json({ items: result, source: 'googlenews' });
         }
-
-        const recentNaver = items.filter(it => isWithin3Days(it.pubDate));
-        if (recentNaver.length > 0) return res.status(200).json({ items: recentNaver, source: 'naver' });
-      }
+      } catch {}
     }
 
     // 3. Fallback to Bing News RSS for general news or if others fail
