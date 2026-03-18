@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (error) throw error;
 
                 // Success
-                alert('로그인 성공!');
                 window.location.href = 'nl.html';
             } catch (error) {
                 errorEl.textContent = error.message;
