@@ -2366,7 +2366,7 @@ function renderCard(s) {
   }
 }
 
-const esc = s => (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const esc = s => (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -4912,9 +4912,10 @@ function buildEmailHTML() {
 
   /* ── 섹션들 ── */
   for (const s of active) {
+    try {
     const key   = s.keys[0];
     let text  = getSel(key);
-    
+
     // 강제 플레이스홀더 주입 로직 (내보내기 전용)
     if (!text.trim()) {
       const def = DEFAULTS.ktds.find(d => d.keys.includes(key)) || DEFAULTS.general.find(d => d.keys.includes(key));
@@ -5077,6 +5078,9 @@ function buildEmailHTML() {
       ${ctaBtn}
     </td></tr></table>
   </td></tr>`;
+    }
+    } catch(e) {
+      console.error('buildEmailHTML 섹션 렌더 오류:', s?.name, e);
     }
   }
 
