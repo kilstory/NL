@@ -58,10 +58,22 @@ export default async function handler(req, res) {
       applyAttributesTableElements: true,
     });
 
+    // plain text 대안 생성 (스팸 필터 우회, Outlook 호환성)
+    const plainText = inlinedHtml
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
     await transporter.sendMail({
       from: `"뉴스레터 빌더" <${user}>`,
       to: toStr,
       subject,
+      text: plainText,
       html: inlinedHtml,
     });
 

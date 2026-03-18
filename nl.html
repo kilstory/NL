@@ -5140,7 +5140,7 @@ function buildEmailHTML() {
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@700;900&display=swap');
 body,table,td,p,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
 table,td{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}
-img{border:0;line-height:100%;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;}
+img{border:0;line-height:100%;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;max-width:100%;height:auto;}
 body{margin:0!important;padding:0!important;}p{margin:0;}a{color:inherit;}
 /* 모바일 반응형 */
 @media screen and (max-width:620px){
@@ -5159,7 +5159,7 @@ body{margin:0!important;padding:0!important;}p{margin:0;}a{color:inherit;}
 <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f0ede8" style="background-color:#f0ede8;border-collapse:collapse;">
   <tr><td align="center" style="padding:20px 10px 30px;">
     <!--[if mso]><table width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
-    <table cellpadding="0" cellspacing="0" border="0" width="600" align="center" class="email-wrap" style="width:600px;max-width:600px;border-collapse:collapse;">
+    <table cellpadding="0" cellspacing="0" border="0" align="center" class="email-wrap" style="width:100%;max-width:600px;border-collapse:collapse;">
       ${rows}
     </table>
     <!--[if mso]></td></tr></table><![endif]-->
