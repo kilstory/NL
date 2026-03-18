@@ -5425,6 +5425,28 @@ function saveSchedule() {
     savedAt:    Date.now()
   };
   localStorage.setItem('nlSchedule', JSON.stringify(cfg));
+
+  // ── 서버(Vercel KV) 동기화 ──
+  const serverCfg = {
+    ...cfg,
+    sections: sections.filter(s => s.on !== false).map(s => ({
+      name: s.name, icon: s.icon, keys: [...s.keys],
+      topic: s.topic, layout: s.layout || 'full', on: true, img: !!s.img
+    })),
+    brand:       document.getElementById('rBrand')?.value || 'KT DS',
+    brandSub:    document.getElementById('rSub')?.value   || 'AX 전문 파트너',
+    heroSlogan:  mainVisual.slogan,
+    heroSub:     mainVisual.sub,
+    heroImg:     mainVisual.image || '',
+  };
+  fetch('/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(serverCfg)
+  }).then(r => r.json()).then(d => {
+    if (d.ok) console.log('✅ 예약 서버 저장 완료 (Vercel KV)');
+  }).catch(e => console.warn('서버 저장 실패 (로컬은 저장됨):', e));
+
   startScheduleChecker();
   updateSchedBadge();
   const st = document.getElementById('schedStatus');
@@ -5440,6 +5462,12 @@ function cancelSchedule() {
   const cfg = JSON.parse(localStorage.getItem('nlSchedule') || '{}');
   cfg.active = false;
   localStorage.setItem('nlSchedule', JSON.stringify(cfg));
+  // 서버에도 비활성화 동기화
+  fetch('/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active: false })
+  }).catch(() => {});
   if (_schedTimer) { clearInterval(_schedTimer); _schedTimer = null; }
   updateSchedBadge();
   document.getElementById('schedCancelBtn').style.display = 'none';
@@ -5511,9 +5539,21 @@ async function checkSchedule() {
   } catch(e) { setStatus('❌ 예약 발송 오류: ' + e.message); }
 }
 
-// 페이지 로드 시 예약 있으면 체커 시작
-(function initSchedule() {
-  const cfg = JSON.parse(localStorage.getItem('nlSchedule') || 'null');
+// 페이지 로드 시 예약 확인 (로컬 → 서버 동기화)
+(async function initSchedule() {
+  let cfg = JSON.parse(localStorage.getItem('nlSchedule') || 'null');
+  try {
+    const r = await fetch('/api/schedule');
+    if (r.ok) {
+      const srv = await r.json();
+      // 서버에 활성 예약이 있고 로컬에 없으면 서버 설정 우선 적용
+      if (srv?.active && !cfg?.active) {
+        localStorage.setItem('nlSchedule', JSON.stringify(srv));
+        cfg = srv;
+        console.log('✅ 서버 예약 설정 로드 완료');
+      }
+    }
+  } catch { /* 오프라인 또는 KV 미설정 시 로컬 사용 */ }
   if (cfg?.active) { startScheduleChecker(); updateSchedBadge(); }
 })();
 async function sendMail() {
