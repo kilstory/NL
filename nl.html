@@ -4863,66 +4863,9 @@ function buildEmailHTML() {
   const heroMain = copyData['mvMain'] ? getSel('mvMain') : mainVisual.slogan;
   const heroSub  = copyData['mvSub']  ? getSel('mvSub')  : mainVisual.sub;
   const heroImg  = mainVisual.image || '';
-
-  if (currentSkin === 'magazine') {
-    // ── Magazine 전용 커버 히어로 (classic 절대 불변) ──
-    const MG_COVER = '#12151e';
-    const MG_ACC   = '#3a6df0';
-    const MG_RED   = '#c12b23';
-    if (heroImg) {
-      rows += `
-  <tr><td bgcolor="${MG_COVER}" class="mob-pad-0" style="background-color:${MG_COVER};padding:0;">
-    <div style="background:url('${heroImg}') center/cover no-repeat;min-height:380px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-        <tr><td style="height:160px;padding:0;">&nbsp;</td></tr>
-        <tr><td class="mob-pad" style="background:linear-gradient(to bottom,transparent 0%,rgba(12,14,22,0.85) 40%,rgba(12,14,22,0.98) 100%);padding:32px 40px 44px;">
-          <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-bottom:20px;"><tr>
-            <td bgcolor="${MG_RED}" style="background-color:${MG_RED};border-radius:3px;padding:5px 12px;">
-              <p style="margin:0;font-family:${BF};font-size:9px;font-weight:800;color:#ffffff;letter-spacing:2.5px;">NEWSLETTER</p>
-            </td>
-            <td style="padding-left:12px;">
-              <p style="margin:0;font-family:${MF};font-size:11px;color:rgba(255,255,255,0.38);letter-spacing:1px;">${esc(vol)}</p>
-            </td>
-          </tr></table>
-          <p class="mob-h1" style="margin:0 0 8px;font-family:${TF};font-size:52px;font-weight:900;color:#ffffff;line-height:1.05;letter-spacing:-1.5px;">${esc(brand)}</p>
-          <p style="margin:0 0 30px;font-family:${BF};font-size:14px;color:rgba(255,255,255,0.45);letter-spacing:0.3px;">${esc(sub)}</p>
-          <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
-            <td bgcolor="${MG_RED}" style="background-color:${MG_RED};border-radius:4px;">
-              <p style="margin:0;padding:12px 28px;font-family:${BF};font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.2px;">이번 호 읽기 →</p>
-            </td>
-          </tr></table>
-        </td></tr>
-      </table>
-    </div>
-  </td></tr>`;
-    } else {
-      rows += `
-  <tr><td bgcolor="${MG_COVER}" class="mob-pad-0" style="background-color:${MG_COVER};padding:0;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-      <tr><td bgcolor="${MG_COVER}" class="mob-pad" style="background:linear-gradient(155deg,#1a1816 0%,#2d1a0f 45%,#0d1520 100%);padding:48px 40px 52px;">
-        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-bottom:24px;"><tr>
-          <td bgcolor="${MG_RED}" style="background-color:${MG_RED};border-radius:3px;padding:5px 12px;">
-            <p style="margin:0;font-family:${BF};font-size:9px;font-weight:800;color:#ffffff;letter-spacing:2.5px;">NEWSLETTER</p>
-          </td>
-          <td style="padding-left:12px;">
-            <p style="margin:0;font-family:${MF};font-size:11px;color:rgba(255,255,255,0.38);letter-spacing:1px;">${esc(vol)}</p>
-          </td>
-        </tr></table>
-        <p class="mob-h1" style="margin:0 0 8px;font-family:${TF};font-size:52px;font-weight:900;color:#ffffff;line-height:1.05;letter-spacing:-1.5px;">${esc(brand)}</p>
-        <p style="margin:0 0 32px;font-family:${BF};font-size:14px;color:rgba(255,255,255,0.45);letter-spacing:0.3px;">${esc(sub)}</p>
-        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
-          <td bgcolor="${MG_RED}" style="background-color:${MG_RED};border-radius:4px;">
-            <p style="margin:0;padding:12px 28px;font-family:${BF};font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.2px;">이번 호 읽기 →</p>
-          </td>
-        </tr></table>
-      </td></tr>
-    </table>
-  </td></tr>`;
-    }
-  } else {
-    // ── Classic / KTDS 히어로 (절대 불변) ──
-    if (heroImg) {
-      rows += `
+  // 히어로 배경: 이미지가 있으면 배경+그라데이션 오버레이, 없으면 짙은 배경색
+  if (heroImg) {
+    rows += `
   <tr><td bgcolor="${DARK}" class="mob-pad-0" style="background-color:${DARK};padding:0;">
     <div style="background:url('${heroImg}') center/cover no-repeat;min-height:300px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
@@ -4934,8 +4877,8 @@ function buildEmailHTML() {
       </table>
     </div>
   </td></tr>`;
-    } else {
-      rows += `
+  } else {
+    rows += `
   <tr><td bgcolor="${DARK}" class="mob-pad-0" style="background-color:${DARK};padding:0;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr><td bgcolor="${DARK}" class="mob-pad" style="background-color:${DARK};padding:28px 36px 34px;">
@@ -4944,7 +4887,6 @@ function buildEmailHTML() {
       </td></tr>
     </table>
   </td></tr>`;
-    }
   }
 
   /* ── 헤더 바 ── */
