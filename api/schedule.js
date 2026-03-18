@@ -1,5 +1,6 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
+const redis = Redis.fromEnv();
 const KEY = 'nl_schedule';
 
 export default async function handler(req, res) {
@@ -10,7 +11,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const cfg = await kv.get(KEY);
+      const cfg = await redis.get(KEY);
       return res.status(200).json(cfg || null);
     }
 
@@ -19,12 +20,12 @@ export default async function handler(req, res) {
       if (!cfg || typeof cfg !== 'object') {
         return res.status(400).json({ error: 'Invalid body' });
       }
-      await kv.set(KEY, cfg);
+      await redis.set(KEY, cfg);
       return res.status(200).json({ ok: true });
     }
 
     if (req.method === 'DELETE') {
-      await kv.del(KEY);
+      await redis.del(KEY);
       return res.status(200).json({ ok: true });
     }
 

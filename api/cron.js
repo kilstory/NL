@@ -1,4 +1,6 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 import nodemailer from 'nodemailer';
 import juice from 'juice';
 
@@ -481,7 +483,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const cfg = await kv.get('nl_schedule');
+    const cfg = await redis.get('nl_schedule');
     if (!cfg?.active) {
       return res.status(200).json({ skip: 'no active schedule' });
     }
@@ -520,7 +522,7 @@ export default async function handler(req, res) {
     // 1회 발송이면 비활성화
     if (cfg.type === 'once') {
       cfg.active = false;
-      await kv.set('nl_schedule', cfg);
+      await redis.set('nl_schedule', cfg);
     }
 
     const ts = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
