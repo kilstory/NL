@@ -4911,9 +4911,7 @@ function buildEmailHTML() {
   }
 
   /* ── 섹션들 ── */
-  rows += `<!-- BUILD: ${active.length} sections -->`;
   for (const s of active) {
-    rows += `<!-- SEC: ${s.name} key=${s.keys[0]} lay=${s.layout||'full'} on=${s.on} -->`;
     try {
     const key   = s.keys[0];
     let text  = getSel(key);
@@ -5081,9 +5079,7 @@ function buildEmailHTML() {
     </td></tr></table>
   </td></tr>`;
     }
-    rows += `<!-- SEC OK: ${s?.name} -->`;
     } catch(e) {
-      rows += `<!-- SEC ERROR: ${s?.name} - ${e?.message} -->`;
       console.error('buildEmailHTML 섹션 렌더 오류:', s?.name, e);
     }
   }
@@ -5183,9 +5179,11 @@ function buildExportHTML() {
   const content = frame?.innerHTML || '';
   if (!content.trim()) return '';
 
-  // 페이지에 정의된 모든 CSS를 수집 (뉴스레터 클래스 포함)
+  // 뉴스레터 관련 CSS만 추출 (앱 UI CSS 제외)
   let css = '';
   document.querySelectorAll('style').forEach(el => { css += el.textContent + '\n'; });
+  // #nlFrame 선택자 제거 → 독립 HTML에서 바로 적용되도록
+  css = css.replace(/#nlFrame\s+/g, '');
 
   // 선택된 폰트 패키지 추가 링크
   const pkg = FONT_PKGS[currentFontPkg];
@@ -5200,9 +5198,13 @@ function buildExportHTML() {
 <title>${brand} Newsletter</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&family=DM+Mono:wght@400&display=swap">
 ${extraFont}
-<style>${css}</style>
+<style>${css}
+/* 독립 HTML 렌더링 오버라이드 */
+body { height:auto !important; overflow:visible !important; background:#f0ede8; }
+.nl-frame { width:600px; margin:0 auto; display:block !important; overflow:visible !important; }
+</style>
 </head>
-<body style="margin:0;padding:0;">${content}</body>
+<body><div class="nl-frame">${content}</div></body>
 </html>`;
 }
 
@@ -5215,7 +5217,7 @@ function doCopy() {
 }
 function doDownload() {
   prepareNewsletterForExport().then(() => {
-    const html = buildEmailHTML(); // 테이블 기반 고품질 HTML 사용
+    const html = buildExportHTML(); // 미리보기와 동일한 HTML 내보내기
     if(!html){alert('먼저 생성해주세요.');return;}
     const brand=document.getElementById('rBrand').value||'newsletter';
     const blob=new Blob([html],{type:'text/html'});
