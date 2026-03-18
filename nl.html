@@ -4930,11 +4930,14 @@ function buildEmailHTML() {
     const key   = s.keys[0];
     let text  = getSel(key);
 
-    // 강제 플레이스홀더 주입 로직 (내보내기 전용)
+    // 강제 플레이스홀더 주입 로직 (내보내기 전용, magazine/digest/letter 포함)
     if (!text.trim()) {
-      const def = DEFAULTS.ktds.find(d => d.keys.includes(key)) || DEFAULTS.general.find(d => d.keys.includes(key));
-      if (def) text = def.ph || s.name;
-      else text = s.name;
+      let def = null;
+      for (const arr of [DEFAULTS.ktds, DEFAULTS.general, DEFAULTS[currentSkin]||[], DEFAULTS.magazine||[]]) {
+        def = arr.find(d => d.keys.includes(key));
+        if (def) break;
+      }
+      text = def?.ph || s.name;
     }
 
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -4948,6 +4951,110 @@ function buildEmailHTML() {
 
     // 히어로 섹션은 mainVisual로 이미 렌더링됨 → 스킵
     if (isHero) continue;
+
+    // ── Magazine 전용 섹션 렌더링 (classic/ktds와 완전 분리) ──
+    if (currentSkin === 'magazine') {
+      const MG_DARK = '#0f1623';
+      const MG_ACC  = '#3a6df0';
+      const MG_BG   = '#f8f9fc';
+      const mgCta = link
+        ? `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;border-collapse:collapse;"><tr><td align="center" style="border-radius:4px;background-color:${MG_ACC};"><!--[if !mso]><!--><a href="${esc(link)}" target="_blank" style="background-color:${MG_ACC};border-radius:4px;color:#ffffff;display:inline-block;font-family:${BF};font-size:12px;font-weight:700;line-height:1;padding:10px 22px;text-decoration:none;">자세히 보기 →</a><!--<![endif]--></td></tr></table>`
+        : '';
+
+      if (lay === 'banner') {
+        rows += `
+  <tr><td bgcolor="${MG_DARK}" style="background-color:${MG_DARK};border-bottom:2px solid ${MG_ACC};padding:0;">
+    ${img ? `<img src="${img}" width="600" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:260px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${MG_DARK}" class="mob-pad" style="background-color:${MG_DARK};padding:22px 36px 28px;">
+      <p style="margin:0 0 6px;font-family:${BF};font-size:9px;font-weight:700;color:${MG_ACC};letter-spacing:2px;text-transform:uppercase;">${esc(s.name)}</p>
+      <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:24px;font-weight:900;color:#ffffff;line-height:1.25;">${esc(title)}</p>
+      ${desc ? `<p style="margin:0;font-family:${BF};font-size:13px;color:rgba(255,255,255,0.65);line-height:1.75;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
+      ${link ? `<p style="margin:12px 0 0;"><a href="${esc(link)}" target="_blank" style="font-family:${BF};font-size:12px;font-weight:700;color:${MG_ACC};text-decoration:none;">자세히 보기 →</a></p>` : ''}
+    </td></tr></table>
+  </td></tr>`;
+      } else if (lay === 'side' || lay === 'side-r') {
+        const rev = lay === 'side-r';
+        const IW  = 200;
+        const imgTd = `<td width="${IW}" valign="top" class="mob-col" style="width:${IW}px;vertical-align:top;padding:0;">${img ? `<img src="${img}" width="${IW}" class="mob-w-full" alt="${esc(title)}" style="display:block;width:${IW}px;height:170px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}</td>`;
+        const txtTd = `<td valign="top" class="mob-col mob-pad" style="vertical-align:top;padding:20px 24px;">
+          <p style="margin:0 0 6px;font-family:${BF};font-size:9px;font-weight:700;color:${MG_ACC};letter-spacing:2px;text-transform:uppercase;">${esc(s.name)}</p>
+          <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:17px;font-weight:900;color:#1a1816;line-height:1.35;">${esc(title)}</p>
+          ${desc ? `<p style="margin:0;font-family:${BF};font-size:12px;color:#555555;line-height:1.75;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
+          ${mgCta}
+        </td>`;
+        rows += `
+  <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e0e4f0;padding:0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>${rev ? txtTd + imgTd : imgTd + txtTd}</tr>
+    </table>
+  </td></tr>`;
+      } else if (lay === 'card') {
+        const cardKeys = s.keys.length >= 2 ? s.keys : [key, key + '_b'];
+        const n  = cardKeys.length;
+        const CW = Math.floor((560 - (n - 1) * 8) / n);
+        const cardTDs = cardKeys.map((k, ci) => {
+          const ct    = getSel(k);
+          const cl    = ct.split('\n').map(x => x.trim()).filter(Boolean);
+          const ctit  = cl[0] || s.name;
+          const cdesc = cl.slice(1).join(' ') || '';
+          const cimg  = ci === 0 ? getImg(s) : getImg2(s);
+          return `<td width="${CW}" valign="top" class="mob-col" style="width:${CW}px;vertical-align:top;background-color:#ffffff;border-radius:6px;">
+            ${cimg ? `<img src="${cimg}" width="${CW}" class="mob-w-full" alt="${esc(ctit)}" style="display:block;width:${CW}px;height:150px;object-fit:cover;border:0;border-radius:6px 6px 0 0;outline:none;">` : ''}
+            <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 16px 18px;">
+              <p style="margin:0 0 4px;font-family:${BF};font-size:9px;font-weight:700;color:${MG_ACC};letter-spacing:1.5px;text-transform:uppercase;">${esc(s.name)}</p>
+              <p style="margin:0 0 6px;font-family:${TF};font-size:13px;font-weight:800;color:#1a1816;line-height:1.35;">${esc(ctit)}</p>
+              ${cdesc ? `<p style="margin:0;font-family:${BF};font-size:11px;color:#777777;line-height:1.65;">${esc(cdesc)}</p>` : ''}
+            </td></tr></table>
+          </td>`;
+        });
+        const spacers = cardKeys.slice(0,-1).map(() => `<td width="8" style="width:8px;font-size:0;line-height:0;">&nbsp;</td>`);
+        const allTDs  = cardTDs.reduce((a,td,i) => a + td + (spacers[i]||''), '');
+        rows += `
+  <tr><td bgcolor="${MG_BG}" style="background-color:${MG_BG};border-bottom:1px solid #e0e4f0;padding:18px 20px;">
+    <p style="margin:0 0 12px;font-family:${BF};font-size:9px;font-weight:700;color:${MG_ACC};letter-spacing:2px;text-transform:uppercase;">${esc(s.name)}</p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr class="mob-stack">${allTDs}</tr>
+    </table>
+  </td></tr>`;
+      } else if (lay === 'list' || lay === 'news') {
+        const newsItems = lay === 'news'
+          ? text.split('\n\n').filter(Boolean).slice(0, 5)
+          : lines.map(l => l);
+        rows += `
+  <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e0e4f0;padding:0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td class="mob-pad" style="padding:20px 36px 14px;border-bottom:2px solid ${MG_ACC};">
+        <p style="margin:0;font-family:${TF};font-size:16px;font-weight:900;color:#1a1816;">${esc(s.name)}</p>
+      </td></tr>
+      ${newsItems.map((item, i) => {
+        const itemLines = lay === 'news' ? item.split('\n').map(l => l.trim()).filter(Boolean) : [item];
+        const itit  = itemLines[0] || '';
+        const idesc = lay === 'news' ? (itemLines.slice(1).join(' ') || '') : '';
+        return `
+      <tr><td class="mob-pad" style="padding:${i===0?'14':'5'}px 36px ${i===newsItems.length-1?'22':'5'}px;">
+        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+          <td width="28" valign="top" style="width:28px;font-family:${MF};font-size:9px;font-weight:800;color:${MG_ACC};padding-top:3px;vertical-align:top;">${String(i+1).padStart(2,'0')}</td>
+          <td style="font-family:${BF};font-size:13px;color:#333333;line-height:1.7;"><strong>${esc(itit)}</strong>${idesc ? `<br><span style="font-size:12px;color:#777777;">${esc(idesc)}</span>` : ''}</td>
+        </tr></table>
+      </td></tr>`;
+      }).join('')}
+    </table>
+  </td></tr>`;
+      } else {
+        // full + fallback
+        rows += `
+  <tr><td bgcolor="#ffffff" style="background-color:#ffffff;border-bottom:1px solid #e0e4f0;padding:0;">
+    ${img ? `<img src="${img}" width="600" height="260" class="mob-w-full" alt="${esc(title)}" style="display:block;width:600px;max-width:100%;height:260px;object-fit:cover;border:0;outline:none;line-height:100%;">` : ''}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#ffffff" class="mob-pad" style="background-color:#ffffff;padding:22px 36px 28px;">
+      <p style="margin:0 0 6px;font-family:${BF};font-size:9px;font-weight:700;color:${MG_ACC};letter-spacing:2px;text-transform:uppercase;">${esc(s.name)}</p>
+      <p class="mob-h2" style="margin:0 0 10px;font-family:${TF};font-size:22px;font-weight:900;color:#1a1816;line-height:1.3;">${esc(title)}</p>
+      ${desc ? `<p style="margin:0;font-family:${BF};font-size:13px;color:#555555;line-height:1.8;">${esc(desc).replace(/\n/g,'<br>')}</p>` : ''}
+      ${mgCta}
+    </td></tr></table>
+  </td></tr>`;
+      }
+      continue; // magazine 처리 완료 — classic/ktds 렌더링 스킵
+    }
 
     // KTDS: 섹션 타이틀 바 (k-bar) - intro 제외
     if (currentType === 'ktds' && !isIntro) {
