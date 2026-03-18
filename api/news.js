@@ -27,6 +27,19 @@ export default async function handler(req, res) {
     return '';
   }
 
+  function toAbsoluteUrl(imgUrl, baseUrl) {
+    if (!imgUrl) return '';
+    if (imgUrl.startsWith('http')) return imgUrl;
+    try {
+      const base = new URL(baseUrl);
+      if (imgUrl.startsWith('//')) return base.protocol + imgUrl;
+      if (imgUrl.startsWith('/')) return `${base.protocol}//${base.host}${imgUrl}`;
+      return `${base.protocol}//${base.host}/${imgUrl}`;
+    } catch {
+      return imgUrl;
+    }
+  }
+
   // Extract thumbnail from description HTML (e.g. Bing wraps <img> in description)
   function extractDescThumbnail(rawDesc) {
     const m = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i);
@@ -73,7 +86,8 @@ export default async function handler(req, res) {
           const urlParam = link.match(/url=([^&]+)/);
           if (urlParam) link = decodeURIComponent(urlParam[1]);
           const rawDesc = descM ? descM[1] : '';
-          const thumbnail = extractRssThumbnail(ix) || extractDescThumbnail(rawDesc);
+          let thumbnail = extractRssThumbnail(ix) || extractDescThumbnail(rawDesc);
+          if (thumbnail) thumbnail = toAbsoluteUrl(thumbnail, 'https://www.digitaltoday.co.kr');
           all.push({
             title: titleM[1].replace(/<[^>]+>/g, '').trim(),
             link,
@@ -145,7 +159,8 @@ export default async function handler(req, res) {
           const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
           if (titleMatch && linkMatch) {
             const rawDesc = descMatch ? descMatch[1] : '';
-            const thumbnail = extractRssThumbnail(itemXml) || extractDescThumbnail(rawDesc);
+            let thumbnail = extractRssThumbnail(itemXml) || extractDescThumbnail(rawDesc);
+            if (thumbnail) thumbnail = toAbsoluteUrl(thumbnail, 'https://www.aitimes.com');
             all.push({
               title: titleMatch[1].trim(),
               link: linkMatch[1].trim(),
