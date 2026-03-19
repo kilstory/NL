@@ -22,7 +22,6 @@ export default async function handler(req, res) {
     }
 
     const { model, fullPrompt } = req.body;
-    
     if (!model || !fullPrompt) {
        return res.status(400).json({ error: 'Missing model or fullPrompt in request body.' });
     }
@@ -45,11 +44,51 @@ export default async function handler(req, res) {
 
     const d = await response.json();
     const p = d.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-    
     if (!p) {
-        return res.status(404).json({ error: 'No image returned from Gemini' });
+      return res.status(404).json({ error: 'No image returned from Gemini' });
     }
 
+    // ── Supabase Storage 업로드 (서버사이드) ──
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+    const bucket = 'newsletter-images';
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const mimeType = p.inlineData.mimeType;
+        const ext = mimeType.split('/')[1]?.split('+')[0] || 'png';
+        const fileName = `ai_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+        const imageBuffer = Buffer.from(p.inlineData.data, 'base64');
+
+        const uploadRes = await fetch(
+          `${supabaseUrl}/storage/v1/object/${bucket}/${fileName}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': mimeType,
+              'x-upsert': 'true'
+            },
+            body: imageBuffer
+          }
+        );
+
+        if (uploadRes.ok) {
+          const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${fileName}`;
+          console.log('Supabase 업로드 성공:', publicUrl);
+          return res.status(200).json({ url: publicUrl });
+        } else {
+          const errText = await uploadRes.text();
+          console.error('Supabase 업로드 실패:', uploadRes.status, errText);
+        }
+      } catch (uploadErr) {
+        console.error('Supabase 업로드 오류:', uploadErr.message);
+      }
+    } else {
+      console.warn('SUPABASE_URL 또는 SUPABASE_SERVICE_KEY 환경변수 없음 → base64 fallback');
+    }
+
+    // Fallback: base64 반환
     const imgBase64 = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
     return res.status(200).json({ image: imgBase64 });
 
