@@ -1,3 +1,5 @@
+import sharp from 'sharp';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -55,10 +57,15 @@ export default async function handler(req, res) {
 
     if (supabaseUrl && supabaseKey) {
       try {
-        const mimeType = p.inlineData.mimeType;
-        const ext = mimeType.split('/')[1]?.split('+')[0] || 'png';
+        // PNG → JPEG 변환 + 최대 1200px 리사이즈 (Outlook 용량 최적화)
+        const rawBuffer = Buffer.from(p.inlineData.data, 'base64');
+        const imageBuffer = await sharp(rawBuffer)
+          .resize({ width: 1200, withoutEnlargement: true })
+          .jpeg({ quality: 82 })
+          .toBuffer();
+        const mimeType = 'image/jpeg';
+        const ext = 'jpg';
         const fileName = `ai_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-        const imageBuffer = Buffer.from(p.inlineData.data, 'base64');
 
         const uploadRes = await fetch(
           `${supabaseUrl}/storage/v1/object/${bucket}/${fileName}`,
