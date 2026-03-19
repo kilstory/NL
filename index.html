@@ -1,138 +1,146 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Newsletter Studio</title>
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@400;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@400;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/login.css">
     <style>
         /* Inherit some tokens from index.html if needed or define locally */
         :root {
-            --bg:    #eef0f6;
+            --bg: #eef0f6;
             --panel: #ffffff;
-            --card:  #f5f7fc;
-            --inp:   #eaecf4;
-            --bd:    #d8dcea;
-            --bd2:   #c2c9dc;
-            --tx:    #181c2e;
-            --mu:    #64708c;
-            --dim:   #9aa2bc;
-            --blue:  #3a6df0;
-            --red:   #d94040;
+            --card: #f5f7fc;
+            --inp: #eaecf4;
+            --bd: #d8dcea;
+            --bd2: #c2c9dc;
+            --tx: #181c2e;
+            --mu: #64708c;
+            --dim: #9aa2bc;
+            --blue: #3a6df0;
+            --red: #d94040;
         }
     </style>
 </head>
+
 <body class="login-body">
 
-<div class="login-container">
-    <!-- Hero Banner -->
-    <div class="login-banner">
-        <video class="login-banner-video" autoplay muted loop playsinline>
-            <source src="login.mp4" type="video/mp4">
-        </video>
-        <div class="login-banner-overlay"></div>
-        <div class="login-banner-content">
-            <div class="login-logo">
-                <div class="login-logo-mark">N</div>
-                <div class="login-logo-name">Newsletter Studio</div>
-            </div>
-            <h1 class="login-banner-title" style="font-family:'Pretendard',sans-serif;">
-                가장 완벽한 브랜딩,<br>우리가 함께합니다.
-            </h1>
-            <p class="login-banner-desc">
-                세련된 디자인과 스마트한 AI의 결합.<br>
-                전문가급 뉴스레터를 지금 바로 시작하세요.
-            </p>
-        </div>
-    </div>
-
-    <!-- Auth Form Area -->
-    <div class="login-form-area">
-        <div id="loginForm">
-            <div class="login-header">
-                <h2>반가워요! 👋</h2>
-                <p>계정에 로그인하여 워크스페이스로 이동합니다.</p>
-            </div>
-            
-            <form id="signInForm">
-                <div class="form-group">
-                    <label class="form-label">이메일 주소</label>
-                    <input type="email" id="loginEmail" class="form-input" placeholder="name@company.com" required>
-                    <div id="loginEmailError" class="error-msg">이메일을 입력해주세요.</div>
+    <div class="login-container">
+        <!-- Hero Banner -->
+        <div class="login-banner">
+            <video class="login-banner-video" autoplay muted loop playsinline>
+                <source src="login.mp4" type="video/mp4">
+            </video>
+            <div class="login-banner-overlay"></div>
+            <div class="login-banner-content">
+                <div class="login-logo">
+                    <div class="login-logo-mark">N</div>
+                    <div class="login-logo-name">Newsletter Studio</div>
                 </div>
-                
-                <div class="form-group">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <label class="form-label" style="margin-bottom:0;">비밀번호</label>
-                        <a href="#" style="font-size:12px; color:var(--blue); text-decoration:none;">비밀번호 찾기</a>
+                <h1 class="login-banner-title" style="font-family:'Pretendard',sans-serif;">
+                    가장 완벽한 브랜딩,<br>우리가 함께합니다.
+                </h1>
+                <p class="login-banner-desc">
+                    세련된 디자인과 스마트한 AI의 결합.<br>
+                    전문가급 뉴스레터를 지금 바로 시작하세요.
+                </p>
+            </div>
+        </div>
+
+        <!-- Auth Form Area -->
+        <div class="login-form-area">
+            <div id="loginForm">
+                <div class="login-header">
+                    <h2>반가워요! 👋</h2>
+                    <p>계정에 로그인하여 워크스페이스로 이동합니다.</p>
+                </div>
+
+                <form id="signInForm">
+                    <div class="form-group">
+                        <label class="form-label">이메일 주소</label>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="name@kt.com" required>
+                        <div id="loginEmailError" class="error-msg">이메일을 입력해주세요.</div>
                     </div>
-                    <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
-                    <div id="loginPasswordError" class="error-msg">비밀번호를 입력해주세요.</div>
-                </div>
-                
-                <button type="submit" class="btn-login" id="signInBtn">로그인</button>
-            </form>
 
-            <div class="login-footer">
-                계정이 없으신가요? <a href="#" id="toSignUp">회원가입</a>
+                    <div class="form-group">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="form-label" style="margin-bottom:0;">비밀번호</label>
+                            <a href="#" style="font-size:12px; color:var(--blue); text-decoration:none;">비밀번호 찾기</a>
+                        </div>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
+                        <div id="loginPasswordError" class="error-msg">비밀번호를 입력해주세요.</div>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="signInBtn">로그인</button>
+                </form>
+
+                <div class="login-footer">
+                    계정이 없으신가요? <a href="#" id="toSignUp">회원가입</a>
+                </div>
             </div>
-        </div>
 
-        <div id="signUpForm" style="display: none;">
-            <div class="login-header">
-                <h2>시작하기 ✨</h2>
-                <p>몇 가지 정보만 입력하고 바로 시작하세요.</p>
-            </div>
-            
-            <form id="registerForm">
-                <div class="form-group">
-                    <label class="form-label">이메일 주소</label>
-                    <input type="email" id="regEmail" class="form-input" placeholder="name@company.com" required>
+            <div id="signUpForm" style="display: none;">
+                <div class="login-header">
+                    <h2>시작하기 ✨</h2>
+                    <p>몇 가지 정보만 입력하고 바로 시작하세요.</p>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">비밀번호</label>
-                    <input type="password" id="regPassword" class="form-input" placeholder="8자 이상 입력" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">비밀번호 확인</label>
-                    <input type="password" id="regPasswordConfirm" class="form-input" placeholder="다시 한번 입력" required>
-                </div>
-                
-                <button type="submit" class="btn-login" id="signUpBtn">회원가입</button>
-            </form>
 
-            <div class="login-footer">
-                이미 계정이 있으신가요? <a href="#" id="toLogin">로그인</a>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label class="form-label">이메일 주소</label>
+                        <input type="email" id="regEmail" class="form-input" placeholder="name@company.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">비밀번호</label>
+                        <input type="password" id="regPassword" class="form-input" placeholder="8자 이상 입력" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">비밀번호 확인</label>
+                        <input type="password" id="regPasswordConfirm" class="form-input" placeholder="다시 한번 입력"
+                            required>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="signUpBtn">회원가입</button>
+                </form>
+
+                <div class="login-footer">
+                    이미 계정이 있으신가요? <a href="#" id="toLogin">로그인</a>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script type="module" src="js/auth.js"></script>
-<script>
-    // UI Navigation Logic
-    const loginForm = document.getElementById('loginForm');
-    const signUpForm = document.getElementById('signUpForm');
-    const toSignUp = document.getElementById('toSignUp');
-    const toLogin = document.getElementById('toLogin');
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script>
+        // UI Navigation Logic
+        const loginForm = document.getElementById('loginForm');
+        const signUpForm = document.getElementById('signUpForm');
+        const toSignUp = document.getElementById('toSignUp');
+        const toLogin = document.getElementById('toLogin');
 
-    toSignUp.addEventListener('click', (e) => {
-        e.preventDefault();
-        loginForm.style.display = 'none';
-        signUpForm.style.display = 'block';
-    });
+        toSignUp.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            signUpForm.style.display = 'block';
+        });
 
-    toLogin.addEventListener('click', (e) => {
-        e.preventDefault();
-        signUpForm.style.display = 'none';
-        loginForm.style.display = 'block';
-    });
-</script>
+        toLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            signUpForm.style.display = 'none';
+            loginForm.style.display = 'block';
+        });
+    </script>
 
 </body>
+
 </html>

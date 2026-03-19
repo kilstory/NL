@@ -1,36 +1,6 @@
 import nodemailer from 'nodemailer';
 import juice from 'juice';
 
-// 외부 이미지 URL → base64 인라인 변환 (Outlook 이미지 차단 우회)
-async function inlineExternalImages(html) {
-  const imgRegex = /<img([^>]*?)src=["'](https?:\/\/[^"']+)["']([^>]*?)>/gi;
-  const matches = [];
-  let match;
-  while ((match = imgRegex.exec(html)) !== null) {
-    matches.push({ full: match[0], before: match[1], url: match[2], after: match[3] });
-  }
-  if (matches.length === 0) return html;
-
-  await Promise.all(matches.map(async (m) => {
-    try {
-      const resp = await fetch(m.url, { signal: AbortSignal.timeout(8000) });
-      if (!resp.ok) return;
-      const ct = resp.headers.get('content-type') || 'image/jpeg';
-      const buf = await resp.arrayBuffer();
-      const b64 = Buffer.from(buf).toString('base64');
-      m.replacement = `<img${m.before}src="data:${ct};base64,${b64}"${m.after}>`;
-    } catch (e) {
-      console.warn('이미지 인라인 실패 (유지):', m.url, e.message);
-    }
-  }));
-
-  let result = html;
-  for (const m of matches) {
-    if (m.replacement) result = result.replace(m.full, m.replacement);
-  }
-  return result;
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,6 +19,7 @@ export default async function handler(req, res) {
     res.status(400).json({ error: '수신자, 제목, 내용이 필요합니다.' });
     return;
   }
+  // to는 문자열 또는 배열 모두 허용
   const toStr = Array.isArray(to) ? to.join(', ') : to;
 
   const user = process.env.MAIL_USER;
@@ -64,19 +35,16 @@ export default async function handler(req, res) {
       auth: { user, pass },
     });
 
-    // CSS inline
+    // CSS를 각 요소의 inline style로 변환 (이메일 클라이언트 호환)
     const inlinedHtml = juice(html, {
-      removeStyleTags: false,
+      removeStyleTags: false,   // <style> 태그 유지 (일부 클라이언트용)
       preserveMediaQueries: true,
       applyWidthAttributes: true,
       applyAttributesTableElements: true,
     });
 
-    // 외부 이미지 → base64 인라인 (Outlook 이미지 차단 우회)
-    const finalHtml = await inlineExternalImages(inlinedHtml);
-
-    // plain text
-    const plainText = finalHtml
+    // plain text 대안 생성 (스팸 필터 우회, Outlook 호환성)
+    const plainText = inlinedHtml
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
       .replace(/<[^>]+>/g, ' ')
       .replace(/&nbsp;/g, ' ')
@@ -91,7 +59,7 @@ export default async function handler(req, res) {
       to: toStr,
       subject,
       text: plainText,
-      html: finalHtml,
+      html: inlinedHtml,
     });
 
     res.status(200).json({ ok: true });
