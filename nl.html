@@ -3177,7 +3177,10 @@ async function generateAll(mode = 'copy') {
 async function fetchImage(apiKey, src, prompt, style, sOrName, isCard2=false) {
   if (src === 'web' && typeof sOrName === 'object') {
     const s = sOrName;
-    const idSfx = isCard2 ? (s.id + '_c2') : s.id;
+    // 카드 2는 topic2 키워드로 별도 웹 이미지 검색 (카드 1 기사와 중복 방지)
+    if (isCard2) {
+      return await fetchWebImage(prompt, s.name);
+    }
     let thumb = s._cachedArticle?.thumbnail || null;
     if (!thumb && s._cachedArticle?.link) {
       try {
@@ -3186,13 +3189,12 @@ async function fetchImage(apiKey, src, prompt, style, sOrName, isCard2=false) {
       } catch {}
     }
     if (!thumb) {
-      const prevSrc = isCard2 ? s.imgSrc2 : s.imgSrc;
+      const prevSrc = s.imgSrc;
       await crawlNewsForSection(s, false);
-      if (isCard2) s.imgSrc2 = prevSrc; else s.imgSrc = prevSrc;
-      thumb = imageData['ai_'+idSfx] || (isCard2 ? imageData['ai_'+s.id] : null);
+      s.imgSrc = prevSrc;
+      thumb = imageData['ai_'+s.id] || null;
     }
     if (thumb) return thumb;
-    // fallback to generic web search if article thumb fails
     return await fetchWebImage(prompt, s.name, s.crawledLink);
   }
   
