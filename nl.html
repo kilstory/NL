@@ -5027,7 +5027,7 @@ function buildEmailHTML() {
         const cdesc = cl.slice(1).join(' ') || '';
         const cimg  = ci === 0 ? getImg(s) : getImg2(s);
         return `<td width="${CW}" valign="top" class="mob-col" style="width:${CW}px;vertical-align:top;background-color:#ffffff;border-radius:6px;">
-          ${cimg ? `<img src="${cimg}" width="${CW}" class="mob-w-full" alt="${esc(ctit)}" style="display:block;width:${CW}px;height:150px;object-fit:cover;border:0;border-radius:6px 6px 0 0;outline:none;">` : ''}
+          ${cimg ? `<img src="${cimg}" width="${CW}" class="mob-w-full" alt="${esc(ctit)}" style="display:block;width:${CW}px;height:150px;object-fit:cover;border:0;outline:none;">` : ''}
           <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 16px 18px;">
             <p style="margin:0 0 6px;font-family:${TF};font-size:13px;font-weight:800;color:#1a1816;line-height:1.35;">${esc(ctit)}</p>
             ${cdesc ? `<p style="margin:0;font-family:${BF};font-size:11px;color:#777777;line-height:1.65;">${esc(cdesc)}</p>` : ''}
