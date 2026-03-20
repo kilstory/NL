@@ -1592,9 +1592,17 @@ select.r-inp { cursor:pointer; }
 .mail-status a { color:var(--blue); }
 
 /* ── 카드 블록 (카드 레이아웃 편집 UI) ── */
-.card-block       { border:1px solid var(--bd); border-radius:7px; padding:7px 8px; margin-bottom:5px; background:var(--bg); }
+.card-block       { border:1px solid var(--bd); border-radius:7px; padding:10px 10px 8px; margin-bottom:8px; background:var(--bg); display:flex; flex-direction:column; gap:6px; }
 .card-block-2     { border-style:dashed; }
-.card-block-lbl   { font-size:9px; font-weight:700; color:var(--blue); margin-bottom:5px; letter-spacing:.3px; }
+.card-block-lbl   { font-size:9px; font-weight:700; color:var(--blue); letter-spacing:.3px; }
+/* 링크 토글 버튼 */
+.t-lnk-btn { width:28px; height:28px; border-radius:6px; border:1px solid var(--bd); background:var(--inp); color:var(--dim); font-size:11px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .14s; }
+.t-lnk-btn:hover { border-color:var(--bd2); }
+.t-lnk-btn.active { border-color:rgba(74,124,248,.5); color:var(--blue); background:var(--blb); }
+.t-lnk-wrap { display:none; }
+.t-lnk-wrap.show { display:block; }
+.t-lnk-inp { width:100%; background:var(--inp); border:1px solid var(--bd); border-radius:6px; padding:5px 8px; font-family:'Pretendard',sans-serif; font-size:10px; color:var(--tx); outline:none; box-sizing:border-box; }
+.t-lnk-inp:focus { border-color:rgba(74,124,248,.6); }
 
 /* ── 레이아웃 피커 라벨 ── */
 .sly-wrap { margin-top:2px; }
@@ -1969,7 +1977,7 @@ function initSections(type) {
     keys:[...t.keys], ph:t.ph,
     img:t.img, multi:t.multi||false,
     allowedLayouts: t.allowedLayouts !== undefined ? t.allowedLayouts : null,
-    on:true, topic:'', topic2:'', image:null, image2:null, custom:false, genDone:false, genDone2:false, imgSrc:'ai', imgSrc2:'ai', imgUrl:'', imgUrl2:'', imgStyle:'', imgStyle2:'', layout:t.defaultLayout||'full', link:'',
+    on:true, topic:'', topic2:'', image:null, image2:null, custom:false, genDone:false, genDone2:false, imgSrc:'ai', imgSrc2:'ai', imgUrl:'', imgUrl2:'', imgStyle:'', imgStyle2:'', layout:t.defaultLayout||'full', link:'', link2:'',
   }));
   renderSecList(); updateInfo(); livePreview(); renderFontPkgGrid();
 }
@@ -2324,6 +2332,10 @@ function renderCard(s) {
           <div class="t-row">
             <input type="text" class="t-inp" id="tp-${s.id}" placeholder="${s.ph}" value="${esc(s.topic)}" oninput="updTopic('${s.id}',this.value)">
             <button class="t-gen ${s.genDone?'done':''}" id="tg-${s.id}" onclick="genSec('${s.id}')">${s.genDone?'✓':'✦'}</button>
+            <button class="t-lnk-btn ${s.link?'active':''}" id="lb-${s.id}" onclick="togLinkInp('${s.id}','1')" title="기사 링크">🔗</button>
+          </div>
+          <div class="t-lnk-wrap ${s.link?'show':''}" id="lw-${s.id}">
+            <input class="t-lnk-inp" type="url" placeholder="기사 URL 입력" value="${esc(s.link||'')}" oninput="updLink('${s.id}',this.value)">
           </div>
           ${s.img ? imgBlock('') : ''}
         </div>
@@ -2332,14 +2344,14 @@ function renderCard(s) {
           <div class="t-row">
             <input type="text" class="t-inp" id="tp2-${s.id}" placeholder="카드 2 주제" value="${esc(s.topic2||'')}" oninput="updTopic2('${s.id}',this.value)">
             <button class="t-gen ${s.genDone2?'done':''}" id="tg2-${s.id}" onclick="genSec2('${s.id}')">${s.genDone2?'✓':'✦'}</button>
+            <button class="t-lnk-btn ${s.link2?'active':''}" id="lb2-${s.id}" onclick="togLinkInp('${s.id}','2')" title="기사 링크">🔗</button>
+          </div>
+          <div class="t-lnk-wrap ${s.link2?'show':''}" id="lw2-${s.id}">
+            <input class="t-lnk-inp" type="url" placeholder="기사 URL 입력" value="${esc(s.link2||'')}" oninput="updLink2('${s.id}',this.value)">
           </div>
           ${s.img ? imgBlock('2') : ''}
         </div>
         ${renderLayoutPicker(s)}
-        ${s.keys.includes('intro') ? '' : `<div class="sec-link-row">
-          <span class="sec-link-ico">🔗</span>
-          <input class="sec-link-inp" type="url" id="lk-${s.id}" placeholder="링크 URL" value="${esc(s.link||'')}" oninput="updLink('${s.id}',this.value)">
-        </div>`}
       </div>
       <div class="sc-ok ${s.genDone?'show':''}" id="ok-${s.id}"><span>✓</span> 카피 생성 완료</div>
     </div>`;
@@ -2489,6 +2501,15 @@ function updTopic2(id,v) {
 }
 function updName(id,v) { const s=find(id); if(s) { s.name=v; livePreview(); } }
 function updLink(id,v) { const s=find(id); if(s) { s.link=v; if(Object.keys(copyData).length) rebuildPreview(); else livePreview(); } }
+function updLink2(id,v) { const s=find(id); if(s) { s.link2=v; if(Object.keys(copyData).length) rebuildPreview(); else livePreview(); } }
+function togLinkInp(id, card) {
+  const wrap = document.getElementById(card==='2' ? `lw2-${id}` : `lw-${id}`);
+  const btn  = document.getElementById(card==='2' ? `lb2-${id}` : `lb-${id}`);
+  if (!wrap) return;
+  const show = wrap.classList.toggle('show');
+  btn?.classList.toggle('active', show);
+  if (show) wrap.querySelector('input')?.focus();
+}
 function updImgUrl(id,v) { const s=find(id); if(s) { s.imgUrl=v; if(Object.keys(copyData).length) rebuildPreview(); else livePreview(); } }
 function updImgUrl2(id,v) { const s=find(id); if(s) { s.imgUrl2=v; if(Object.keys(copyData).length) rebuildPreview(); else livePreview(); } }
 
@@ -3908,7 +3929,7 @@ function renderSecLayout(s, img, lines, text, skin) {
     const t2   = ln2[0] || '✦ 카드 2 주제 입력 후 생성';
     const d2   = ln2.slice(1).join(' ');
     const link1 = s.crawledLink||s.link||'';
-    const link2 = s.crawledLink2||s.link||'';
+    const link2 = s.crawledLink2||s.link2||s.link||'';
     const cardTag1 = link1 ? `a href="${link1}" onclick="event.preventDefault();window.open('${link1}','_blank');" style="display:block;text-decoration:none;color:inherit;"` : 'div';
     const cardTag2 = link2 ? `a href="${link2}" onclick="event.preventDefault();window.open('${link2}','_blank');" style="display:block;text-decoration:none;color:inherit;"` : 'div';
     return `<div class="rsl-card-duo">
@@ -3973,7 +3994,7 @@ function renderSecLayout(s, img, lines, text, skin) {
   if(lay === 'card') {
     const cardKeys = s.keys.length >= 2 ? s.keys : [s.keys[0], s.keys[0]+'_b'];
     const cardImgs = [s.image, s.image2];
-    const cardLinks = [s.crawledLink||s.link||'', s.crawledLink2||s.link||''];
+    const cardLinks = [s.crawledLink||s.link||'', s.crawledLink2||s.link2||s.link||''];
     return `<div class="ly-card-wrap">
       <div class="ly-card-hd">${s.name}</div>
       <div class="ly-cards" style="grid-template-columns:${cardKeys.map(()=>'1fr').join(' ')}">
@@ -5060,7 +5081,7 @@ function buildEmailHTML() {
         const ctit  = cl[0] || s.name;
         const cdesc = cl.slice(1).join(' ') || '';
         const cimg  = ci === 0 ? getImg(s) : getImg2(s);
-        const clink = ci === 0 ? (s.crawledLink||s.link||'') : (s.crawledLink2||s.link||'');
+        const clink = ci === 0 ? (s.crawledLink||s.link||'') : (s.crawledLink2||s.link2||s.link||'');
         return `<td width="${CW}" valign="top" class="mob-col" style="width:${CW}px;vertical-align:top;background-color:#ffffff;">
           ${clink ? `<a href="${esc(clink)}" target="_blank" style="display:block;text-decoration:none;color:inherit;">` : ''}
           ${cimg ? `<img src="${cimg}" width="${CW}" class="mob-w-full" alt="${esc(ctit)}" style="display:block;width:${CW}px;height:150px;object-fit:cover;border:0;outline:none;">` : ''}
