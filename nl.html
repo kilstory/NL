@@ -322,7 +322,7 @@ select.r-inp { cursor:pointer; }
 .ly-card-wrap { padding:16px 22px; border-bottom:1px solid #f0ede8; }
 .ly-card-hd { font-size:13px; font-weight:900; color:#1a1816; margin-bottom:12px; font-family:'Pretendard',sans-serif; }
 .ly-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.ly-card { background:#fff; border:1px solid #ece9e4; border-radius:6px; overflow:hidden; }
+.ly-card { background:#fff; border:1px solid #ece9e4; overflow:hidden; }
 .ly-card-img { width:100%; height:110px; object-fit:cover; display:block; }
 .ly-card-ph { width:100%; height:110px; background:linear-gradient(135deg,#e8e4dc,#d0cbc2); display:flex; align-items:center; justify-content:center; font-size:28px; }
 .ly-card-body { padding:10px 12px; }
@@ -5028,7 +5028,7 @@ function buildEmailHTML() {
         const ctit  = cl[0] || s.name;
         const cdesc = cl.slice(1).join(' ') || '';
         const cimg  = ci === 0 ? getImg(s) : getImg2(s);
-        return `<td width="${CW}" valign="top" class="mob-col" style="width:${CW}px;vertical-align:top;background-color:#ffffff;border-radius:6px;">
+        return `<td width="${CW}" valign="top" class="mob-col" style="width:${CW}px;vertical-align:top;background-color:#ffffff;">
           ${cimg ? `<img src="${cimg}" width="${CW}" class="mob-w-full" alt="${esc(ctit)}" style="display:block;width:${CW}px;height:150px;object-fit:cover;border:0;outline:none;">` : ''}
           <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 16px 18px;">
             <p style="margin:0 0 6px;font-family:${TF};font-size:13px;font-weight:800;color:#1a1816;line-height:1.35;">${esc(ctit)}</p>
