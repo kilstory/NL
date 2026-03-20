@@ -1435,7 +1435,7 @@ select.r-inp { cursor:pointer; }
 .rsl-dg-side-desc { font-size:10.5px; color:#555; line-height:1.6; }
 
 /* CARD (단독 카드) */
-.rsl-dg-card { background:#fff; border-radius:8px; overflow:hidden; margin:0 0 4px; }
+.rsl-dg-card { background:#fff; overflow:hidden; margin:0 0 4px; }
 .rsl-dg-card-img { width:100%; height:130px; object-fit:cover; display:block; }
 .rsl-dg-card-ph {
   width:100%; height:130px; background:linear-gradient(135deg,#e8f0ff,#d0e0ff);
@@ -3907,23 +3907,27 @@ function renderSecLayout(s, img, lines, text, skin) {
     const ln2  = safeLines(txt2);
     const t2   = ln2[0] || '✦ 카드 2 주제 입력 후 생성';
     const d2   = ln2.slice(1).join(' ');
+    const link1 = s.crawledLink||s.link||'';
+    const link2 = s.crawledLink2||s.link||'';
+    const cardTag1 = link1 ? `a href="${link1}" onclick="event.preventDefault();window.open('${link1}','_blank');" style="display:block;text-decoration:none;color:inherit;"` : 'div';
+    const cardTag2 = link2 ? `a href="${link2}" onclick="event.preventDefault();window.open('${link2}','_blank');" style="display:block;text-decoration:none;color:inherit;"` : 'div';
     return `<div class="rsl-card-duo">
-      <div class="rsl-dg-card rsl-card-half">
+      <${cardTag1} class="rsl-dg-card rsl-card-half">
         ${img ? `<img class="rsl-dg-card-img" src="${img}" alt="">` : `<div class="rsl-dg-card-ph">${s.icon}</div>`}
         <div class="rsl-dg-card-body">
           <div class="rsl-dg-card-tag">${s.name}</div>
           <div class="rsl-dg-card-tit">${title||'✦ 카피를 생성해주세요'}</div>
           <div class="rsl-dg-card-desc">${desc}</div>
         </div>
-      </div>
-      <div class="rsl-dg-card rsl-card-half${!txt2?' rsl-card-pending':''}">
+      </${link1 ? 'a' : 'div'}>
+      <${cardTag2} class="rsl-dg-card rsl-card-half${!txt2?' rsl-card-pending':''}">
         ${getImg2(s) ? `<img class="rsl-dg-card-img" src="${imageData['user_'+s.id+'_c2']||s.image2||img}" alt="">` : `<div class="rsl-dg-card-ph">${s.icon}</div>`}
         <div class="rsl-dg-card-body">
           <div class="rsl-dg-card-tag">${s.name}</div>
           <div class="rsl-dg-card-tit">${t2}</div>
           <div class="rsl-dg-card-desc">${d2}</div>
         </div>
-      </div>
+      </${link2 ? 'a' : 'div'}>
     </div>`;
   }
   if(lay === 'full') {
