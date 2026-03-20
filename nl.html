@@ -3177,8 +3177,27 @@ async function generateAll(mode = 'copy') {
 async function fetchImage(apiKey, src, prompt, style, sOrName, isCard2=false) {
   if (src === 'web' && typeof sOrName === 'object') {
     const s = sOrName;
-    // 카드 2는 topic2 키워드로 별도 웹 이미지 검색 (카드 1 기사와 중복 방지)
+    // 카드 2는 topic2 키워드로 뉴스 크롤링 → 썸네일 추출
     if (isCard2) {
+      const kw = (s.topic2 || s.topic || s.name).trim();
+      try {
+        const nr = await fetch(`/api/news?keyword=${encodeURIComponent(kw)}`);
+        if (nr.ok) {
+          const nd = await nr.json();
+          const pick = nd.items?.find(it => it.link && it.link !== s._cachedArticle?.link) || nd.items?.[0];
+          if (pick) {
+            s.crawledLink2 = pick.link;
+            let thumb = pick.thumbnail || null;
+            if (!thumb && pick.link) {
+              try {
+                const ir = await fetch(`/api/image?url=${encodeURIComponent(pick.link)}`);
+                if (ir.ok) { const id2 = await ir.json(); thumb = id2?.url || null; }
+              } catch {}
+            }
+            if (thumb) return thumb;
+          }
+        }
+      } catch {}
       return await fetchWebImage(prompt, s.name);
     }
     let thumb = s._cachedArticle?.thumbnail || null;
@@ -3948,19 +3967,28 @@ function renderSecLayout(s, img, lines, text, skin) {
     </div>`;
   }
   if(lay === 'card') {
-    const cards = lines.filter(Boolean);
-    const cardItems = cards.length >= 2 ? cards : [title, desc||text, '', ''];
+    const cardKeys = s.keys.length >= 2 ? s.keys : [s.keys[0], s.keys[0]+'_b'];
+    const cardImgs = [s.image, s.image2];
+    const cardLinks = [s.crawledLink||s.link||'', s.crawledLink2||s.link||''];
     return `<div class="ly-card-wrap">
       <div class="ly-card-hd">${s.name}</div>
-      <div class="ly-cards">
-        ${cardItems.slice(0,4).map((c, i) => `
-          <div class="ly-card">
-            ${img && i===0 ? `<img class="ly-card-img" src="${img}" alt="">` : `<div class="ly-card-ph">${s.icon}</div>`}
+      <div class="ly-cards" style="grid-template-columns:${cardKeys.map(()=>'1fr').join(' ')}">
+        ${cardKeys.map((k, i) => {
+          const ct = getSel(k)||'';
+          const cl = ct.split('\n').map(x=>x.trim()).filter(Boolean);
+          const ctit = cl[0]||s.name;
+          const cdesc = cl.slice(1).join(' ')||'';
+          const cimg = cardImgs[i]||null;
+          const clink = cardLinks[i]||'';
+          const tag = clink ? `a href="${clink}" onclick="event.preventDefault();window.open('${clink}','_blank');" style="text-decoration:none;color:inherit;display:block;"` : 'div';
+          return `<${tag} class="ly-card">
+            ${cimg ? `<img class="ly-card-img" src="${cimg}" alt="">` : `<div class="ly-card-ph">${s.icon}</div>`}
             <div class="ly-card-body">
-              <div class="ly-card-tit">${c.length > 30 ? c.slice(0,30)+'…' : c}</div>
-              <div class="ly-card-txt">${cardItems[i+1]||''}</div>
+              <div class="ly-card-tit">${ctit.length > 30 ? ctit.slice(0,30)+'…' : esc(ctit)}</div>
+              ${cdesc ? `<div class="ly-card-txt">${esc(cdesc).slice(0,60)}</div>` : ''}
             </div>
-          </div>`).filter((_,i)=>i%2===0).join('')}
+          </${clink ? 'a' : 'div'}>`;
+        }).join('')}
       </div>
     </div>`;
   }
@@ -5028,12 +5056,15 @@ function buildEmailHTML() {
         const ctit  = cl[0] || s.name;
         const cdesc = cl.slice(1).join(' ') || '';
         const cimg  = ci === 0 ? getImg(s) : getImg2(s);
+        const clink = ci === 0 ? (s.crawledLink||s.link||'') : (s.crawledLink2||s.link||'');
         return `<td width="${CW}" valign="top" class="mob-col" style="width:${CW}px;vertical-align:top;background-color:#ffffff;">
+          ${clink ? `<a href="${esc(clink)}" target="_blank" style="display:block;text-decoration:none;color:inherit;">` : ''}
           ${cimg ? `<img src="${cimg}" width="${CW}" class="mob-w-full" alt="${esc(ctit)}" style="display:block;width:${CW}px;height:150px;object-fit:cover;border:0;outline:none;">` : ''}
           <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 16px 18px;">
             <p style="margin:0 0 6px;font-family:${TF};font-size:13px;font-weight:800;color:#1a1816;line-height:1.35;">${esc(ctit)}</p>
             ${cdesc ? `<p style="margin:0;font-family:${BF};font-size:11px;color:#777777;line-height:1.65;">${esc(cdesc)}</p>` : ''}
           </td></tr></table>
+          ${clink ? `</a>` : ''}
         </td>`;
       });
       const spacers = cardKeys.slice(0,-1).map(() => `<td width="8" style="width:8px;font-size:0;line-height:0;">&nbsp;</td>`);
